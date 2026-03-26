@@ -88,7 +88,11 @@ aliases:
 # hitting 404 on in-flight requests. Combines all files from new and old
 # version inside the asset_path.
 #
-asset_path: /rails/public/assets
+# Disabled: serving assets through Rails allows rack-cors to add CORS headers,
+# which is required for assets served from a cross-origin CDN (assets.boolder.com).
+# CloudFront caches old assets, so bridging during deploys is still covered.
+#
+# asset_path: /rails/public/assets
 
 # Configure rolling deploys by setting a wait time between batches of restarts.
 #
