@@ -1,7 +1,7 @@
 class Admin::BaseController < ApplicationController
   default_form_builder DefaultFormBuilder
   layout "admin"
-  before_action :authenticate, unless: -> { Rails.env.local? }
+  before_action :authenticate
   before_action :set_cookie
 
   private
@@ -15,11 +15,9 @@ class Admin::BaseController < ApplicationController
   end
 
   def accounts
-    {
-      "nico"  => Rails.application.credentials.dig(:admin, :nico_password),
-      "emile" => Rails.application.credentials.dig(:admin, :emile_password),
-      "gael" => Rails.application.credentials.dig(:admin, :gael_password)
-    }
+    cred_accounts = Rails.application.credentials.admin_accounts&.stringify_keys
+    return cred_accounts if cred_accounts.present?
+    { ENV["ADMIN_USERNAME"] => ENV["ADMIN_PASSWORD"] }.compact
   end
 
   # used by audited gem (see config/initializers/audited.rb)

@@ -10,7 +10,7 @@ export default class extends Controller {
     "gradeRadioButton", "gradeMin", "gradeMax", "customGradePicker",
     "filterCounter", "filterIcon" 
   ]
-  static values = { 
+  static values = {
     token: String,
     bounds: Object,
     problem: Object,
@@ -20,6 +20,7 @@ export default class extends Controller {
     contributeSource: String,
     circuit7a: { type: Boolean, default: false },
     circuit7aSource: String,
+    mapDataSource: String,
   }
 
   connect() {
@@ -30,8 +31,8 @@ export default class extends Controller {
       language: this.localeValue, // doesn't seem to work?
       locale: this.localeValue == 'fr' ? this.getFrLocale() : null,
       hash: true,
-      style: `mapbox://styles/nmondollot/cl95n147u003k15qry7pvfmq2${this.draftValue ? "/draft" : ""}`,
-      bounds: [[2.4806787, 48.2868427],[2.7698927,48.473906]], 
+      style: `mapbox://styles/mapbox/outdoors-v12`,
+      bounds: [[-4.1, 50.45],[-3.7, 50.70]],
       padding: 5,
     });
 
@@ -81,17 +82,19 @@ export default class extends Controller {
   }
 
   addLayers() {
-    this.map.addSource('problems', {
-      type: 'vector',
-      url: 'mapbox://nmondollot.4xsv235p',
-      promoteId: "id"
-    });
+    if(this.hasMapDataSourceValue) {
+      this.map.addSource('problems', {
+        type: 'geojson',
+        data: this.mapDataSourceValue,
+        promoteId: "id"
+      });
+    }
 
+    if(true) {
     this.map.addLayer({
       'id': 'problems',
       'type': 'circle',
       'source': 'problems',
-      'source-layer': 'problems-ayes3a',
       'minzoom': 15,
       'layout': {
         'visibility': 'visible',
@@ -228,14 +231,13 @@ export default class extends Controller {
       ],
     }
     ,
-    "areas" // layer will be inserted just before this layer
+    "road-label" // insert below road labels
     );
 
     this.map.addLayer({
       'id': 'problems-texts',
       'type': 'symbol',
       'source': 'problems',
-      'source-layer': 'problems-ayes3a',
       'minzoom': 19,
       'layout': {
         'visibility': 'visible',
@@ -255,7 +257,7 @@ export default class extends Controller {
         ],
       },
       'paint': {
-        'text-color': 
+        'text-color':
           [
             "case",
             [
@@ -278,6 +280,34 @@ export default class extends Controller {
           false
       ],
     });
+    } // end problems block
+
+    // BOULDER OUTLINES
+    if(this.hasMapDataSourceValue) {
+      this.map.addLayer({
+        'id': 'boulders',
+        'type': 'fill',
+        'source': 'problems',
+        'minzoom': 16,
+        'paint': {
+          'fill-color': '#888',
+          'fill-opacity': 0.2,
+        },
+        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+      });
+
+      this.map.addLayer({
+        'id': 'boulders-outline',
+        'type': 'line',
+        'source': 'problems',
+        'minzoom': 16,
+        'paint': {
+          'line-color': '#555',
+          'line-width': 1.5,
+        },
+        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+      });
+    }
 
     // CONTRIBUTE LAYERS
 
@@ -340,7 +370,7 @@ export default class extends Controller {
       ],
       }
       ,
-      "areas" // layer will be inserted just before this layer
+      "road-label" // insert below road labels
       );
   
       this.map.addLayer({
@@ -432,7 +462,7 @@ export default class extends Controller {
       ],
       }
       ,
-      // "areas" // layer will be inserted just before this layer
+      // "road-label" // insert below road labels
       );
   
       this.map.addLayer({
@@ -491,7 +521,7 @@ export default class extends Controller {
       },
       }
       ,
-      "areas" // layer will be inserted just before this layer
+      "road-label" // insert below road labels
       );
     }
   }
@@ -826,6 +856,7 @@ export default class extends Controller {
   }
 
   applyLayerFilter(layer, grades) {
+    if(!this.map.getLayer(layer)) return;
     this.map.setFilter(layer, [
       'match',
       ['get', 'grade'],

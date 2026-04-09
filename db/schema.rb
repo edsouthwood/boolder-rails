@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_06_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_09_113405) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -59,7 +59,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_120000) do
     t.text "description_en"
     t.text "warning_fr"
     t.text "warning_en"
-    t.integer "bleau_area_id", null: false
+    t.integer "bleau_area_id"
     t.integer "cluster_id"
     t.index ["slug"], name: "index_areas_on_slug", unique: true
     t.index ["tags"], name: "index_areas_on_tags", using: :gin
@@ -229,6 +229,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_120000) do
     t.string "circuit_letter"
     t.boolean "sit_start", default: false, null: false
     t.boolean "has_line", default: false, null: false
+    t.string "ukc_url"
     t.index ["area_id"], name: "index_problems_on_area_id"
     t.index ["circuit_id"], name: "index_problems_on_circuit_id"
     t.index ["grade"], name: "index_problems_on_grade"

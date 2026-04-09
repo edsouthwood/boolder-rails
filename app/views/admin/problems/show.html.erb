@@ -1,4 +1,4 @@
-<% add_breadcrumb "Fontainebleau", admin_areas_path %>
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
 <% add_breadcrumb @problem.area.name, admin_area_problems_path(area_slug: @problem.area.slug, circuit_id: @problem.circuit&.id) %>
 <% add_breadcrumb "Problem ##{@problem.id}", nil, class: "active" %>
 
@@ -117,13 +117,13 @@
   <div class="md:col-span-2">
     <div class="mb-8 shadow overflow-hidden sm:rounded-md">
       <div class="px-4 py-5 bg-white sm:p-6">
-        <% if @problem.bleau_info_id.present? %>
-          <%= link_to bleau_info_url(@problem), target: "_blank" do %>
+        <% if @problem.ukc_url.present? %>
+          <%= link_to @problem.ukc_url, target: "_blank" do %>
             <div class="flex items-center space-x-2 text-emerald-600 mb-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
               </svg>
-              <div>See on bleau.info</div>
+              <div>See on UKC</div>
             </div>
           <% end %>
         <% end %>

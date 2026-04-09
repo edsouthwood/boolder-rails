@@ -1,21 +1,6 @@
-<div class="col-span-6 sm:col-span-1">
-  <%= form.label :circuit_number, "Number" %>
-  <%= form.text_field :circuit_number, autocomplete: "off" %>
-</div>
-
-<div class="col-span-6 sm:col-span-1">
-  <%= form.label :circuit_letter, "Bis" %>
-  <%= form.select :circuit_letter, Problem::LETTERS.invert, { include_blank: true } %>
-</div>
-
-<div class="col-span-6 sm:col-span-2">
-  <%= form.label :circuit_id %>
-  <%= form.collection_select :circuit_id, @circuits, :id, :color, include_blank: true %>
-</div>
-
-<div class="col-span-6 sm:col-span-2 sm:col-start-1">
-  <%= form.label :bleau_info_id, "Bleau.info id" %>
-  <%= form.text_field :bleau_info_id, autocomplete: "off" %>
+<div class="col-span-6 sm:col-span-4 sm:col-start-1">
+  <%= form.label :ukc_url, "UKC link" %>
+  <%= form.text_field :ukc_url, autocomplete: "off", placeholder: "https://www.ukclimbing.com/logbook/crags/..." %>
 </div>
 
 <div class="col-span-6 sm:col-span-4 sm:col-start-1">
@@ -25,7 +10,7 @@
 
 <div class="col-span-6 sm:col-span-1">
   <%= form.label :grade %>
-  <%= form.text_field :grade, autocomplete: "off" %>
+  <%= form.select :grade, Problem::DISPLAY_GRADE_VALUES, { include_blank: true } %>
 </div>
 
 <div class="col-span-6 sm:col-span-2">
@@ -36,6 +21,16 @@
 <div class="col-span-6 sm:col-span-4">
   <%= form.label :sit_start %>
   <%= form.check_box :sit_start %>
+</div>
+
+<div class="col-span-6 sm:col-span-3 sm:col-start-1">
+  <%= form.label :lat, "Latitude" %>
+  <%= form.text_field :lat, autocomplete: "off", placeholder: "e.g. 50.5712" %>
+</div>
+
+<div class="col-span-6 sm:col-span-3">
+  <%= form.label :lon, "Longitude" %>
+  <%= form.text_field :lon, autocomplete: "off", placeholder: "e.g. -3.9341" %>
 </div>
 
 <div class="col-span-6 sm:col-span-2 sm:col-start-1">

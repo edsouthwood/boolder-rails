@@ -40,13 +40,17 @@ class Admin::ProblemsController < Admin::BaseController
   end
 
   def create
-    problem = Problem.new
-    problem.assign_attributes(problem_params)
+    @problem = Problem.new
+    @problem.assign_attributes(problem_params)
 
-    problem.save!
-
-    flash[:notice] = "Problem created"
-    redirect_to [ :admin, problem ]
+    if @problem.save
+      flash[:notice] = "Problem created"
+      redirect_to [ :admin, @problem ]
+    else
+      @circuits = @problem.area&.sorted_circuits || []
+      flash.now[:error] = @problem.errors.full_messages.join(", ")
+      render :new, status: :unprocessable_entity
+    end
   end
 
   def show
@@ -75,7 +79,8 @@ class Admin::ProblemsController < Admin::BaseController
   def problem_params
     params.require(:problem).
       permit(:area_id, :name, :grade, :steepness, :sit_start,
-        :bleau_info_id, :circuit_number, :circuit_letter, :circuit_id, :parent_id,
+        :ukc_url, :parent_id,
+        :lat, :lon,
       )
   end
 

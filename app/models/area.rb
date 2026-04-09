@@ -3,12 +3,12 @@ class Area < ApplicationRecord
 
   init_pg_searchable trigram_threshold: 0.5, trigram_low_threshold: 0.45
 
-  has_many :boulders
-  has_many :problems
+  has_many :boulders, dependent: :destroy
+  has_many :problems, dependent: :destroy
   has_many :circuits, -> { distinct }, through: :problems
-  has_many :poi_routes
-  belongs_to :cluster
-  belongs_to :bleau_area
+  has_many :poi_routes, dependent: :destroy
+  belongs_to :cluster, optional: true
+  belongs_to :bleau_area, optional: true
 
   has_one_attached :cover do |attachable|
     attachable.variant :thumb, resize_to_limit: [ 400, 400 ], saver: { quality: 80, strip: true, interlace: true }, preprocessed: true

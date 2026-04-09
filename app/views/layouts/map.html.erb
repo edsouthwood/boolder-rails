@@ -7,7 +7,7 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%= display_meta_tags site: 'Boolder', reverse: true %>
+    <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -16,9 +16,6 @@
     <script async src="https://ga.jspm.io/npm:es-module-shims@1.8.2/dist/es-module-shims.js" data-turbo-track="reload"></script>
     <%= javascript_importmap_tags %>
 
-    <% if !Rails.env.development? %>
-      <script async defer data-domain="boolder.com" src="https://plausible.io/js/plausible.js" data-turbo-track="reload"></script>
-    <% end %>
 
     <!-- FIXME: load async -->
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet" data-turbo-track="reload">

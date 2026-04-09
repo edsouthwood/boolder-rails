@@ -15,19 +15,48 @@ class Problem < ApplicationRecord
 
   audited except: [ :has_line, :ascents, :ratings, :ratings_average, :popularity, :featured ], associated_with: :import
   attr_accessor :import # used by audited associated_with: :import
+
+  def lat
+    location&.lat
+  end
+
+  def lon
+    location&.lon
+  end
+
+  def lat=(value)
+    @lat_input = value.presence
+    rebuild_location
+  end
+
+  def lon=(value)
+    @lon_input = value.presence
+    rebuild_location
+  end
+
   include CheckConflicts
 
   STEEPNESS_VALUES = %w[wall slab overhang roof traverse other]
-  GRADE_VALUES = %w[
+  # Simplified grades for display and new entry (sub-6a uses number only)
+  DISPLAY_GRADE_VALUES = %w[
+    1 1+
+    2 2+
+    3 3+
+    4 4+
+    5 5+
+    6a 6a+ 6b 6b+ 6c 6c+
+    7a 7a+ 7b 7b+ 7c 7c+
+    8a 8a+ 8b 8b+ 8c 8c+
+    9a 9a+ 9b 9b+ 9c 9c+
+  ]
+
+  # Full list including legacy detailed sub-6a grades for backward compatibility
+  GRADE_VALUES = DISPLAY_GRADE_VALUES + %w[
     1a 1a+ 1b 1b+ 1c 1c+
     2a 2a+ 2b 2b+ 2c 2c+
     3a 3a+ 3b 3b+ 3c 3c+
     4a 4a+ 4b 4b+ 4c 4c+
     5a 5a+ 5b 5b+ 5c 5c+
-    6a 6a+ 6b 6b+ 6c 6c+
-    7a 7a+ 7b 7b+ 7c 7c+
-    8a 8a+ 8b 8b+ 8c 8c+
-    9a 9a+ 9b 9b+ 9c 9c+
   ]
   LANDING_VALUES = %w[easy medium hard]
   LETTER_BIS = "b"
@@ -53,7 +82,14 @@ class Problem < ApplicationRecord
     scope color, -> { joins(:circuit).where(circuits: { color: color }) }
   end
 
-  scope :level, ->(i) { where("grade >= ? AND grade < ?", "#{i}a", "#{i + 1}a").tap { raise unless i.in?(1..8) } }
+  scope :level, ->(i) {
+    tap { raise unless i.in?(1..8) }
+    if i <= 5
+      where("(grade >= ? AND grade < ?) OR grade IN (?)", "#{i}a", "#{i + 1}a", ["#{i}", "#{i}+"])
+    else
+      where("grade >= ? AND grade < ?", "#{i}a", "#{i + 1}a")
+    end
+  }
   scope :significant_ascents, -> { where("ascents >= ?", 20) }
   scope :exclude_bis, -> { where(circuit_letter: [ nil, "" ]) }
   scope :with_location, -> { where.not(location: nil) }
@@ -164,6 +200,12 @@ class Problem < ApplicationRecord
   end
 
   private
+
+  def rebuild_location
+    if @lat_input && @lon_input
+      self.location = FACTORY.point(@lon_input.to_f, @lat_input.to_f)
+    end
+  end
 
   def validate_circuit_fields
     if circuit_number.present? != circuit_id.present?

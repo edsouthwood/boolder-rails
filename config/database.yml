@@ -9,7 +9,7 @@ default: &default
 
 development:
   <<: *default
-  database: dump-prod
+  database: dartmoor-dev
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -22,27 +22,27 @@ production:
   primary:
     <<: *default
     database: boolder-production
-    username: boolder
+    username: dartmoor
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   cache:
     <<: *default
     database: boolder-cache
     migrations_paths: db/cache_migrate
-    username: boolder
+    username: dartmoor
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   queue:
     <<: *default
     database: boolder-queue
     migrations_paths: db/queue_migrate
-    username: boolder
+    username: dartmoor
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   cable:
     <<: *default
     database: boolder-cable
     migrations_paths: db/cable_migrate
-    username: boolder
+    username: dartmoor
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>

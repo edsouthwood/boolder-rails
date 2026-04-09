@@ -1,3 +1,7 @@
 Bugsnag.configure do |config|
-  config.api_key = Rails.application.credentials.dig(:bugsnag, :api_key) unless Rails.env.local?
+  if Rails.env.local?
+    config.enabled_release_stages = []
+  else
+    config.api_key = Rails.application.credentials.dig(:bugsnag, :api_key)
+  end
 end

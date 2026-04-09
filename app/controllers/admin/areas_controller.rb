@@ -4,6 +4,24 @@ class Admin::AreasController < Admin::BaseController
     @areas = Area.order(sort)
   end
 
+  def new
+    @area = Area.new(published: false, priority: 3)
+  end
+
+  def create
+    @area = Area.new
+    @area.assign_attributes(area_params)
+    @area.tags = params[:area][:joined_tags].to_s.split(",")
+
+    if @area.save
+      flash[:notice] = "Area created"
+      redirect_to edit_admin_area_path(@area)
+    else
+      flash.now[:error] = @area.errors.full_messages.join("; ")
+      render :new, status: :unprocessable_entity
+    end
+  end
+
   def edit
     set_area
   end
@@ -30,6 +48,13 @@ class Admin::AreasController < Admin::BaseController
       flash[:error] = @area.errors.full_messages.join("; ")
       render "edit", status: :unprocessable_entity
     end
+  end
+
+  def destroy
+    set_area
+    @area.destroy!
+    flash[:notice] = "Area deleted"
+    redirect_to admin_areas_path
   end
 
   private

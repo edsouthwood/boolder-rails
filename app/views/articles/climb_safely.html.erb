@@ -32,46 +32,6 @@
           </p>
         </div>
 
-        <div class="py-8 sm:mx-20 sm:text-lg sm:max-w-prose sm:mx-auto">
-          <div class="mt-4 max-w-lg mx-auto grid gap-5 sm:grid-cols-2 sm:max-w-none">
-            <% problem = Problem.find(306) %>
-            <%= link_to problem_friendly_path(problem) do %>
-              <%= render 'shared/topo_image', topo: problem.lines.first.topo, klass: "rounded-lg" %>
-            <% end %>
-            <div class="text-emerald-500 sm:px-4 pb-4 self-center">
-              <ul>
-                <li><%= t('views.articles.beginners_guide.climb_safely.height') %> 2m</li>
-                <li><%= t('views.articles.beginners_guide.climb_safely.good_landing') %></li>
-              </ul>
-              <div class="mt-4 flex space-x-2 font-bold">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span><%= t('views.articles.beginners_guide.climb_safely.safe') %></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-4 max-w-lg mx-auto grid gap-5 sm:grid-cols-2 sm:max-w-none">
-            <% problem = Problem.find(2344) %>
-            <%= link_to problem_friendly_path(problem) do %>
-              <%= render 'shared/topo_image', topo: problem.lines.first.topo, klass: "rounded-lg" %>
-            <% end %>
-            <div class="text-red-500 sm:px-4 pb-4 self-center">
-              <ul>
-                <li><%= t('views.articles.beginners_guide.climb_safely.height') %>  5m</li>
-                <li><%= t('views.articles.beginners_guide.climb_safely.bad_landing') %></li>
-              </ul>
-              <div class="mt-4 flex space-x-2 font-bold">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span><%= t('views.articles.beginners_guide.climb_safely.unsafe') %></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="mt-6 prose prose-emerald prose-lg text-gray-500 mx-auto">
           <h2><%= t('views.articles.beginners_guide.climb_safely.multi_crashpad') %></h2>
 
