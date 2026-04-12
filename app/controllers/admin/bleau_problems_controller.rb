@@ -1,4 +1,6 @@
 class Admin::BleauProblemsController < Admin::BaseController
+  before_action :require_super_admin
+
   def index
     # TODO: make this code DRY with bleau.rake
     @bleau_problems = BleauProblem.joins(bleau_area: :area).where(ignore: false).

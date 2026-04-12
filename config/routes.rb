@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       resources :bulk_uploads, only: [:new, :create]
 
       get "mapping", to: "mapping#dashboard"
+      get "docs", to: "docs#index"
 
       root "areas#index"
     end
@@ -90,6 +91,7 @@ Rails.application.routes.draw do
     get "circuit7a/map", to: "map#index", as: :circuit7a_map, defaults: { circuit7a: true }
 
     get "map-data", to: "map_data#index", as: :map_data
+    get "area-labels", to: "area_labels#index", as: :area_labels
     resources :redirects, only: :new # useful for redirects where we only know the problem_id or area_id, eg. mapbox
 
     # Permalinks (don't remove!)

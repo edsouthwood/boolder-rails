@@ -1,4 +1,6 @@
 class Admin::ProblemImportsController < Admin::BaseController
+  before_action :require_super_admin
+
   def create
     files = params[:import][:json].select { |f| f.present? }
 

@@ -11,7 +11,6 @@ export default class extends Controller {
     "filterCounter", "filterIcon" 
   ]
   static values = {
-    token: String,
     bounds: Object,
     problem: Object,
     locale: { type: String, default: 'en' },
@@ -21,17 +20,14 @@ export default class extends Controller {
     circuit7a: { type: Boolean, default: false },
     circuit7aSource: String,
     mapDataSource: String,
+    areaLabelsSource: String,
   }
 
   connect() {
-    mapboxgl.accessToken = this.tokenValue;
-
-    this.map = new mapboxgl.Map({
+    this.map = new maplibregl.Map({
       container: 'map',
-      language: this.localeValue, // doesn't seem to work?
-      locale: this.localeValue == 'fr' ? this.getFrLocale() : null,
       hash: true,
-      style: `mapbox://styles/mapbox/outdoors-v12`,
+      style: 'https://tiles.openfreemap.org/styles/liberty',
       bounds: [[-4.1, 50.45],[-3.7, 50.70]],
       padding: 5,
     });
@@ -42,6 +38,7 @@ export default class extends Controller {
       this.addLayers()
       this.centerMap()
       this.cleanHistory()
+      this.geolocate.trigger()
     });
 
     this.popup = null
@@ -55,30 +52,29 @@ export default class extends Controller {
     this.setupClickEvents()
 
     // FIXME: make this DRY (see Problem::GRADE_VALUES)
-    this.allGrades = ["1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+","4a","4a+","4b","4b+","4c","4c+","5a","5a+","5b","5b+","5c","5c+","6a","6a+","6b","6b+","6c","6c+","7a","7a+","7b","7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+",]
+    this.allGrades = ["1","1+","2","2+","3","3+","4","4+","5","5+","1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+","4a","4a+","4b","4b+","4c","4c+","5a","5a+","5b","5b+","5c","5c+","6a","6a+","6b","6b+","6c","6c+","7a","7a+","7b","7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+",]
   }
 
   addControls() {
     this.map.addControl(
-      new mapboxgl.ScaleControl({
+      new maplibregl.ScaleControl({
         maxWidth: 100,
         unit: 'metric'
        })
     );
 
     this.map.addControl(
-      new mapboxgl.NavigationControl()
+      new maplibregl.NavigationControl()
     );
 
-    this.map.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-        },
-        trackUserLocation: true,
-        showUserHeading: true
-      })
-    );
+    this.geolocate = new maplibregl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+    this.map.addControl(this.geolocate);
   }
 
   addLayers() {
@@ -125,90 +121,31 @@ export default class extends Controller {
             ]
           ]
         ,
-        'circle-color':  // FIXME: make it DRY  
+        'circle-color':
           [
-            "case",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "yellow"],
-              true,
-              false
-            ],
-            "#FFCC02",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "purple"],
-              true,
-              false
-            ],
-            "#D783FF",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "orange"],
-              true,
-              false
-            ],
+            "match",
+            ["get", "grade"],
+            ["1","1+","2","2+","3","3+","4","4+","4a","4a+","4b","4b+","4c","4c+"],
             "#FF9500",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "green"],
-              true,
-              false
-            ],
-            "#77C344",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "blue"],
-              true,
-              false
-            ],
+            ["5","5+","5a","5a+","5b","5b+","5c","5c+","6a","6a+"],
             "#017AFF",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "skyblue"],
-              true,
-              false
-            ],
-            "#5AC7FA",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "salmon"],
-              true,
-              false
-            ],
-            "#FDAF8A",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "red"],
-              true,
-              false
-            ],
+            ["6b","6b+","6c"],
             "#FF3B2F",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "black"],
-              true,
-              false
-            ],
-            "#000",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "white"],
-              true,
-              false
-            ],
+            ["6c+","7a","7a+","7b"],
             "#FFFFFF",
+            ["7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+"],
+            "#000000",
             "#878A8D"
+          ]
+        ,
+        'circle-stroke-width': 1,
+        'circle-stroke-color':
+          [
+            "match",
+            ["get", "grade"],
+            ["6c+","7a","7a+","7b"],
+            "#888",
+            "rgba(0,0,0,0)"
           ]
         ,
         'circle-opacity': 
@@ -229,10 +166,7 @@ export default class extends Controller {
           true,
           false
       ],
-    }
-    ,
-    "road-label" // insert below road labels
-    );
+    });
 
     this.map.addLayer({
       'id': 'problems-texts',
@@ -291,7 +225,7 @@ export default class extends Controller {
         'minzoom': 16,
         'paint': {
           'fill-color': '#888',
-          'fill-opacity': 0.2,
+          'fill-opacity': 1,
         },
         filter: ['match', ['geometry-type'], ['Polygon'], true, false],
       });
@@ -306,6 +240,37 @@ export default class extends Controller {
           'line-width': 1.5,
         },
         filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+      });
+    }
+
+    // AREA LABELS
+    if (this.hasAreaLabelsSourceValue) {
+      this.map.addSource('areas', {
+        type: 'geojson',
+        data: this.areaLabelsSourceValue,
+      });
+
+      this.map.addLayer({
+        'id': 'areas',
+        'type': 'symbol',
+        'source': 'areas',
+        'minzoom': 10,
+        'maxzoom': 16,
+        'layout': {
+          'text-field': ['get', 'name'],
+          'text-size': [
+            'interpolate', ['linear'], ['zoom'],
+            10, 12,
+            14, 16,
+          ],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-anchor': 'center',
+        },
+        'paint': {
+          'text-color': '#333',
+          'text-halo-color': '#fff',
+          'text-halo-width': 1.5,
+        },
       });
     }
 
@@ -368,10 +333,7 @@ export default class extends Controller {
           true,
           false
       ],
-      }
-      ,
-      "road-label" // insert below road labels
-      );
+      });
   
       this.map.addLayer({
       'id': 'contribute-problems-texts',
@@ -461,10 +423,8 @@ export default class extends Controller {
           false
       ],
       }
-      ,
-      // "road-label" // insert below road labels
       );
-  
+
       this.map.addLayer({
       'id': 'circuit7a-problems-texts',
       'type': 'symbol',
@@ -500,29 +460,6 @@ export default class extends Controller {
       ],
       });
 
-      this.map.addSource('circuit7a-bike', {
-        type: 'vector',
-        url: 'mapbox://nmondollot.c2qwxo24',
-        promoteId: "id"
-      });
-
-      this.map.addLayer({
-      'id': 'circuit7a-bike',
-      'type': 'line',
-      'source': 'circuit7a-bike',
-      'source-layer': 'top7a-bike-2kosot',
-      // 'minzoom': 8,
-      'layout': {
-        'visibility': 'visible',
-      },
-      'paint': {
-        'line-color': "#FFDC36",
-        'line-width': 4,
-      },
-      }
-      ,
-      "road-label" // insert below road labels
-      );
     }
   }
 
@@ -553,7 +490,7 @@ export default class extends Controller {
         const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
            
         // will be displayed thanks to the 'moveend' event code above
-        this.popup = new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
+        this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
           .setLngLat(coordinates)
           .setHTML(html)
       }
@@ -602,7 +539,7 @@ export default class extends Controller {
         }        
         const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
          
-        new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+        new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
         .setLngLat(coordinates)
         .setHTML(html)
         .addTo(this.map);
@@ -637,7 +574,7 @@ export default class extends Controller {
         </div>`
       ).join("");
        
-      new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
       .setLngLat(coordinates)
       .setHTML(html)
       .addTo(this.map);
@@ -663,7 +600,7 @@ export default class extends Controller {
       }        
       const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
        
-      new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
       .setLngLat(coordinates)
       .setHTML(html)
       .addTo(this.map);
@@ -688,7 +625,7 @@ export default class extends Controller {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const html = `<a href="${e.features[0].properties.googleUrl}" target="_blank">${this.localeValue == 'fr' ? 'Voir sur Google' : 'See on Google'}</a>`;
          
-        new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+        new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
         .setLngLat(coordinates)
         .setHTML(html)
         .addTo(this.map);
@@ -770,26 +707,6 @@ export default class extends Controller {
     this.map.flyTo(cameraOptions)
   }
 
-  // https://github.com/mapbox/mapbox-gl-js/blob/20e8fd2b60fb751f5846d3be2d46dfa76d940324/src/ui/default_locale.js
-  getFrLocale() {
-    return {
-      'AttributionControl.ToggleAttribution': 'Changer valeur attribution',
-      'AttributionControl.MapFeedback': 'Feedback sur la carte',
-      'FullscreenControl.Enter': 'Mode plein écran',
-      'FullscreenControl.Exit': 'Sortir du mode plein écran',
-      'GeolocateControl.FindMyLocation': 'Trouver ma position',
-      'GeolocateControl.LocationNotAvailable': 'Localisation non disponible',
-      'LogoControl.Title': 'Logo Mapbox',
-      'Map.Title': 'Carte',
-      'NavigationControl.ResetBearing': 'Remettre au Nord',
-      'NavigationControl.ZoomIn': 'Zoomer',
-      'NavigationControl.ZoomOut': 'Dézoomer',
-      'ScrollZoomBlocker.CtrlMessage': 'Utilisez ctrl + défilement pour zoomer',
-      'ScrollZoomBlocker.CmdMessage': 'Utilisez ⌘ + défilement pour zoomer',
-      'TouchPanBlocker.Message': 'Utilisez deux doigts pour bouger la carte'
-    }
-  }
-
   // =========================================================
   // TODO: move the filters logic into its own controller
   // =========================================================
@@ -811,13 +728,13 @@ export default class extends Controller {
 
     var grades = []
     if(this.gradeRadioButton == "beginner") {
-      grades = ["1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+",]
-    } 
+      grades = ["1","1+","2","2+","3","3+","1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+",]
+    }
     else if(this.gradeRadioButton == "level4") {
-      grades = ["4a","4a+","4b","4b+","4c","4c+"]
+      grades = ["4","4+","4a","4a+","4b","4b+","4c","4c+"]
     }
     else if(this.gradeRadioButton == "level5") {
-      grades = ["5a","5a+","5b","5b+","5c","5c+"]
+      grades = ["5","5+","5a","5a+","5b","5b+","5c","5c+"]
     } 
     else if(this.gradeRadioButton == "level6") {
       grades = ["6a","6a+","6b","6b+","6c","6c+"]
@@ -896,7 +813,7 @@ export default class extends Controller {
     const coordinates = [event.detail.lon, event.detail.lat];
     const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${event.detail.id}" target="_blank">${event.detail.name || ""}</a><span class="text-gray-400 ml-1">${event.detail.grade}</span>`;
      
-    new mapboxgl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
+    new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
     .setLngLat(coordinates)
     .setHTML(html)
     .addTo(this.map);

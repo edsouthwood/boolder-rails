@@ -39,7 +39,7 @@ data-mapbox-bounds-value="<%= @bounds.to_json %>"
 <% end %>
 
 data-mapbox-map-data-source-value="<%= map_data_path(format: :geojson) %>"
-data-mapbox-token-value="<%= Rails.env.local? ? ENV['MAPBOX_DEV_ACCESS_KEY'] : Rails.application.credentials.dig(:mapbox, :access_token) %>"
+data-mapbox-area-labels-source-value="<%= area_labels_path(format: :geojson) %>"
 >
   <div id="map"></div>
   <%= render "filters" %>

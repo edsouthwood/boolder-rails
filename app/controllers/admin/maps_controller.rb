@@ -1,6 +1,7 @@
-# TODO: inherit from Admin::BaseController and handle authorization for geojson_source_url
-class Admin::MapsController < ApplicationController
+class Admin::MapsController < Admin::BaseController
   include ProblemsHelper
+
+  before_action :require_map_area_access
 
   def show
     area = Area.find(params[:area_id])
@@ -46,5 +47,12 @@ class Admin::MapsController < ApplicationController
         end
       end
     end
+  end
+
+  private
+
+  def require_map_area_access
+    area = Area.find(params[:area_id])
+    require_area_access(area.slug)
   end
 end

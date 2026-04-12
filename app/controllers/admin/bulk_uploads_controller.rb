@@ -1,6 +1,8 @@
 require "csv"
 
 class Admin::BulkUploadsController < Admin::BaseController
+  before_action :require_super_admin
+
   def new
     @areas = Area.order(:name)
   end

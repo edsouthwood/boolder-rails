@@ -1,6 +1,8 @@
-<div class="my-4">
-  <%= link_to "New area", new_admin_area_path, class: "btn" %>
-</div>
+<% if current_admin_user.super_admin? %>
+  <div class="my-4">
+    <%= link_to "New area", new_admin_area_path, class: "btn" %>
+  </div>
+<% end %>
 
 <div class="flex flex-col my-6">
   <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

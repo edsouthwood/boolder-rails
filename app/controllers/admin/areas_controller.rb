@@ -1,7 +1,15 @@
 class Admin::AreasController < Admin::BaseController
+  before_action :require_super_admin, only: [:new, :create, :destroy]
+  before_action :set_area,            only: [:show, :edit, :update, :destroy]
+  before_action -> { require_area_access(@area.slug) }, only: [:edit, :update]
+
   def index
     sort = params[:sort] == "id" ? :id : :name
-    @areas = Area.order(sort)
+    @areas = if (slugs = current_admin_user.accessible_area_slugs)
+      Area.where(slug: slugs).order(sort)
+    else
+      Area.order(sort)
+    end
   end
 
   def new
@@ -58,6 +66,7 @@ class Admin::AreasController < Admin::BaseController
   end
 
   private
+
   def area_params
     params.require(:area).
       permit(:name, :slug, :published, :priority, :short_name, :description_fr, :description_en, :warning_fr, :warning_en)

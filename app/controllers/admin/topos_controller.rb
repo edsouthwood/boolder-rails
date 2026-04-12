@@ -1,4 +1,7 @@
 class Admin::ToposController < Admin::BaseController
+  before_action :require_super_admin,      only: [:new, :create]
+  before_action :require_topo_area_access, only: [:show, :edit, :update, :destroy]
+
   def new
     @topo = Topo.new
   end
@@ -74,6 +77,12 @@ class Admin::ToposController < Admin::BaseController
   end
 
   private
+
+  def require_topo_area_access
+    slug = Topo.find(params[:id]).problems.first&.area&.slug
+    require_area_access(slug) if slug
+  end
+
   def topo_params
     params.require(:topo).permit(:published, :photo)
   end

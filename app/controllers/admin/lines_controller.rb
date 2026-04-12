@@ -1,4 +1,7 @@
 class Admin::LinesController < Admin::BaseController
+  before_action :require_line_area_access,     only: [:show, :edit, :update, :destroy]
+  before_action :require_new_line_area_access, only: [:new, :create]
+
   def edit
     set_line
 
@@ -57,6 +60,16 @@ class Admin::LinesController < Admin::BaseController
   end
 
   private
+
+  def require_line_area_access
+    require_area_access(Line.find(params[:id]).problem.area.slug)
+  end
+
+  def require_new_line_area_access
+    problem_id = params[:problem_id] || params.dig(:line, :problem_id)
+    require_area_access(Problem.find(problem_id).area.slug) if problem_id.present?
+  end
+
   def line_params
     params.require(:line).permit(:problem_id, :topo_id, topo_attributes: [ :photo ])
   end

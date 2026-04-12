@@ -1,4 +1,7 @@
 class Admin::ProblemsController < Admin::BaseController
+  before_action :require_index_area_access,   only: [:index]
+  before_action :require_problem_area_access, only: [:new, :create, :show, :edit, :update]
+
   def index
     @area = Area.find_by(slug: params[:area_slug])
 
@@ -76,6 +79,22 @@ class Admin::ProblemsController < Admin::BaseController
   end
 
   private
+
+  def require_index_area_access
+    area = Area.find_by(slug: params[:area_slug])
+    require_area_access(area.slug) if area
+  end
+
+  def require_problem_area_access
+    if params[:id]
+      require_area_access(Problem.find(params[:id]).area.slug)
+    elsif params.dig(:problem, :area_id).present?
+      require_area_access(Area.find(params[:problem][:area_id]).slug)
+    elsif params[:area_id].present?
+      require_area_access(Area.find(params[:area_id]).slug)
+    end
+  end
+
   def problem_params
     params.require(:problem).
       permit(:area_id, :name, :grade, :steepness, :sit_start,

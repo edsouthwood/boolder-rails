@@ -1,0 +1,360 @@
+<% add_breadcrumb "Docs", nil, class: "active" %>
+
+<div class="max-w-3xl">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Admin Guide</h1>
+
+  <%# Table of contents %>
+  <nav class="mb-10 bg-white shadow sm:rounded-md px-6 py-4">
+    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Contents</p>
+    <ol class="space-y-1 text-sm text-blue-600 list-decimal list-inside">
+      <li><a href="#project-structure" class="hover:underline">Project Structure</a></li>
+      <li><a href="#admin-accounts" class="hover:underline">Admin Accounts</a></li>
+      <li><a href="#permission-levels" class="hover:underline">Permission Levels</a></li>
+      <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
+      <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
+      <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
+      <li><a href="#adding-boulders" class="hover:underline">Adding Boulders</a></li>
+      <li><a href="#geojson-import" class="hover:underline">GeoJSON Import Workflow</a></li>
+      <li><a href="#problem-editing" class="hover:underline">Individual Problem Editing</a></li>
+      <li><a href="#topos" class="hover:underline">Topos and Line Drawing</a></li>
+      <li><a href="#circuits" class="hover:underline">Circuits</a></li>
+      <li><a href="#pois" class="hover:underline">POIs and Routes</a></li>
+      <li><a href="#contributions" class="hover:underline">Contributions</a></li>
+    </ol>
+  </nav>
+
+  <%# Sections %>
+  <div class="space-y-10">
+
+    <%# Project Structure %>
+    <section id="project-structure">
+      <%= render "admin/docs/section_header", title: "Project Structure" %>
+      <div class="prose-content">
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4 overflow-x-auto leading-relaxed">app/
+  controllers/
+    admin/                   # All admin controllers (require authentication)
+    map_data_controller.rb   # Serves problems + boulders as GeoJSON for the map
+    area_labels_controller.rb# Serves area name labels as GeoJSON for the map
+  models/
+    area.rb                  # Climbing area (has many problems, boulders, circuits)
+    problem.rb               # An individual climbing problem
+    boulder.rb               # A physical boulder (polygon geometry)
+    circuit.rb               # A colour-coded circuit grouping problems
+    topo.rb                  # A photo with line drawings on it
+    line.rb                  # A drawn line on a topo linking it to a problem
+    poi.rb                   # Point of Interest (parking, train station)
+    poi_route.rb             # Transport route from a POI to an area
+  views/
+    admin/                   # Admin HTML views
+    map/                     # Public-facing map view
+  javascript/controllers/
+    mapbox_controller.js     # All map behaviour (layers, filters, popups)
+db/
+  schema.rb                  # Database schema
+docs/
+  admin_guide.md             # Offline copy of this guide</pre>
+      </div>
+    </section>
+
+    <%# Admin Accounts %>
+    <section id="admin-accounts">
+      <%= render "admin/docs/section_header", title: "Admin Accounts" %>
+      <div class="prose-content space-y-4 text-sm text-gray-700">
+        <p>Credentials are stored in Rails encrypted credentials. Edit them with:</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">rails credentials:edit</pre>
+
+        <p class="font-medium text-gray-800">Legacy format (treated as super admin)</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">admin_accounts:
+  yourusername: "yourpassword"</pre>
+
+        <p class="font-medium text-gray-800">New format with roles</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">admin_accounts:
+  # Super admin — full access
+  alice:
+    password: "somepassword"
+    role: super_admin
+
+  # Area admin — restricted to listed areas
+  bob:
+    password: "otherpassword"
+    role: area_admin
+    areas:
+      - bonehill
+      - haytor</pre>
+
+        <p class="text-gray-500 text-xs">Plain string credentials continue to work unchanged and are treated as super_admin.</p>
+      </div>
+    </section>
+
+    <%# Permission Levels %>
+    <section id="permission-levels">
+      <%= render "admin/docs/section_header", title: "Permission Levels" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Access</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs font-semibold text-purple-700">super_admin</td>
+              <td class="px-4 py-2">Full access — create/delete areas, all imports, bulk uploads, POIs, audits</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs font-semibold text-blue-700">area_admin</td>
+              <td class="px-4 py-2">Edit assigned areas and their problems, topos, lines; download/upload GeoJSON for assigned areas; view contributions</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li>Area creation and deletion — super admin only</li>
+          <li>Circuits — super admin only</li>
+          <li>Bulk uploads, POIs, audit log — super admin only</li>
+          <li>GeoJSON import apply step — scoped to your assigned areas</li>
+        </ul>
+      </div>
+    </section>
+
+    <%# Managing Areas %>
+    <section id="managing-areas">
+      <%= render "admin/docs/section_header", title: "Managing Areas" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Areas are the top-level groupings. Each has problems, boulders, circuits, and POI routes.</p>
+
+        <p class="font-medium text-gray-800">Creating an area <span class="text-xs font-normal text-gray-400">(super admin only)</span></p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Go to <strong>Admin → Areas → New area</strong></li>
+          <li>Fill in <code class="bg-gray-100 px-1 rounded">name</code>, <code class="bg-gray-100 px-1 rounded">slug</code> (URL-friendly, e.g. <code class="bg-gray-100 px-1 rounded">bonehill-rocks</code>), descriptions</li>
+          <li>Leave <strong>published</strong> unchecked until the area is ready</li>
+          <li>Add problems and boulders before publishing</li>
+        </ol>
+
+        <p class="font-medium text-gray-800">Tags</p>
+        <p>Available: <code class="bg-gray-100 px-1 rounded">popular</code>, <code class="bg-gray-100 px-1 rounded">beginner_friendly</code>, <code class="bg-gray-100 px-1 rounded">family_friendly</code>, <code class="bg-gray-100 px-1 rounded">dry_fast</code></p>
+      </div>
+    </section>
+
+    <%# Bulk Upload %>
+    <section id="bulk-upload">
+      <%= render "admin/docs/section_header", title: "Bulk Upload (Problems)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>The fastest way to add many problems to an area. Go to <strong>Admin → Bulk Uploads</strong>.</p>
+
+        <p class="font-medium text-gray-800">CSV format</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4 overflow-x-auto">name,grade,steepness,sit_start,lat,lon,image_filename,ukc_url
+Overhanging Scoop,5c,overhang,false,50.5712,-3.9341,scoop.jpg,
+Low Traverse,4a,wall,false,50.5715,-3.9345,,
+Unnamed Slab,,slab,false,,,</pre>
+
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Column</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100 text-xs">
+            <tr><td class="px-4 py-2 font-mono">name</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Can be blank for unnamed problems</td></tr>
+            <tr><td class="px-4 py-2 font-mono">grade</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Font grade: 4, 5, 5+, 6a, 6b+, 7a, etc.</td></tr>
+            <tr><td class="px-4 py-2 font-mono">steepness</td><td class="px-4 py-2 font-semibold text-red-600">Yes</td><td class="px-4 py-2">See valid values below</td></tr>
+            <tr><td class="px-4 py-2 font-mono">sit_start</td><td class="px-4 py-2">No</td><td class="px-4 py-2"><code>true</code> or leave blank</td></tr>
+            <tr><td class="px-4 py-2 font-mono">lat / lon</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Decimal degrees, e.g. 50.5712 / -3.9341</td></tr>
+            <tr><td class="px-4 py-2 font-mono">image_filename</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Must match uploaded image filename exactly</td></tr>
+            <tr><td class="px-4 py-2 font-mono">ukc_url</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Full UKC URL for the problem</td></tr>
+          </tbody>
+        </table>
+
+        <p class="font-medium text-gray-800">Valid steepness values</p>
+        <p class="font-mono text-xs bg-gray-100 p-2 rounded"><%= Problem::STEEPNESS_VALUES.join(", ") %></p>
+
+        <p class="font-medium text-gray-800">Uploading images</p>
+        <p>Upload image files alongside the CSV. Each image creates a topo — draw line coordinates on it afterwards in the topo editor.</p>
+
+        <%= link_to "Go to Bulk Upload →", new_admin_bulk_upload_path, class: "inline-block mt-2 text-blue-600 hover:underline text-sm" %>
+      </div>
+    </section>
+
+    <%# Photo Import %>
+    <section id="photo-import">
+      <%= render "admin/docs/section_header", title: "Importing Problems from Photos" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>If you have a folder of photos named with problem names and grades, import them all with one command.</p>
+
+        <p class="font-medium text-gray-800">Filename convention</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">Name_With_Underscores-grade.JPG
+
+# Examples:
+American_Squeeze_Job-7b+.JPG  →  "American Squeeze Job"  7b+
+Walla_slab-5.JPG              →  "Walla slab"  5
+The_Blimp-5+.JPG              →  "The Blimp"  5+</pre>
+
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li>Use underscores for spaces in names</li>
+          <li>Separate name and grade with a hyphen — the <strong>last</strong> hyphen is the separator</li>
+          <li>Photos must be JPEGs with GPS coordinates in the EXIF (phone camera is fine)</li>
+          <li>The folder name must match the area's slug or name (case-insensitive)</li>
+        </ul>
+
+        <p class="font-medium text-gray-800">Running the import</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4"># Folder inside the project root
+rails import:problems FOLDER=bearacleave
+
+# Absolute path
+rails import:problems FOLDER=/path/to/haytor</pre>
+
+        <p class="font-medium text-gray-800">What gets created per photo</p>
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Record</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Values</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100 text-xs">
+            <tr><td class="px-4 py-2 font-mono">Problem</td><td class="px-4 py-2">Name, grade, steepness: wall, lat/lon from photo GPS EXIF</td></tr>
+            <tr><td class="px-4 py-2 font-mono">Topo</td><td class="px-4 py-2">The photo, attached via ActiveStorage</td></tr>
+            <tr><td class="px-4 py-2 font-mono">Line</td><td class="px-4 py-2">Links topo to problem — no coordinates yet (draw manually in admin)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-xs text-yellow-800">
+          <strong>Note:</strong> Running the task twice on the same folder creates duplicates. Run once per folder. The area must already exist in admin before importing.
+        </div>
+      </div>
+    </section>
+
+    <%# Adding Boulders %>
+    <section id="adding-boulders">
+      <%= render "admin/docs/section_header", title: "Adding Boulders" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Boulders are grey polygon outlines shown on the map at zoom 16+. Each <code class="bg-gray-100 px-1 rounded">Boulder</code> record stores a PostGIS polygon.</p>
+
+        <ol class="list-decimal list-inside space-y-3">
+          <li>
+            <strong>Download the area's GeoJSON</strong> from the area edit page. This file contains existing problem points and boulder polygons.
+          </li>
+          <li>
+            <strong>Open in <a href="https://geojson.io" target="_blank" class="text-blue-600 hover:underline">geojson.io</a></strong> — drag and drop the file. Switch to <strong>Satellite</strong> base layer.
+          </li>
+          <li>
+            <strong>Draw polygons</strong> around each boulder using the polygon tool (pentagon icon). No properties are needed — just the shape.
+          </li>
+          <li>
+            <strong>Export as GeoJSON</strong>, then upload via <strong>Admin → Imports → New</strong>. Preview the diff and click Apply.
+          </li>
+        </ol>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800">
+          <strong>Tip:</strong> OpenStreetMap may already have boulder polygons for well-mapped areas. Export via
+          <a href="https://overpass-turbo.eu" target="_blank" class="underline">Overpass Turbo</a>
+          using the query <code>natural=rock</code>.
+        </div>
+      </div>
+    </section>
+
+    <%# GeoJSON Import %>
+    <section id="geojson-import">
+      <%= render "admin/docs/section_header", title: "GeoJSON Import Workflow" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Used to update problem locations and boulder polygons in bulk. Go to <strong>Admin → Imports → New</strong>.</p>
+
+        <ol class="list-decimal list-inside space-y-2">
+          <li>Upload a <code class="bg-gray-100 px-1 rounded">.geojson</code> file (must be a FeatureCollection)</li>
+          <li>Preview page shows exactly what will be added or changed</li>
+          <li>If there are conflicts (records edited since the file was exported) the import is blocked</li>
+          <li>Click <strong>Apply</strong> to commit all changes</li>
+        </ol>
+
+        <p class="font-medium text-gray-800">File rules</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li>All features must belong to the same area</li>
+          <li><strong>Point</strong> features with a <code class="bg-gray-100 px-1 rounded">problemId</code> property → update problem locations</li>
+          <li><strong>Polygon</strong> features → update or create boulder outlines</li>
+          <li>New polygons (no <code class="bg-gray-100 px-1 rounded">boulderId</code>) create new boulder records</li>
+        </ul>
+
+        <%= link_to "Go to Imports →", admin_imports_path, class: "inline-block mt-2 text-blue-600 hover:underline text-sm" %>
+      </div>
+    </section>
+
+    <%# Problem Editing %>
+    <section id="problem-editing">
+      <%= render "admin/docs/section_header", title: "Individual Problem Editing" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Navigate to a problem via <strong>Admin → Areas → [area] → [circuit]</strong> then click a problem.</p>
+        <p>From the problem show page you can:</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li>Edit name, grade, steepness, sit start, UKC URL</li>
+          <li>Set or update location (lat/lon)</li>
+          <li>Add a topo photo or draw lines on existing topos</li>
+          <li>View and respond to contribution requests</li>
+          <li>Link to a circuit via the edit form</li>
+        </ul>
+      </div>
+    </section>
+
+    <%# Topos %>
+    <section id="topos">
+      <%= render "admin/docs/section_header", title: "Topos and Line Drawing" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Topos are photos with line drawings that show where to climb on a boulder face.</p>
+
+        <p class="font-medium text-gray-800">Uploading a topo</p>
+        <p>Go to <strong>Admin → Topos → New</strong>. Upload the photo. Optionally upload a metadata JSON file (from the iOS app) to auto-link to problems.</p>
+
+        <p class="font-medium text-gray-800">Drawing lines</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Open a problem's show page</li>
+          <li>Click <strong>New line</strong> or edit an existing one</li>
+          <li>Click on the photo to place control points</li>
+          <li>Save — the line links the topo to the problem</li>
+        </ol>
+      </div>
+    </section>
+
+    <%# Circuits %>
+    <section id="circuits">
+      <%= render "admin/docs/section_header", title: "Circuits" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Circuits group problems by colour and difficulty. Each problem can belong to one circuit.</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li>Circuit details (colour, risk) — super admin only</li>
+          <li>Circuit membership is set per-problem via the problem edit form</li>
+          <li>Circuits filter the map and appear on area pages</li>
+        </ul>
+      </div>
+    </section>
+
+    <%# POIs %>
+    <section id="pois">
+      <%= render "admin/docs/section_header", title: "POIs and Routes" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Points of Interest (parking, train stations) help users navigate to areas.</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>Admin → POIs</strong> — manage POI records (super admin only)</li>
+          <li><strong>Admin → POI Routes</strong> — link POIs to areas with distance and transport type</li>
+          <li>POI routes appear on the area edit page and in the mobile app</li>
+        </ul>
+      </div>
+    </section>
+
+    <%# Contributions %>
+    <section id="contributions">
+      <%= render "admin/docs/section_header", title: "Contributions" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Users can submit photos and line drawings to improve topos.</p>
+        <p>Go to <strong>Admin → Contributions</strong> to review pending submissions.</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>Pending</strong> — awaiting review</li>
+          <li><strong>Approved</strong> — accepted and visible</li>
+          <li><strong>Rejected</strong> — declined</li>
+        </ul>
+        <p class="text-gray-500 text-xs">Accepting a contribution automatically closes any open contribution request for that problem.</p>
+      </div>
+    </section>
+
+  </div>
+</div>

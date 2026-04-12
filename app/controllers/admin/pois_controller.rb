@@ -1,4 +1,6 @@
 class Admin::PoisController < Admin::BaseController
+  before_action :require_super_admin
+
   def index
     @pois = Poi.order(:id)
   end

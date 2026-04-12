@@ -1,4 +1,6 @@
 class Admin::ImportsController < Admin::BaseController
+  before_action :require_import_area_access, only: [:apply]
+
   def index
     @imports = Import.all.order(id: :desc)
   end
@@ -51,6 +53,14 @@ class Admin::ImportsController < Admin::BaseController
   end
 
   private
+
+  def require_import_area_access
+    import = Import.find(params[:id])
+    area_id = import.objects_to_update.map(&:area_id).compact.first
+    area = Area.find(area_id)
+    require_area_access(area.slug)
+  end
+
   def import_params
     params.require(:import).permit(:applied_at, :file)
   end

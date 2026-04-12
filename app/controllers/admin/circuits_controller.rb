@@ -1,4 +1,6 @@
 class Admin::CircuitsController < Admin::BaseController
+  before_action :require_super_admin, only: [:edit, :update]
+
   def index
     @circuits = Circuit.all.sort_by(&:average_grade)
   end

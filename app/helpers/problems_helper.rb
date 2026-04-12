@@ -23,6 +23,17 @@ module ProblemsHelper
     color_mapping[circuit_color] || fallback
   end
 
+  def grade_color(grade)
+    case grade.to_s
+    when /\A(1\+?|2\+?|3\+?|4[abc]?\+?)\z/i then "#FF9500"
+    when /\A(5[abc]?\+?|6a\+?)\z/i           then "#017AFF"
+    when /\A6[bc]\+?\z/i                      then "#FF3B2F"
+    when /\A(6c\+|7[ab])\z/i                  then "#FFFFFF"
+    when /\A(7b\+|7c\+?|8[abc]\+?|9[abc]\+?)\z/i then "#000000"
+    else "#878A8D"
+    end
+  end
+
   def bleau_info_url(problem)
     "https://bleau.info/c/#{problem.bleau_info_id}.html" if problem.bleau_info_id.present?
   end

@@ -18,7 +18,9 @@
         </div>
       <% end %>
 
-      <%= button_to "Delete #{@area.name}", admin_area_path(@area), method: :delete, data: { turbo_confirm: "Delete #{@area.name} and all its problems? This cannot be undone." }, class: "mt-4 text-red-600 text-sm underline" %>
+      <% if current_admin_user.super_admin? %>
+        <%= button_to "Delete #{@area.name}", admin_area_path(@area), method: :delete, data: { turbo_confirm: "Delete #{@area.name} and all its problems? This cannot be undone." }, class: "mt-4 text-red-600 text-sm underline" %>
+      <% end %>
     </div>
     <div class="md:col-span-2">
       <div class="px-4 sm:px-0">
