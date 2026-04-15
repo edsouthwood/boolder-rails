@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       get "map", to: "maps#show"
       resources :areas, param: :slug do
         resources :problems, only: :index
+        get "map-editor", to: "problems#map_editor", as: :map_editor
       end
       resources :problems, except: :index
       resources :boulders

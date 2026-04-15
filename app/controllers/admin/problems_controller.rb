@@ -1,5 +1,5 @@
 class Admin::ProblemsController < Admin::BaseController
-  before_action :require_index_area_access,   only: [:index]
+  before_action :require_index_area_access,   only: [:index, :map_editor]
   before_action :require_problem_area_access, only: [:new, :create, :show, :edit, :update]
 
   def index
@@ -64,17 +64,32 @@ class Admin::ProblemsController < Admin::BaseController
     set_problem
   end
 
+  def map_editor
+    @area = Area.find_by!(slug: params[:area_slug])
+    @unlocated_problems = @area.problems.without_location.order(:name)
+  end
+
   def update
     set_problem
 
     @problem.assign_attributes(problem_params)
 
     if @problem.save
-      flash[:notice] = "Problem updated"
-      redirect_to admin_problem_path(@problem)
+      respond_to do |format|
+        format.html do
+          flash[:notice] = "Problem updated"
+          redirect_to admin_problem_path(@problem)
+        end
+        format.json { render json: { ok: true } }
+      end
     else
-      flash[:error] = @problem.errors.full_messages.join("; ")
-      render "edit", status: :unprocessable_entity
+      respond_to do |format|
+        format.html do
+          flash[:error] = @problem.errors.full_messages.join("; ")
+          render "edit", status: :unprocessable_entity
+        end
+        format.json { render json: { errors: @problem.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 

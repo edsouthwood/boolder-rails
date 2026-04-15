@@ -1,0 +1,66 @@
+<% content_for :head do %>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<% end %>
+
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug) %>
+<% add_breadcrumb "Map Editor", nil, class: "active" %>
+
+<div
+  data-controller="admin-map-editor"
+  data-admin-map-editor-geojson-url-value="<%= geojson_source_url(@area) %>"
+  data-admin-map-editor-update-url-template-value="<%= admin_problem_path('PROBLEM_ID') %>"
+  data-admin-map-editor-bounds-value="<%= @area.serialized_bounds.to_json %>"
+>
+  <div class="flex border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
+
+    <%# Sidebar: unlocated problems %>
+    <div class="w-72 flex-shrink-0 flex flex-col border-r overflow-hidden">
+      <div class="px-3 py-2 bg-gray-50 border-b text-sm font-semibold text-gray-700 flex-shrink-0">
+        Unlocated problems
+        (<span data-admin-map-editor-target="count"><%= @unlocated_problems.count %></span>)
+      </div>
+      <p class="px-3 py-2 text-xs text-gray-500 flex-shrink-0 border-b">
+        Drag a problem name onto the map to set its location.
+      </p>
+      <div class="overflow-y-auto flex-1 divide-y" data-admin-map-editor-target="sidebar">
+        <% @unlocated_problems.each do |problem| %>
+          <div
+            draggable="true"
+            data-admin-map-editor-target="problem"
+            data-problem-id="<%= problem.id %>"
+            data-problem-name="<%= problem.name || "Problem ##{problem.id}" %>"
+            data-action="dragstart->admin-map-editor#dragStart"
+            class="px-3 py-2 text-sm cursor-grab hover:bg-emerald-50 select-none flex items-center gap-2"
+          >
+            <span class="w-2 h-2 rounded-full bg-gray-300 flex-shrink-0"></span>
+            <span><%= problem.name || "##{problem.id}" %></span>
+            <% if problem.grade.present? %>
+              <span class="ml-auto text-xs text-gray-400"><%= problem.grade %></span>
+            <% end %>
+          </div>
+        <% end %>
+        <% if @unlocated_problems.empty? %>
+          <p class="px-3 py-4 text-sm text-gray-400 italic">All problems have locations.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Map panel %>
+    <div
+      class="flex-1 relative"
+      data-admin-map-editor-target="mapContainer"
+      data-action="dragover->admin-map-editor#dragOver drop->admin-map-editor#drop"
+      id="map-editor-canvas"
+    >
+      <%# MapLibre renders into this div %>
+    </div>
+
+  </div>
+
+  <p class="mt-2 text-xs text-gray-400">
+    Drag pins on the map to reposition already-placed problems.
+    Changes save automatically.
+  </p>
+</div>
