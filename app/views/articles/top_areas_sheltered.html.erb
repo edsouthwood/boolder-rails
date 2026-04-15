@@ -1,0 +1,42 @@
+<% set_meta_tags title: "Sheltered bouldering areas in Dartmoor" %>
+<% set_meta_tags og: { type: "website", image: image_url("hero-homepage.jpg") } %>
+
+<div class="bg-white">
+  <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="text-lg max-w-prose mx-auto mb-16">
+      <h1>
+        <span class="mt-2 block text-3xl text-center leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          Sheltered areas
+        </span>
+      </h1>
+      <p class="mt-8 text-xl text-gray-500 leading-8 text-center">
+        These areas offer some protection from wind and weather, making them good choices on blustery Dartmoor days.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="max-w-3xl mx-auto">
+    <div class="py-2 relative">
+      <div class="flex flex-nowrap overflow-x-auto py-4 space-x-2 px-4 sm:px-6 lg:px-8">
+        <% Area.with_ids_keep_order(@areas_ids).each do |area| %>
+          <%= link_to area_path(area) do %>
+            <%= render 'shared/area_card', area: area %>
+          <% end %>
+        <% end %>
+        <div class="pr-16">&nbsp;</div>
+        <div class="hidden lg:block inset-y-0 right-0 flex bg-gradient-to-l from-white pl-8 pr-8 pointer-events-none absolute"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mt-6 prose prose-emerald prose-lg text-gray-500 mx-auto">
+      <p>
+        See also: <%= link_to "all areas", areas_path %>.
+      </p>
+    </div>
+  </div>
+
+</div>

@@ -50,6 +50,14 @@
         <%= simple_format @contribution.comment %>
       </div>
 
+      <% if @contribution.ukc_url.present? %>
+        <div class="mb-4">
+          <span class="text-sm font-medium text-gray-600">UKC: </span>
+          <%= link_to @contribution.ukc_url, @contribution.ukc_url, target: "_blank",
+                class: "text-sm text-emerald-600 hover:underline break-all" %>
+        </div>
+      <% end %>
+
       <div class="mb-4">
         <% if location = @contribution.location %>
           <span>GPS: </span>
@@ -57,8 +65,19 @@
         <% end %>
       </div>
 
-      <% @contribution.photos.each do |photo| %>
-        <%= image_tag(photo, class: "w-full object-cover") %>
+      <% if @contribution.line_coordinates.present? && @contribution.photos.any? %>
+        <div class="mb-4 relative" data-controller="line-preview"
+             data-line-preview-coordinates-value="<%= @contribution.line_coordinates.to_json %>">
+          <%= image_tag(@contribution.photos.first, class: "w-full object-cover block rounded",
+                data: { "line-preview-target": "image" }) %>
+          <canvas data-line-preview-target="canvas"
+                  class="absolute top-0 left-0 pointer-events-none rounded"
+                  style="width:100%;height:100%"></canvas>
+        </div>
+      <% else %>
+        <% @contribution.photos.each do |photo| %>
+          <%= image_tag(photo, class: "w-full object-cover mb-2") %>
+        <% end %>
       <% end %>
 
       <% @contribution.line_drawings.each do |line_drawing| %>

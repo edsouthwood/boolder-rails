@@ -22,12 +22,12 @@ class Area < ApplicationRecord
 
   normalizes :name, :short_name, :description_fr, :description_en, :warning_fr, :warning_en, with: ->(s) { s.strip.presence }
 
-  validates :tags, array: { inclusion: { in: %w[popular beginner_friendly family_friendly dry_fast] } }
+  validates :tags, array: { inclusion: { in: %w[popular beginner_friendly family_friendly dry_fast sheltered sensitive_access remote] } }
   validates :slug, presence: true
 
 
   def levels
-    @levels ||= 1.upto(8).map { |level| [ level, problems.with_location.level(level).count >= 20 ] }.to_h
+    @levels ||= 1.upto(8).map { |level| [ level, problems.with_location.level(level).count ] }.to_h
   end
 
   def self.beginner_friendly

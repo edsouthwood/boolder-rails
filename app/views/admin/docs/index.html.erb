@@ -14,8 +14,10 @@
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#adding-boulders" class="hover:underline">Adding Boulders</a></li>
+      <li><a href="#drawing-boulders" class="hover:underline">Drawing Boulders</a></li>
       <li><a href="#geojson-import" class="hover:underline">GeoJSON Import Workflow</a></li>
       <li><a href="#problem-editing" class="hover:underline">Individual Problem Editing</a></li>
+      <li><a href="#problem-description" class="hover:underline">Problem Description</a></li>
       <li><a href="#topos" class="hover:underline">Topos and Line Drawing</a></li>
       <li><a href="#circuits" class="hover:underline">Circuits</a></li>
       <li><a href="#pois" class="hover:underline">POIs and Routes</a></li>
@@ -143,10 +145,10 @@ docs/
         <p>The fastest way to add many problems to an area. Go to <strong>Admin → Bulk Uploads</strong>.</p>
 
         <p class="font-medium text-gray-800">CSV format</p>
-        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4 overflow-x-auto">name,grade,steepness,sit_start,lat,lon,image_filename,ukc_url
-Overhanging Scoop,5c,overhang,false,50.5712,-3.9341,scoop.jpg,
-Low Traverse,4a,wall,false,50.5715,-3.9345,,
-Unnamed Slab,,slab,false,,,</pre>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4 overflow-x-auto">name,grade,steepness,sit_start,lat,lon,image_filename,ukc_url,description
+Overhanging Scoop,5c,overhang,false,50.5712,-3.9341,scoop.jpg,,Classic line up the right side.
+Low Traverse,4a,wall,false,50.5715,-3.9345,,,
+Unnamed Slab,,slab,false,,,,</pre>
 
         <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
           <thead class="bg-gray-50">
@@ -164,6 +166,7 @@ Unnamed Slab,,slab,false,,,</pre>
             <tr><td class="px-4 py-2 font-mono">lat / lon</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Decimal degrees, e.g. 50.5712 / -3.9341</td></tr>
             <tr><td class="px-4 py-2 font-mono">image_filename</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Must match uploaded image filename exactly</td></tr>
             <tr><td class="px-4 py-2 font-mono">ukc_url</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Full UKC URL for the problem</td></tr>
+            <tr><td class="px-4 py-2 font-mono">description</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Free-text description shown on the problem page</td></tr>
           </tbody>
         </table>
 
@@ -255,6 +258,36 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       </div>
     </section>
 
+    <%# Drawing Boulders %>
+    <section id="drawing-boulders">
+      <%= render "admin/docs/section_header", title: "Drawing Boulders" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>The screencast below walks through the full workflow for drawing boulder polygons and adjusting problem locations.</p>
+
+        <div class="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+          <iframe
+            src="https://www.youtube.com/embed/tXdTrivdFFg"
+            title="Drawing boulders screencast"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="w-full rounded-md"
+            style="height: 360px;">
+          </iframe>
+        </div>
+
+        <p class="font-medium text-gray-800">Steps</p>
+        <ol class="list-decimal list-inside space-y-2">
+          <li>Download the GeoJSON file for the area from the area edit page</li>
+          <li>Open the downloaded file in <a href="https://geojson.io" target="_blank" class="text-blue-600 hover:underline">geojson.io</a> — drag and drop it onto the map</li>
+          <li>Draw polygons around each boulder using the polygon tool — switch to <strong>Satellite</strong> view for accuracy</li>
+          <li>Move problem location pins if needed by dragging them to the correct position</li>
+          <li>Download the updated file from geojson.io (<strong>Save → GeoJSON</strong>)</li>
+          <li>Import back to Bowda via <strong>Admin → Imports → New</strong>, preview the changes, and click Apply</li>
+        </ol>
+      </div>
+    </section>
+
     <%# GeoJSON Import %>
     <section id="geojson-import">
       <%= render "admin/docs/section_header", title: "GeoJSON Import Workflow" %>
@@ -293,6 +326,21 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>View and respond to contribution requests</li>
           <li>Link to a circuit via the edit form</li>
         </ul>
+      </div>
+    </section>
+
+    <%# Problem Description %>
+    <section id="problem-description">
+      <%= render "admin/docs/section_header", title: "Problem Description" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Each problem has an optional free-text description field for beta, key moves, starting instructions, or any other notes visible to users on the public problem page.</p>
+        <p class="font-medium text-gray-800">Adding or editing a description</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Open a problem in admin and click <strong>Edit</strong></li>
+          <li>Fill in the <strong>Description</strong> field at the bottom of the form</li>
+          <li>Save — the text will appear below the topo photo on the public problem page</li>
+        </ol>
+        <p class="text-gray-500 text-xs">Leave the field blank and nothing will be shown. Plain text only — no markdown or HTML.</p>
       </div>
     </section>
 
@@ -345,8 +393,14 @@ rails import:problems FOLDER=/path/to/haytor</pre>
     <section id="contributions">
       <%= render "admin/docs/section_header", title: "Contributions" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
-        <p>Users can submit photos and line drawings to improve topos.</p>
-        <p>Go to <strong>Admin → Contributions</strong> to review pending submissions.</p>
+        <p>Users submit photos and route information via the public contribution form. The form now includes:</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>Boulder photo</strong> — GPS coordinates auto-extracted from photo EXIF where available</li>
+          <li><strong>Route line</strong> — drawn directly on the photo using an in-browser canvas tool</li>
+          <li><strong>UKC link</strong> — optional link to the problem on UK Climbing</li>
+          <li><strong>GPS location</strong> — auto-populated from photo, or entered manually</li>
+        </ul>
+        <p>Go to <strong>Admin → Contributions</strong> to review pending submissions. The review page shows the boulder photo with any drawn route line overlaid, the UKC link, GPS coordinates, and contributor comments.</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li><strong>Pending</strong> — awaiting review</li>
           <li><strong>Approved</strong> — accepted and visible</li>

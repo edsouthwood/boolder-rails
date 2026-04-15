@@ -44,6 +44,12 @@
         <% end %>
       </div>
 
+      <% if @problem.description.present? %>
+        <div class="px-4 sm:px-0 py-2 text-sm text-gray-700">
+          <%= @problem.description %>
+        </div>
+      <% end %>
+
       <div class="px-4 sm:px-0 py-2">
         <% if @problem.location.present? %>
           <%= link_to map_path(@problem.area, pid: @problem.id), rel: "nofollow" do %>

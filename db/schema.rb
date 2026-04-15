@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_09_113405) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_12_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -167,6 +167,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_09_113405) do
     t.string "state", default: "pending", null: false
     t.string "problem_name"
     t.string "problem_url"
+    t.string "ukc_url"
+    t.json "line_coordinates"
     t.index ["problem_id"], name: "index_contributions_on_problem_id"
   end
 
@@ -230,6 +232,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_09_113405) do
     t.boolean "sit_start", default: false, null: false
     t.boolean "has_line", default: false, null: false
     t.string "ukc_url"
+    t.text "description"
     t.index ["area_id"], name: "index_problems_on_area_id"
     t.index ["circuit_id"], name: "index_problems_on_circuit_id"
     t.index ["grade"], name: "index_problems_on_grade"

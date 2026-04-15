@@ -27,8 +27,14 @@
 <div class="col-span-6 sm:col-span-4"></div>
 
 <div class="col-span-6 sm:col-span-4">
-  <%= form.label :joined_tags, 'Tags' %>
-  <%= form.text_field :joined_tags, value: @area.tags.join(","), autocomplete: "off" %>
+  <%= form.label :tags, 'Tags' %>
+  <%= form.select :tags,
+      options_for_select(
+        [['Popular', 'popular'], ['Beginner friendly', 'beginner_friendly'], ['Family friendly', 'family_friendly'], ['Dries fast', 'dry_fast'], ['Sheltered', 'sheltered'], ['Sensitive access', 'sensitive_access'], ['Remote', 'remote']],
+        @area.tags
+      ),
+      { include_blank: false },
+      { multiple: true, size: 7 } %>
 </div>
 
 <div class="col-span-6 sm:col-span-6">

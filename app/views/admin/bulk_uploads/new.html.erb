@@ -2,7 +2,35 @@
 
 <% if flash[:error] %>
   <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm space-y-1">
+    <p class="font-semibold">Errors — no problems were created</p>
     <% flash[:error].split(" | ").each do |msg| %>
+      <div><%= msg %></div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if flash[:conflict] %>
+  <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm space-y-1">
+    <p class="font-semibold">Skipped — already exist</p>
+    <% flash[:conflict].split(" | ").each do |msg| %>
+      <div><%= msg %></div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if flash[:skipped_no_grade] %>
+  <div class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded text-gray-700 text-sm space-y-1">
+    <p class="font-semibold">Skipped — invalid or missing grade</p>
+    <% flash[:skipped_no_grade].split(" | ").each do |msg| %>
+      <div><%= msg %></div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if flash[:fuzzy] %>
+  <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm space-y-1">
+    <p class="font-semibold">Possible duplicates — check these</p>
+    <% flash[:fuzzy].split(" | ").each do |msg| %>
       <div><%= msg %></div>
     <% end %>
   </div>

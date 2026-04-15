@@ -46,6 +46,8 @@
 
                 <%= link_to "Contributions (#{Contribution.pending.count})", admin_contributions_path(state: "pending"), class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
+                <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+
                 <%= link_to "Docs", admin_docs_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
                 <div class="flex md:hidden">

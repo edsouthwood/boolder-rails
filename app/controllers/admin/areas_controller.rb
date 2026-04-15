@@ -19,7 +19,7 @@ class Admin::AreasController < Admin::BaseController
   def create
     @area = Area.new
     @area.assign_attributes(area_params)
-    @area.tags = params[:area][:joined_tags].to_s.split(",")
+    @area.tags = (@area.tags || []).compact_blank
 
     if @area.save
       flash[:notice] = "Area created"
@@ -43,7 +43,7 @@ class Admin::AreasController < Admin::BaseController
     set_area
 
     @area.assign_attributes(area_params)
-    @area.tags = params[:area][:joined_tags].split(",")
+    @area.tags = (@area.tags || []).compact_blank
 
     if cover = params[:area][:cover]
       @area.cover = params[:area][:cover]
@@ -69,7 +69,7 @@ class Admin::AreasController < Admin::BaseController
 
   def area_params
     params.require(:area).
-      permit(:name, :slug, :published, :priority, :short_name, :description_fr, :description_en, :warning_fr, :warning_en)
+      permit(:name, :slug, :published, :priority, :short_name, :description_fr, :description_en, :warning_fr, :warning_en, tags: [])
   end
 
   def set_area

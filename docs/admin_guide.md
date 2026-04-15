@@ -10,7 +10,8 @@
 7. [Adding Boulders (Polygon Map Data)](#adding-boulders)
 8. [GeoJSON Import Workflow](#geojson-import-workflow)
 9. [Individual Problem Editing](#individual-problem-editing)
-10. [Topos and Line Drawing](#topos-and-line-drawing)
+10. [Problem Description](#problem-description)
+11. [Topos and Line Drawing](#topos-and-line-drawing)
 11. [Circuits](#circuits)
 12. [POIs and Routes](#pois-and-routes)
 13. [Contributions](#contributions)
@@ -129,10 +130,10 @@ The fastest way to add many problems to an area at once.
 ### CSV format
 
 ```csv
-name,grade,steepness,sit_start,lat,lon,image_filename,ukc_url
-Overhanging Scoop,5c,overhang,false,50.5712,-3.9341,scoop.jpg,
-Low Traverse,4a,wall,false,50.5715,-3.9345,,
-Unnamed Slab,,slab,false,,,
+name,grade,steepness,sit_start,lat,lon,image_filename,ukc_url,description
+Overhanging Scoop,5c,overhang,false,50.5712,-3.9341,scoop.jpg,,Classic line up the right side of the overhang.
+Low Traverse,4a,wall,false,50.5715,-3.9345,,,
+Unnamed Slab,,slab,false,,,,
 ```
 
 ### Column reference
@@ -147,6 +148,7 @@ Unnamed Slab,,slab,false,,,
 | `lon` | No | Decimal longitude (e.g. `-3.9341`) |
 | `image_filename` | No | Must match an uploaded image filename exactly |
 | `ukc_url` | No | Full UKC URL for the problem |
+| `description` | No | Free-text description shown on the problem page |
 
 ### Valid steepness values
 `slab`, `wall`, `vertical`, `overhang`, `roof`, `traverse`, `other`
@@ -289,6 +291,19 @@ Set `circuit_id` via the problem edit form. Circuit membership determines the co
 
 ---
 
+## Problem Description
+
+Each problem has an optional free-text description field for beta, key moves, starting instructions, or any other notes.
+
+### Adding or editing a description
+1. Open a problem in admin and click **Edit**
+2. Fill in the **Description** field at the bottom of the form
+3. Save — the text appears below the topo photo on the public problem page
+
+Leave the field blank and nothing is shown. Plain text only.
+
+---
+
 ## Topos and Line Drawing
 
 Topos are the guidebook-style photos that show where to climb on a boulder face. Lines drawn on them link the photo to specific problems.
@@ -331,12 +346,22 @@ POI routes appear on the area edit page and are shown in the mobile app.
 
 ## Contributions
 
-Users can submit photos and line drawings to improve topos.
+Users can submit photos and route information to improve topos. The contribution form includes:
+
+- **Boulder photo** — uploaded by the contributor; GPS coordinates are automatically extracted from EXIF metadata if available
+- **Route line** — drawn directly on the uploaded photo using an in-browser canvas tool; stored as normalised JSON coordinates
+- **UKC link** — optional link to the problem on UK Climbing (ukclimbing.com)
+- **GPS location** — auto-populated from photo EXIF, or entered manually
 
 **Admin → Contributions** — review pending submissions
 
 - **Pending** — awaiting review
 - **Approved** — accepted and visible
 - **Rejected** — declined
+
+When reviewing a contribution, the admin edit page shows:
+- The contributor's UKC link (if provided) as a clickable link
+- The boulder photo with the drawn route line overlaid in red
+- GPS coordinates, name, and any comments
 
 Accepting a contribution automatically closes any open contribution request for that problem.

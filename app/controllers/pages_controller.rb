@@ -8,6 +8,9 @@ class PagesController < ApplicationController
   def about
   end
 
+  def ethics
+  end
+
   def contribute
   end
 end

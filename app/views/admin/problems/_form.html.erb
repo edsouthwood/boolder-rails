@@ -37,3 +37,8 @@
   <%= form.label :parent_id, "Parent id" %>
   <%= form.text_field :parent_id, autocomplete: "off" %>
 </div>
+
+<div class="col-span-6 sm:col-start-1">
+  <%= form.label :description %>
+  <%= form.text_area :description, rows: "4", class: "shadow-sm block w-full sm:text-sm border-gray-300 rounded-md", placeholder: "Optional description shown below the topo photo" %>
+</div>

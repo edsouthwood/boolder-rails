@@ -12,14 +12,14 @@ en:
           title: Equipment
           intro: Here is the equipment you will need to climb outdoors.
           shoes: Climbing shoes
-          crashpad: A crash mat
-          crashpad_description: A crash mat is designed to soften your fall.
+          crashpad: A boulder pad
+          crashpad_description: A boulder pad is designed to soften your fall, even out landings and protect you from hitting rocks. Having a firm pad can sometimes be useful when climbing above rocks in the ground.
           crashpad_tip: We recommend you use a thick one with a large surface, even if it's a bit more bulky.
           guidebook: A guidebook
           guidebook_description_html: A guidebook will help you find and identify problems in a climbing area.
           optional: And also
           optional_item1_html: a <strong>doormat</strong> (or a rag), to clean your shoes before starting a problem
-          optional_item2_html: <strong>additional crash mats</strong>, see <a href="%{path}">“Climb safely”</a>
+          optional_item2_html: <strong>additional boulder pads</strong>, see <a href="%{path}">“Climb safely”</a>
           optional_item3_html: some <strong>chalk</strong> (to be used sparingly!), see <a href="%{path}">“Rules of good conduct”</a>
           optional_item4_html: a <strong>soft brush</strong> to clean the rock and remove chalk marks
           other_tips: Also, feel free to take a sports outfit that doesn't restrict your movements too much, and some food and water.
@@ -38,10 +38,10 @@ en:
           title: Choose problems
           intro: Once you get to a bouldering area, here are a few tips to easily find problems adapted to you.
           filter_by_level: Filter by level
-          filter_by_level_p1_html: Thanks to the <a href="%{path}">Boolder app</a>, you can filter problems that match with your level.
+          filter_by_level_p1_html: Thanks to the <a href="%{path}">Bowda website</a>, you can filter problems that match with your level.
           filter_by_level_p2: This way you can identify the zones with a good density of problems adapted to your level.
-          filter_by_level_warning: "Careful: the grade 4a in Dartmoor is roughly equivalent to 5a elsewhere."
-          filter_by_level_warning2: Don't overestimate yourself ;)
+          filter_by_level_warning: "Careful: Dartmoor climbs love a good sandbag"
+          filter_by_level_warning2: leave your ego at the door and just enjoy the climbing
           circuit: Follow a circuit
           circuit_p1: Circuits are a series of boulders of (relatively) homogeneous level, with ascending numbers.
           circuit_p2: Each problem is represented by a colored number and an arrow, painted directly on the boulder.
@@ -61,13 +61,13 @@ en:
           bad_landing: Difficult landing
           safe: Perfect to climb with confidence
           unsafe: To avoid
-          multi_crashpad: Take several crash mats
-          multi_crashpad_p1: It can be reassuring to have several crash mats to cover a larger surface on the ground.
-          multi_crashpad_p2: If you climb with a group, you can also ask your friends to move the crash mat while you're climbing, so that it always stays right below you.
+          multi_crashpad: Take several boulder pads
+          multi_crashpad_p1: It can be reassuring to have several boulder pads to cover a larger surface on the ground.
+          multi_crashpad_p2: If you climb with a group, you can also ask your friends to move the boulder pad while you're climbing, so that it always stays right below you.
           spot: Have a spotter
           spot_p1_html: To help your friends climb safely, you can offer to be the <i>spotter</i>.
-          spot_p2: The spotter redirects the climber's fall to land safely on the crash mat.
-          spot_p3: "Careful: don't try to catch the climber yourself, you migh injure yourself!"
+          spot_p2: The spotter redirects the climber's fall to land safely on the boulder pad.
+          spot_p3: "Careful: don't try to catch the climber yourself, you might injure yourself! The goal of spotting is to help the climber land safely. This might be stopping their head from hitting the floor, or, directing them in the air to land on the mat."
           descent: Anticipate the descent
           descent_p1: It can sometimes be tricky to go down from a boulder once you're on top. Check the descent beforehand — especially if you're alone!
           metas:
@@ -81,18 +81,35 @@ en:
           clean_shoes: Clean your shoes
           clean_shoes_p1: Mud and vegetation on your shoes can both damage friction on the rock and spread invasive species between sites.
           clean_shoes_p2: Clean your shoes on a doormat or brush before you start climbing, especially if you've been walking across boggy ground.
-          rain: Wet rock is dangerous
-          rain_p1: Unlike sandstone, Dartmoor's granite is not damaged by rain and does not require a drying period to protect the rock itself.
-          rain_p2: However, wet granite becomes extremely slippery and significantly increases the risk of falls and injury. Wait for the rock to dry before climbing — both for your safety and to avoid damaging the lichen that grows on unclimbed surfaces.
+          rain: Sharp crystals
+          rain_p1: Dartmoor's granite has very large and sharp cystals.
+          rain_p2: It is often better to stop the session early before you start to bleed. It is quite normal for your skin to give up before your muscles.
           other_rules: Other rules
           other_rules_item1: Walk on existing trails and avoid trampling vegetation — Dartmoor's moorland and bog habitats are delicate and slow to recover.
-          other_rules_item2: Carry your crash mat rather than dragging it across the ground.
+          other_rules_item2: Carry your boulder pad rather than dragging it across the ground.
           other_rules_item3: Take all your litter home with you — and consider picking up any you find along the way.
-          other_rules_item4: "Fire risk on Dartmoor is extremely high. Open fires and BBQs are prohibited — this includes disposable BBQs. One spark can destroy thousands of acres of moorland."
+          other_rules_item4: "Fire risk on Dartmoor can be extremely high. Open fires and BBQs are prohibited — this includes disposable BBQs. One spark can destroy thousands of acres of moorland."
           other_rules_item5_html: Keep dogs under close control around livestock. Dartmoor is a working farm — cattle and sheep graze freely across the moor year-round.
           video: In video
           metas:
             title: Rules of good conduct
+        ticks:
+          title: Tick safety
+          intro: Ticks are small parasites found in moorland, woodlands, and long grass across Dartmoor, especially during spring, summer, and autumn. While most tick bites are harmless, it's important to check yourself after climbing and know how to remove a tick safely.
+          check_yourself: Check yourself after climbing
+          check_yourself_p1: After a climbing session, especially in long grass or bracken, inspect your body carefully for ticks. They can attach anywhere, but commonly bite on exposed skin like legs, arms, armpits, and the hairline.
+          check_yourself_p2: Ticks are small — about the size of a sesame seed when unfed, and slightly larger when engorged with blood. Check your clothes as well, as ticks may fall off or be transported on fabric.
+          removing_a_tick: How to remove a tick
+          removing_a_tick_p1: If you find a tick attached to your skin, use fine-tipped tweezers or a dedicated tick removal tool. Grasp the tick as close to the skin as possible and pull steadily upward. Avoid twisting or squeezing the tick's body.
+          removing_a_tick_p2: After removal, clean the bite site with soap and water or an antiseptic. Save the tick in a small container in case you develop symptoms later and need to show a doctor what bit you. Dispose of the tick by placing it in a sealed bag or flushing it down the toilet — do not crush it with your fingers.
+          lyme_disease: Lyme disease warning
+          lyme_disease_p1: Ticks can carry Lyme disease, a bacterial infection transmitted through their saliva. While most tick bites do not result in infection, it's important to watch for symptoms in the weeks following a bite.
+          lyme_disease_p2: Seek medical advice if you develop a bullseye-shaped rash, fever, fatigue, joint pain, or muscle aches within a few weeks of a tick bite. Early treatment with antibiotics is highly effective.
+          prevention: Reduce your risk
+          prevention_p1: Wear long socks and lightweight trousers when climbing in areas with long grass, bracken, or woodlands. Use an insect repellent containing DEET (at least 20%) on exposed skin and on clothing, and reapply after swimming or heavy sweating.
+          prevention_p2: After returning home, wash your climbing clothes separately and consider showering. Do a thorough body check, paying special attention to warm, moist areas like armpits, groin, and behind the knees.
+          metas:
+            title: Tick safety for outdoor bouldering
       top_areas:
         discover_fontainebleau: Discover Dartmoor
         all_areas: All areas in Dartmoor

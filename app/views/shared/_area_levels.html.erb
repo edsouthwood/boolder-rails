@@ -1,5 +1,15 @@
-<% area.levels.each do |level, enabled| %>
-  <% background_color = enabled ? "rgba(5, 150, 105, 0.8)" : "rgba(204, 204, 204, .5)" %>
+<% levels = area.levels %>
+<% total = levels.values.sum %>
+<% levels.each do |level, count| %>
+  <%
+    if total > 0 && count > 0
+      pct = count.to_f / total
+      opacity = (0.2 + pct * 0.8).round(2).clamp(0.2, 1.0)
+      background_color = "rgba(5, 150, 105, #{opacity})"
+    else
+      background_color = "rgba(204, 204, 204, 0.5)"
+    end
+  %>
   <span class="ml-1 rounded-sm text-sm h-4 w-4 leading-4 inline-flex justify-center" style="background-color: <%= background_color %>; color: #FFF">
     <%= level %>
   </span>

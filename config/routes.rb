@@ -44,6 +44,7 @@ Rails.application.routes.draw do
         get "choose-problems", to: "articles#choose_problems", as: :choose_problems
         get "climb-safely", to: "articles#climb_safely", as: :climb_safely
         get "rules", to: "articles#rules", as: :rules
+        get "ticks", to: "articles#ticks", as: :ticks
       end
       scope "top-areas" do
         get "/", to: redirect("/%{locale}/dartmoor")
@@ -52,6 +53,7 @@ Rails.application.routes.draw do
         get "beginner", to: redirect("/%{locale}/articles/beginners-guide/choose-area"), as: :legacy_top_areas_beginner
         get "train", to: "articles#top_areas_train", as: :top_areas_train
         get "dry_fast", to: "articles#top_areas_dry_fast", as: :top_areas_dry_fast
+        get "sheltered", to: "articles#top_areas_sheltered", as: :top_areas_sheltered
       end
       root to: redirect("/%{locale}/articles/beginners-guide"), as: :articles
     end
@@ -85,6 +87,7 @@ Rails.application.routes.draw do
     get "app", to: "pages#app", as: :app
     get "privacy", to: "pages#privacy", as: :privacy
     get "about", to: "pages#about", as: :about
+    get "ethics", to: "pages#ethics", as: :ethics
     get "contribute", to: "pages#contribute", as: :contribute
     get "circuit7a", to: "circuit7a#index", as: :circuit7a
     get "circuit7a/problems", to: "circuit7a#problems", as: :circuit7a_problems

@@ -61,6 +61,10 @@ en:
           title: About
           subtitle: Discover more about this guide and how to contribute.
           cta: More info
+        ethics:
+          title: Local Ethics
+          subtitle: Help keep Dartmoor beautiful — read the local guidelines before you go.
+          cta: Read the guidelines
       metas:
         title: Bouldering on Dartmoor
         description: Granite bouldering on Dartmoor, Devon.
@@ -106,10 +110,16 @@ en:
           warning_horizontal_html: 'Important: photos must be <span class=" underline">horizontal</span>.'
           problem: Problem
           problem_url_label: Link (bleau.info or Boolder)
+          ukc_url_label: UKC link (optional)
           boulder: Boulder photo
           boulder_description: Take a picture of the boulder with your phone.
           line: Route line
-          line_description: Indicate how to climb the boulder.
+          line_description: Draw the route on your boulder photo.
+          line_upload_photo_first: Upload a boulder photo above to draw the route line.
+          line_draw_instruction: "Click on the photo to mark the route line."
+          line_optional: (optional)
+          line_undo: Undo
+          line_clear: Clear
           location: Start location
           location_description: Indicate exactly where the start of the problem is on the map.
           location_gps: Enter the GPS location of the boulder
@@ -160,7 +170,7 @@ en:
         clear: Clear
     app_landing:
       title: All Dartmoor in your pocket
-      subtitle: "The best guide to enjoy bouldering in Font"
+      subtitle: "Hopefully coming soon on iPhone and Android just like the font app"
       android_announcement: We are looking for an Android developer
       selling_points:
         map:
@@ -266,6 +276,7 @@ en:
           beginner_html: Beginner's guide
           level: By level
           dry_fast: Dries fast
+          sheltered: Sheltered
           train_html: Accessible <br>by train + bike
         metas: 
           title: All areas in Dartmoor

@@ -12,8 +12,10 @@ class ArticlesController < ApplicationController
 
   def top_areas_dry_fast
     # see https://guides.rubyonrails.org/caching_with_rails.html#avoid-caching-instances-of-active-record-objects
-    @areas_ids = Rails.cache.fetch("articles/top_areas_dry_fast_ids", expires_in: 12.hours) do
-      Area.published.any_tags(:dry_fast).pluck(:id).shuffle
-    end
+    @areas_ids = Area.published.any_tags(:dry_fast).pluck(:id).shuffle
+  end
+
+  def top_areas_sheltered
+    @areas_ids = Area.published.any_tags(:sheltered).pluck(:id).shuffle
   end
 end

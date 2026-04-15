@@ -99,7 +99,7 @@ class Admin::ProblemsController < Admin::BaseController
     params.require(:problem).
       permit(:area_id, :name, :grade, :steepness, :sit_start,
         :ukc_url, :parent_id,
-        :lat, :lon,
+        :lat, :lon, :description,
       )
   end
 

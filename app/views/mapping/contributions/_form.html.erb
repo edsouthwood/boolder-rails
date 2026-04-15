@@ -21,7 +21,7 @@
 <% end %>
 
 
-<div class="space-y-10 divide-y divide-gray-900/10">
+<div class="space-y-10 divide-y divide-gray-900/10" data-controller="contribution-photo">
 
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
@@ -59,6 +59,13 @@
             </div>
           </div>
 
+          <div class="sm:col-span-4 sm:col-start-1">
+            <%= form.label :ukc_url, t("views.mapping.contributions.new.ukc_url_label"), class: "block text-sm font-medium leading-6 text-gray-900" %>
+            <div class="mt-2">
+              <%= form.text_field :ukc_url, placeholder: "https://www.ukclimbing.com/logbook/crags/...", class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
+            </div>
+          </div>
+
           <% end %>
 
         </div>
@@ -82,7 +89,7 @@
             </div>
           </a>
 
-          
+
           <div class="hidden mt-4" data-reveal-target="item">
             <%= render "how_to_boulder" %>
           </div>
@@ -102,7 +109,10 @@
                   <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
                 </svg>
                 <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600 text-center">
-                  <%= form.file_field :photos, multiple: true, class: "" %>
+                  <%= form.file_field :photos, multiple: true,
+                        data: { "contribution-photo-target": "input",
+                                action: "change->contribution-photo#handlePhotoChange" },
+                        class: "" %>
                 </div>
               </div>
             </div>
@@ -112,7 +122,7 @@
                 <%= t("views.mapping.contributions.new.warning_horizontal_html") %>
               <% end %>
             </div>
-            
+
           </div>
 
         </div>
@@ -125,42 +135,44 @@
       <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.contributions.new.line") %></h2>
       <p class="mt-1 text-sm leading-6 text-gray-600">
         <%= t("views.mapping.contributions.new.line_description") %>
-
-        <div data-controller="reveal">
-          <a href="javascript:void(0)" class="block" data-action="reveal#toggle">
-            <div class="flex items-center space-x-2 text-emerald-600 mt-6">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span class="text-sm font-semibold"><%= t("views.mapping.contributions.new.how_to") %></span>
-            </div>
-          </a>
-
-          <div class="hidden mt-4" data-reveal-target="item">
-            <%= render "how_to_line" %>
-          </div>
-        </div>
       </p>
     </div>
 
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <div class="px-4 py-6 sm:p-8">
-        <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
-          <div class="col-span-full">
-            <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-              <div class="text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-                </svg>
-                <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600 text-center">
-                  <%= form.file_field :line_drawings, multiple: true, class: "" %>
-                </div>
-              </div>
-            </div>
+        <p class="text-sm text-gray-500 italic" data-contribution-photo-target="linePrompt">
+          <%= t("views.mapping.contributions.new.line_upload_photo_first") %>
+        </p>
+
+        <div class="hidden" data-contribution-photo-target="lineEditor">
+          <p class="text-sm text-gray-600 mb-3">
+            <%= t("views.mapping.contributions.new.line_draw_instruction") %>
+            <span class="text-gray-400"><%= t("views.mapping.contributions.new.line_optional") %></span>
+          </p>
+          <div class="relative inline-block w-full">
+            <img data-contribution-photo-target="previewImage"
+                 class="block w-full max-h-96 object-contain rounded-lg bg-gray-100" />
+            <canvas data-contribution-photo-target="canvas"
+                    data-action="click->contribution-photo#addPoint"
+                    class="absolute top-0 left-0 rounded-lg"
+                    style="cursor:crosshair"></canvas>
           </div>
-
+          <p class="mt-3 text-xs text-gray-500">A line requires a minimum of 3 points. The more points you add, the more accurately the line will be displayed.</p>
+          <div class="mt-3 flex space-x-2">
+            <button type="button" data-action="click->contribution-photo#undo"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+              <%= t("views.mapping.contributions.new.line_undo") %>
+            </button>
+            <button type="button" data-action="click->contribution-photo#clear"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+              <%= t("views.mapping.contributions.new.line_clear") %>
+            </button>
+          </div>
         </div>
+
+        <%= form.hidden_field :line_coordinates, data: { "contribution-photo-target": "coordsField" } %>
+
       </div>
     </div>
   </div>
@@ -170,68 +182,39 @@
       <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.contributions.new.location") %></h2>
       <p class="mt-1 text-sm leading-6 text-gray-600">
         <%= t("views.mapping.contributions.new.location_description") %>
-
-        <div data-controller="reveal">
-          <a href="javascript:void(0)" class="block" data-action="reveal#toggle">
-            <div class="flex items-center space-x-2 text-emerald-600 mt-6">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span class="text-sm font-semibold"><%= t("views.mapping.contributions.new.how_to") %></span>
-            </div>
-          </a>
-
-          <div class="hidden mt-4" data-reveal-target="item">
-            <%= render "how_to_location" %>
-          </div>
-        </div>
       </p>
     </div>
 
-    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2" data-controller="reveal">
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <div class="px-4 py-6 sm:p-8">
         <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
           <div class="col-span-full">
-            <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-              <div class="text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-                </svg>
-                <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600 text-center">
-                  <%= form.file_field :location_drawings, multiple: true, class: "" %>
-                </div>
-              </div>
-            </div>
+            <p class="text-sm text-emerald-700 font-medium">Latitude and longitude is the preferred method for providing a location. These will auto-fill if the photo you uploaded above contains GPS data.</p>
           </div>
 
-          <div class="col-span-full" >
-            <div class="space-y-5">
-              <div class="relative flex items-start">
-                <div class="flex h-6 items-center">
-                  <input id="location" data-action="reveal#toggle" name="location" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-600">
-                </div>
-                <div class="ml-3 text-sm leading-6">
-                  <label for="location" data-action="reveal#toggle" class="text-gray-900"><%= t("views.mapping.contributions.new.location_gps") %> <span class="text-gray-500"><%= t("views.mapping.contributions.new.location_optional") %></span></label>
-
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="hidden sm:col-span-3" data-reveal-target="item">
+          <div class="sm:col-span-3">
             <%= form.label :location_lat, "Latitude", class: "block text-sm font-medium leading-6 text-gray-900" %>
             <div class="mt-2">
-              <%= form.text_field :location_lat, placeholder: "48.123456", class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300  placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
+              <%= form.text_field :location_lat, placeholder: "50.123456",
+                    data: { "contribution-photo-target": "latField" },
+                    class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300  placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
             </div>
           </div>
 
-          <div class="hidden sm:col-span-3" data-reveal-target="item">
+          <div class="sm:col-span-3">
             <%= form.label :location_lon, "Longitude", class: "block text-sm font-medium leading-6 text-gray-900" %>
             <div class="mt-2">
-              <%= form.text_field :location_lon, placeholder: "2.123456", class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300   placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
+              <%= form.text_field :location_lon, placeholder: "-3.123456",
+                    data: { "contribution-photo-target": "lonField" },
+                    class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300   placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
             </div>
           </div>
+
+          <div class="col-span-full">
+            <p data-contribution-photo-target="gpsStatus" class="text-xs text-gray-500"></p>
+          </div>
+
 
         </div>
       </div>
@@ -268,7 +251,7 @@
         </div>
 
         <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.contributions.new.private_info") %></h2>
-        
+
         <p class="mt-1 text-sm leading-6 text-gray-600">
           <%= t("views.mapping.contributions.new.private_info_description") %>
         </p>

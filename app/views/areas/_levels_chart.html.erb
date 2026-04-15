@@ -1,9 +1,13 @@
 <%
+counts    = 1.upto(8).map { |i| area.problems.with_location.level(i).count }
+chart_max = [((counts.max.to_f / 5).ceil * 5), 5].max
+step_size = [chart_max / 5, 1].max
+
 chart_data = {
   labels: ['1', '2', '3', '4', '5', '6', '7', '8'],
   datasets: [{
       label: 'problems',
-      data: 1.upto(8).map{|i| area.problems.with_location.level(i).count },
+      data: counts,
       backgroundColor: 'rgba(5, 150, 105, 0.8)',
       borderColor: 'rgba(5, 150, 105, 1)',
       borderWidth: 1
@@ -14,11 +18,11 @@ chart_options = {
   animation: false,
   scales: {
       y: {
-        max: 150,
+        max: chart_max,
           ticks: {
               beginAtZero: true,
-              max: 150,
-              stepSize: 50,
+              max: chart_max,
+              stepSize: step_size,
           },
           # display: false,
           gridLines: {

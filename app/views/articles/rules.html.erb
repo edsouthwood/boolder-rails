@@ -6,7 +6,7 @@
 
         <div class="text-lg max-w-prose mx-auto mb-16">
           <div class="pt-4 pb-16">
-            <%= render 'pagination', prev_path: climb_safely_path, prev_text: "4. #{t('views.articles.beginners_guide.climb_safely.title')}", next_path: beginners_guide_path, next_text: t('views.articles.table_of_contents') %>
+            <%= render 'pagination', prev_path: climb_safely_path, prev_text: "4. #{t('views.articles.beginners_guide.climb_safely.title')}", next_path: ticks_path, next_text: "6. #{t('views.articles.beginners_guide.ticks.title')}" %>
           </div>
 
           <span class="mt-3 sm:mt-4 block text-base text-center text-emerald-600 font-semibold tracking-wide uppercase">
@@ -42,16 +42,6 @@
             <%= t('views.articles.beginners_guide.rules.clean_shoes_p2') %>
           </p>
 
-          <h2><%= t('views.articles.beginners_guide.rules.rain') %></h2>
-
-          <p>
-            <%= t('views.articles.beginners_guide.rules.rain_p1') %>
-          </p>
-
-          <p>
-            <%= t('views.articles.beginners_guide.rules.rain_p2') %>
-          </p>
-
           <h2>
             <%= t('views.articles.beginners_guide.rules.other_rules') %>
           </h2>
@@ -67,7 +57,7 @@
         </div>
 
         <div class="pt-16 pb-8">
-          <%= render 'pagination', prev_path: climb_safely_path, prev_text: "4. #{t('views.articles.beginners_guide.climb_safely.title')}", next_path: beginners_guide_path, next_text: t('views.articles.table_of_contents') %>
+          <%= render 'pagination', prev_path: climb_safely_path, prev_text: "4. #{t('views.articles.beginners_guide.climb_safely.title')}", next_path: ticks_path, next_text: "6. #{t('views.articles.beginners_guide.ticks.title')}" %>
         </div>
 
       </div>
