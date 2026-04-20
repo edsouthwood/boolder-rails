@@ -13,8 +13,9 @@
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
-      <li><a href="#adding-boulders" class="hover:underline">Adding Boulders</a></li>
-      <li><a href="#drawing-boulders" class="hover:underline">Drawing Boulders</a></li>
+      <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
+      <li><a href="#adding-boulders" class="hover:underline">Adding Boulders (GeoJSON)</a></li>
+      <li><a href="#boulder-editor" class="hover:underline">Boulder Editor (In-Browser)</a></li>
       <li><a href="#geojson-import" class="hover:underline">GeoJSON Import Workflow</a></li>
       <li><a href="#problem-editing" class="hover:underline">Individual Problem Editing</a></li>
       <li><a href="#problem-description" class="hover:underline">Problem Description</a></li>
@@ -229,6 +230,29 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       </div>
     </section>
 
+    <%# Location Editor %>
+    <section id="location-editor">
+      <%= render "admin/docs/section_header", title: "Location Editor (Drag-and-Drop)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Set GPS coordinates for unlocated problems directly in the browser — no GeoJSON export needed.</p>
+        <p>Go to <strong>Admin → Areas → [area] → dot menu → Location editor</strong>.</p>
+
+        <p class="font-medium text-gray-800">How to use</p>
+        <ol class="list-decimal list-inside space-y-2">
+          <li>The <strong>left sidebar</strong> lists all problems without a location, sorted alphabetically</li>
+          <li>The <strong>map</strong> shows boulder polygons for context and green pins for already-located problems</li>
+          <li><strong>Drag</strong> a problem name from the sidebar and <strong>drop</strong> it on the map at the correct position — saved instantly</li>
+          <li>To <strong>reposition</strong> an already-placed problem, drag its green pin to a new spot — saves on release</li>
+        </ol>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-xs text-yellow-800">
+          <strong>Bad coordinates?</strong> If problems were uploaded with wrong coordinates (e.g. all at the same point), clear them first:
+          <pre class="mt-1 bg-yellow-100 rounded p-2 overflow-x-auto">bundle exec rails runner "Area.find_by(slug: 'area-slug').problems.update_all(location: nil)"</pre>
+          Then use the location editor to place them correctly.
+        </div>
+      </div>
+    </section>
+
     <%# Adding Boulders %>
     <section id="adding-boulders">
       <%= render "admin/docs/section_header", title: "Adding Boulders" %>
@@ -258,33 +282,37 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       </div>
     </section>
 
-    <%# Drawing Boulders %>
-    <section id="drawing-boulders">
-      <%= render "admin/docs/section_header", title: "Drawing Boulders" %>
+    <%# Boulder Editor %>
+    <section id="boulder-editor">
+      <%= render "admin/docs/section_header", title: "Boulder Editor (In-Browser)" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
-        <p>The screencast below walks through the full workflow for drawing boulder polygons and adjusting problem locations.</p>
+        <p>Trace boulder outlines directly in the browser over satellite imagery. No GeoJSON export needed.</p>
+        <p>Go to <strong>Admin → Areas → [area] → dot menu → Boulder editor</strong>.</p>
 
-        <div class="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-          <iframe
-            src="https://www.youtube.com/embed/tXdTrivdFFg"
-            title="Drawing boulders screencast"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            class="w-full rounded-md"
-            style="height: 360px;">
-          </iframe>
-        </div>
-
-        <p class="font-medium text-gray-800">Steps</p>
-        <ol class="list-decimal list-inside space-y-2">
-          <li>Download the GeoJSON file for the area from the area edit page</li>
-          <li>Open the downloaded file in <a href="https://geojson.io" target="_blank" class="text-blue-600 hover:underline">geojson.io</a> — drag and drop it onto the map</li>
-          <li>Draw polygons around each boulder using the polygon tool — switch to <strong>Satellite</strong> view for accuracy</li>
-          <li>Move problem location pins if needed by dragging them to the correct position</li>
-          <li>Download the updated file from geojson.io (<strong>Save → GeoJSON</strong>)</li>
-          <li>Import back to Bowda via <strong>Admin → Imports → New</strong>, preview the changes, and click Apply</li>
+        <p class="font-medium text-gray-800">Drawing a new boulder</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Click <strong>Draw boulder</strong> — cursor changes to a crosshair</li>
+          <li>Click on the map to place each vertex around the boulder outline</li>
+          <li><strong>Double-click</strong> to finish and save — the polygon appears immediately</li>
+          <li>Press <strong>Escape</strong> to cancel</li>
         </ol>
+
+        <p class="font-medium text-gray-800">Editing an existing boulder</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Click any grey polygon on the map to select it (turns blue)</li>
+          <li>Drag the blue vertex dots to reshape the outline</li>
+          <li>Click <strong>Save changes</strong> to save, or click away to discard</li>
+        </ol>
+
+        <p class="font-medium text-gray-800">Deleting a boulder</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Click the polygon to select it</li>
+          <li>Click <strong>Delete boulder</strong> and confirm</li>
+        </ol>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800">
+          <strong>Tip:</strong> Zoom in to level 19 or higher before tracing — satellite detail is much clearer at high zoom. Click a boulder ID in the sidebar to fly the map to it.
+        </div>
       </div>
     </section>
 
@@ -360,6 +388,14 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Click on the photo to place control points</li>
           <li>Save — the line links the topo to the problem</li>
         </ol>
+
+        <p class="font-medium text-gray-800">Deleting a topo</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Find the topo ID from the problem's show page</li>
+          <li>Navigate to <code class="bg-gray-100 px-1 rounded">/en/admin/topos/&lt;ID&gt;</code></li>
+          <li>Click the red <strong>Delete topo</strong> button and confirm</li>
+        </ol>
+        <p class="text-xs text-gray-500">Deleting a topo also permanently deletes all its associated lines.</p>
       </div>
     </section>
 
@@ -393,10 +429,10 @@ rails import:problems FOLDER=/path/to/haytor</pre>
     <section id="contributions">
       <%= render "admin/docs/section_header", title: "Contributions" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
-        <p>Users submit photos and route information via the public contribution form. The form now includes:</p>
+        <p>Users submit photos and route information via the public contribution form. The form includes:</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li><strong>Boulder photo</strong> — GPS coordinates auto-extracted from photo EXIF where available</li>
-          <li><strong>Route line</strong> — drawn directly on the photo using an in-browser canvas tool</li>
+          <li><strong>Route line</strong> — drawn on the uploaded photo using an in-browser canvas tool. Contributors can also select an existing topo from the area and draw on that instead of uploading a new photo.</li>
           <li><strong>UKC link</strong> — optional link to the problem on UK Climbing</li>
           <li><strong>GPS location</strong> — auto-populated from photo, or entered manually</li>
         </ul>
@@ -406,7 +442,13 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li><strong>Approved</strong> — accepted and visible</li>
           <li><strong>Rejected</strong> — declined</li>
         </ul>
-        <p class="text-gray-500 text-xs">Accepting a contribution automatically closes any open contribution request for that problem.</p>
+        <p class="font-medium text-gray-800">Partial acceptance</p>
+        <p>When setting state to <strong>accepted</strong>, two checkboxes control what gets applied:</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>Photo &amp; line</strong> — attaches the contributor's photo as a new topo and creates the line overlay. If the contributor drew on an existing topo instead of uploading a photo, this creates the line on that existing topo.</li>
+          <li><strong>GPS coordinates</strong> — copies the contributor's location to the problem (only if the problem has no existing location)</li>
+        </ul>
+        <p class="text-gray-500 text-xs">Both are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa. Accepting always closes any open contribution request for that problem.</p>
       </div>
     </section>
 

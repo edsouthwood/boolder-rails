@@ -1,10 +1,11 @@
 <h1 class="my-3 text-3xl font-bold">New line</h1>
+<p class="text-lg text-gray-500"><%= @line.problem.name_with_fallback %></p>
 
 <div class="mt-10 sm:mt-0">
   <div class="md:grid md:grid-cols-4 md:gap-6">
     <div class="mt-5 md:mt-0 md:col-span-2">
 
-      <% if request = @line.problem.contribution_requests.open.first %>
+      <% if @line.problem.contribution_requests.open.first %>
         <div class="my-4">
           <%= warning_box do %>
             <span>FYI the open contribution request will automatically be closed.</span>
@@ -12,26 +13,62 @@
         </div>
       <% end %>
 
-      <div class="my-4">
+      <%# ── Use an existing topo ── %>
+      <div class="my-4" data-controller="topo-picker">
         <h2 class="my-3 text-xl font-semibold">Use an existing topo</h2>
+
         <%= form_with model: [:admin, @line] do |form| %>
           <%= form.hidden_field :problem_id, autocomplete: "off" %>
-          <div class="shadow overflow-hidden sm:rounded-md">
-            <div class="px-4 py-5 bg-white sm:p-6">
-              <div class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 sm:col-span-2 sm:col-start-1">
-                  <%= form.label :topo_id, "Topo id" %>
-                  <%= form.text_field :topo_id, autocomplete: "off", value: session[:last_topo_visited] %>
+          <%= form.hidden_field :topo_id, autocomplete: "off",
+                data: { "topo-picker-target": "topoIdField" } %>
+
+          <% if @area_topos.any? %>
+            <%# Thumbnail grid %>
+            <div class="grid grid-cols-3 gap-2 mb-4 max-h-80 overflow-y-auto p-1">
+              <% @area_topos.each do |topo| %>
+                <div
+                  class="cursor-pointer rounded border-2 border-transparent hover:border-emerald-400 transition-colors"
+                  data-topo-picker-target="thumbnail"
+                  data-topo-id="<%= topo.id %>"
+                  data-medium-url="<%= cdn_image_url(topo.photo.variant(:medium)) %>"
+                  data-action="click->topo-picker#select"
+                >
+                  <%= image_tag cdn_image_path(topo.photo.variant(:thumb)),
+                        class: "w-full h-20 object-cover rounded",
+                        loading: "lazy",
+                        alt: "Topo ##{topo.id}" %>
+                  <p class="text-center text-xs text-gray-400 mt-1">#<%= topo.id %></p>
                 </div>
-              </div>
+              <% end %>
             </div>
-            <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-              <button type="submit" class="btn">Create</button>
+
+            <%# Large preview of selected topo %>
+            <div data-topo-picker-target="preview" class="hidden mb-4">
+              <p class="text-xs text-gray-500 mb-1">Selected topo preview:</p>
+              <img data-topo-picker-target="previewImage"
+                   class="w-full rounded border" src="" alt="Selected topo" />
+            </div>
+
+          <% else %>
+            <p class="text-sm text-gray-400 italic mb-4">No topos found for this area yet — upload a new photo below.</p>
+          <% end %>
+
+          <div class="shadow overflow-hidden sm:rounded-md">
+            <div class="px-4 py-3 bg-gray-50 flex items-center justify-between sm:px-6">
+              <span class="text-sm text-gray-500" data-topo-picker-target="hint">
+                Click a thumbnail to select
+              </span>
+              <button type="submit" class="btn"
+                      data-topo-picker-target="submitBtn"
+                      <%= "disabled" if @area_topos.empty? %>>
+                Create
+              </button>
             </div>
           </div>
         <% end %>
       </div>
 
+      <%# ── Upload a new photo ── %>
       <div class="mt-12">
         <h2 class="my-3 text-xl font-semibold">Or upload a new photo</h2>
         <%= form_with model: [:admin, @line] do |form| %>
@@ -53,6 +90,7 @@
           </div>
         <% end %>
       </div>
+
     </div>
   </div>
 </div>

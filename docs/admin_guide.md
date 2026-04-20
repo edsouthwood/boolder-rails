@@ -7,14 +7,16 @@
 4. [Managing Areas](#managing-areas)
 5. [Bulk Upload (Problems)](#bulk-upload-problems)
 6. [Importing Problems from Photos](#importing-from-photos)
-7. [Adding Boulders (Polygon Map Data)](#adding-boulders)
-8. [GeoJSON Import Workflow](#geojson-import-workflow)
-9. [Individual Problem Editing](#individual-problem-editing)
-10. [Problem Description](#problem-description)
-11. [Topos and Line Drawing](#topos-and-line-drawing)
-11. [Circuits](#circuits)
-12. [POIs and Routes](#pois-and-routes)
-13. [Contributions](#contributions)
+7. [Location Editor (Drag-and-Drop)](#location-editor)
+8. [Adding Boulders (Polygon Map Data)](#adding-boulders)
+9. [Boulder Editor (In-Browser)](#boulder-editor)
+10. [GeoJSON Import Workflow](#geojson-import-workflow)
+11. [Individual Problem Editing](#individual-problem-editing)
+12. [Problem Description](#problem-description)
+13. [Topos and Line Drawing](#topos-and-line-drawing)
+14. [Circuits](#circuits)
+15. [POIs and Routes](#pois-and-routes)
+16. [Contributions](#contributions)
 
 ---
 
@@ -214,6 +216,32 @@ After importing, visit each problem in admin to draw the line on the topo photo.
 
 ---
 
+## Location Editor (Drag-and-Drop) {#location-editor}
+
+The location editor lets you set GPS coordinates for unlocated problems directly in the browser, without editing GeoJSON files externally.
+
+**Admin → Areas → [area] → dot menu → Location editor**
+
+### How to use
+
+1. The left sidebar lists all problems in the area that have **no location** yet, sorted alphabetically
+2. The right panel shows a map with boulder polygons for context and green pins for already-located problems
+3. **Drag** a problem name from the sidebar and **drop** it onto the map at the correct position — the pin is placed and the location is saved instantly
+4. Once placed, the problem disappears from the sidebar and a green marker appears on the map
+5. **Reposition** an already-placed problem by dragging its green marker to a new position — saves on release
+
+### Bulk-clearing bad locations
+
+If problems were uploaded with incorrect coordinates (e.g. all at the same point), clear them first via the Rails runner:
+
+```bash
+bundle exec rails runner "Area.find_by(slug: 'area-slug').problems.update_all(location: nil)"
+```
+
+Then use the location editor to place them correctly.
+
+---
+
 ## Adding Boulders
 
 Boulders are the physical rock outlines shown as grey polygons on the map (visible at zoom 16+). Each `Boulder` record stores a PostGIS polygon.
@@ -252,6 +280,41 @@ All features in the file must belong to the same area.
 - JOSM with the Fastdraw plugin is an alternative to geojson.io for drawing many polygons quickly — see [JOSM docs](https://josm.openstreetmap.de/)
 - OpenStreetMap may already have boulder polygons for well-mapped areas — export via [Overpass Turbo](https://overpass-turbo.eu) using `natural=rock` query
 - The `ignore_for_area_hull` flag on a boulder excludes it from the area's bounding box calculation (useful for outlying boulders)
+
+---
+
+## Boulder Editor (In-Browser) {#boulder-editor}
+
+The boulder editor lets you trace boulder outlines directly in the browser over a satellite image. No GeoJSON export/import needed.
+
+**Admin → Areas → [area] → dot menu → Boulder editor**
+
+### Drawing a new boulder
+
+1. Click **Draw boulder** — the cursor changes to a crosshair
+2. Click on the satellite image to place vertices around the boulder outline
+3. **Double-click** to finish and save the polygon — it appears on the map immediately
+4. Press **Escape** to cancel without saving
+
+### Editing an existing boulder
+
+1. Click any grey polygon on the map to select it (it turns blue)
+2. Its vertices appear as small draggable blue dots
+3. Drag any vertex to reshape the outline
+4. Click **Save changes** to save
+5. Click elsewhere on the map (or the selected boulder again) to deselect without saving
+
+### Deleting a boulder
+
+1. Click the polygon to select it
+2. Click **Delete boulder** — confirm the prompt
+3. The polygon is removed from the map and the database
+
+### Tips
+
+- Zoom in to at least zoom level 19 before tracing — satellite detail is much better at high zoom
+- Click a boulder ID in the left sidebar to fly the map to that boulder
+- The count in the sidebar updates as you add or delete boulders
 
 ---
 
@@ -319,6 +382,9 @@ Topos are the guidebook-style photos that show where to climb on a boulder face.
 3. In the line editor, click on the photo to place control points for the line
 4. Save — the line links the topo to the problem
 
+### Deleting a topo
+Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
+
 ---
 
 ## Circuits
@@ -349,7 +415,7 @@ POI routes appear on the area edit page and are shown in the mobile app.
 Users can submit photos and route information to improve topos. The contribution form includes:
 
 - **Boulder photo** — uploaded by the contributor; GPS coordinates are automatically extracted from EXIF metadata if available
-- **Route line** — drawn directly on the uploaded photo using an in-browser canvas tool; stored as normalised JSON coordinates
+- **Route line** — drawn directly on the uploaded photo using an in-browser canvas tool; stored as normalised JSON coordinates. Alternatively, the contributor can select an existing topo from the area and draw the line on that instead of uploading a new photo.
 - **UKC link** — optional link to the problem on UK Climbing (ukclimbing.com)
 - **GPS location** — auto-populated from photo EXIF, or entered manually
 
@@ -364,4 +430,17 @@ When reviewing a contribution, the admin edit page shows:
 - The boulder photo with the drawn route line overlaid in red
 - GPS coordinates, name, and any comments
 
+### Partial acceptance
+
+When setting state to **accepted** you can choose which parts to apply using the checkboxes on the edit form:
+
+- **Photo & line** — attaches the contributor's photo as a topo and creates the line overlay (or, if the contributor drew on an existing topo, creates the line on that existing topo)
+- **GPS coordinates** — copies the contributor's GPS location to the problem (only applied if the problem has no existing location)
+
+Both are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa.
+
 Accepting a contribution automatically closes any open contribution request for that problem.
+
+### Existing topo line contributions
+
+If the contributor selected an existing topo photo and drew a line on it (rather than uploading a new photo), the contribution will have an `existing_topo_id` set. When you accept the **Photo & line** part, the system creates a new Line record on that existing topo using the submitted coordinates — no new topo is created.

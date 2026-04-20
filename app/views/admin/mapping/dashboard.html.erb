@@ -15,7 +15,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ascents</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ascents / Problems</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">With contributions</th>
             </tr>
@@ -28,7 +28,13 @@
                     <%= link_to area_with_stats.area.name, admin_area_problems_path(area_with_stats.area, missing: @missing) %>
                   </span>
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap w-2/12"><%= "#{(area_with_stats.ascents / 1000.0).ceil}K" %></td>
+                <td class="px-6 py-2 whitespace-nowrap w-2/12">
+                  <% if area_with_stats.ascents > 0 %>
+                    <%= "#{(area_with_stats.ascents / 1000.0).ceil}K" %>
+                  <% else %>
+                    <%= area_with_stats.area.problems.count %>
+                  <% end %>
+                </td>
                 <td class="px-6 py-2 whitespace-nowrap w-3/12">
                   <span style="color:<%= percentage_color(area_with_stats.completion) %>"><%= "#{number_to_percentage(area_with_stats.completion * 100, precision: 1)}" %></span>
                 </td>

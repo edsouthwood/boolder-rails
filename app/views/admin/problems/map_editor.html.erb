@@ -1,6 +1,7 @@
 <% content_for :head do %>
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"
+          onload="window.dispatchEvent(new Event('maplibre-ready'))"></script>
 <% end %>
 
 <% add_breadcrumb "Dartmoor", admin_areas_path %>

@@ -1,0 +1,103 @@
+<% content_for :head do %>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"
+          onload="window.dispatchEvent(new Event('maplibre-ready'))"></script>
+<% end %>
+
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug) %>
+<% add_breadcrumb "Boulder Editor", nil, class: "active" %>
+
+<div
+  data-controller="admin-boulder-editor"
+  data-admin-boulder-editor-geojson-url-value="<%= geojson_source_url(@area) %>"
+  data-admin-boulder-editor-create-url-value="<%= admin_area_boulders_path(area_slug: @area.slug) %>"
+  data-admin-boulder-editor-update-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
+  data-admin-boulder-editor-delete-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
+  data-admin-boulder-editor-bounds-value="<%= @area.serialized_bounds.to_json %>"
+>
+  <div class="flex border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
+
+    <%# Sidebar %>
+    <div class="w-64 flex-shrink-0 flex flex-col border-r overflow-hidden bg-gray-50">
+
+      <div class="px-3 py-2 bg-gray-800 text-white text-sm font-semibold flex-shrink-0">
+        <%= @area.name %> — Boulder Editor
+      </div>
+
+      <%# Tool buttons %>
+      <div class="p-3 border-b flex flex-col gap-2 flex-shrink-0">
+        <button
+          data-action="click->admin-boulder-editor#startDrawing"
+          data-admin-boulder-editor-target="drawBtn"
+          class="w-full px-3 py-2 text-sm font-medium rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+        >
+          + Draw boulder
+        </button>
+
+        <div data-admin-boulder-editor-target="selectedActions" class="hidden flex flex-col gap-2">
+          <button
+            data-action="click->admin-boulder-editor#saveSelected"
+            class="w-full px-3 py-2 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            Save changes
+          </button>
+          <button
+            data-action="click->admin-boulder-editor#deleteSelected"
+            class="w-full px-3 py-2 text-sm font-medium rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+          >
+            Delete boulder
+          </button>
+        </div>
+
+        <div data-admin-boulder-editor-target="drawingActions" class="hidden flex flex-col gap-2">
+          <p class="text-xs text-gray-600 text-center">Click to add vertices.<br>Double-click to finish.</p>
+          <button
+            data-action="click->admin-boulder-editor#cancelDrawing"
+            class="w-full px-3 py-2 text-sm font-medium rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+          >
+            Cancel (Esc)
+          </button>
+        </div>
+      </div>
+
+      <%# Status %>
+      <div class="px-3 py-2 text-xs text-gray-500 border-b flex-shrink-0">
+        <span data-admin-boulder-editor-target="count"><%= @boulder_count %></span> boulder<span data-admin-boulder-editor-target="countSuffix"><%= @boulder_count == 1 ? '' : 's' %></span>
+        &nbsp;·&nbsp;
+        <span data-admin-boulder-editor-target="status">Click a polygon to select</span>
+      </div>
+
+      <%# Instructions %>
+      <div class="px-3 py-3 text-xs text-gray-500 flex-shrink-0 border-b">
+        <p class="font-medium text-gray-700 mb-1">How to use</p>
+        <ul class="space-y-1 list-disc list-inside">
+          <li>Zoom in on satellite image</li>
+          <li>Click <strong>Draw boulder</strong> to trace a new outline</li>
+          <li>Click an existing boulder to select and edit vertices</li>
+          <li>Drag vertices to reshape</li>
+        </ul>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        <div data-admin-boulder-editor-target="boulderList" class="divide-y text-xs text-gray-500 px-3 py-2">
+          <p class="italic text-gray-400">Loading boulders…</p>
+        </div>
+      </div>
+    </div>
+
+    <%# Map %>
+    <div
+      class="flex-1 relative"
+      id="boulder-editor-canvas"
+      data-admin-boulder-editor-target="mapContainer"
+    >
+      <%# MapLibre renders here %>
+    </div>
+
+  </div>
+
+  <p class="mt-2 text-xs text-gray-400">
+    Satellite imagery © Esri. Boulder data saves automatically on finish.
+  </p>
+</div>

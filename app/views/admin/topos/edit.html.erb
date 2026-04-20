@@ -33,14 +33,18 @@
         </code>
       </p>
 
-      <p>
-        <%= form.submit("Update", class: "btn btn-primary mt-8") %>
-        <% items = [] %>
-        <% items << { text: "destroy", link: admin_topo_path(@topo), data: { "turbo-confirm": 'Are you sure?', "turbo-method": :delete } } %>
-        <%= render 'shared/dot_menu', items: items, align_class: "bottom-0" %>
-      </p>
+      <div class="mt-8">
+        <%= form.submit("Update", class: "btn btn-primary") %>
+      </div>
     </div>
   <% end %>
+
+  <div class="mt-4">
+    <%= button_to "Delete topo", admin_topo_path(@topo),
+          method: :delete,
+          data: { turbo_confirm: "Delete this topo and all its lines? This cannot be undone." },
+          class: "px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors" %>
+  </div>
 </div>
 
 <div style="margin-bottom: 300px"></div>

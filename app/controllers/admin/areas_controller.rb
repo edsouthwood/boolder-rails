@@ -1,7 +1,7 @@
 class Admin::AreasController < Admin::BaseController
   before_action :require_super_admin, only: [:new, :create, :destroy]
-  before_action :set_area,            only: [:show, :edit, :update, :destroy]
-  before_action -> { require_area_access(@area.slug) }, only: [:edit, :update]
+  before_action :set_area,            only: [:show, :edit, :update, :destroy, :request_photos]
+  before_action -> { require_area_access(@area.slug) }, only: [:edit, :update, :request_photos]
 
   def index
     sort = params[:sort] == "id" ? :id : :name
@@ -58,6 +58,32 @@ class Admin::AreasController < Admin::BaseController
     end
   end
 
+  def request_photos
+    candidates = @area.problems.with_location.without_line
+
+    created = 0
+    skipped = 0
+
+    candidates.each do |problem|
+      if problem.contribution_requests.open.exists?
+        skipped += 1
+        next
+      end
+
+      cr = ContributionRequest.new(
+        problem: problem,
+        what: "photo",
+        state: "open",
+        location_estimated: problem.location
+      )
+      cr.save ? created += 1 : skipped += 1
+    end
+
+    flash[:notice] = "Added #{created} photo request#{"s" if created != 1}. " \
+                     "Skipped #{skipped} (already had a request or failed to save)."
+    redirect_to edit_admin_area_path(@area)
+  end
+
   def destroy
     set_area
     @area.destroy!
@@ -73,6 +99,6 @@ class Admin::AreasController < Admin::BaseController
   end
 
   def set_area
-    @area = Area.find_by(slug: params[:slug])
+    @area = Area.find_by(slug: params[:slug] || params[:area_slug])
   end
 end

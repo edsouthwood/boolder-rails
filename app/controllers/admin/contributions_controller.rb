@@ -20,7 +20,11 @@ class Admin::ContributionsController < Admin::BaseController
 
     if @contribution.update(contribution_params)
       if @contribution.state == "accepted" && was_pending
-        process_accepted_contribution(@contribution)
+        options = {
+          apply_photo: params.dig(:contribution, :apply_photo) == "1",
+          apply_gps:   params.dig(:contribution, :apply_gps)   == "1",
+        }
+        process_accepted_contribution(@contribution, options)
       end
       flash[:notice] = "Contribution updated"
       redirect_to edit_admin_contribution_path(@contribution)
@@ -32,17 +36,28 @@ class Admin::ContributionsController < Admin::BaseController
 
   private
 
-  def process_accepted_contribution(contribution)
+  def process_accepted_contribution(contribution, options = {})
+    apply_photo = options.fetch(:apply_photo, true)
+    apply_gps   = options.fetch(:apply_gps,   true)
+
     problem = contribution.problem
     return unless problem
 
     # Apply GPS location to the problem if not already located
-    if contribution.location.present? && problem.location.nil?
+    if apply_gps && contribution.location.present? && problem.location.nil?
       problem.update(location: contribution.location)
     end
 
-    # Attach the first photo as a topo with a line
-    if contribution.photos.any?
+    # Draw line on an existing topo (contributor selected an existing photo)
+    if apply_photo && contribution.existing_topo_id.present?
+      existing_topo = Topo.find_by(id: contribution.existing_topo_id)
+      if existing_topo && contribution.line_coordinates.present?
+        coords = contribution.line_coordinates
+        coords = JSON.parse(coords) if coords.is_a?(String)
+        Line.create!(problem: problem, topo: existing_topo, coordinates: coords.presence)
+      end
+    # Attach the first uploaded photo as a new topo with a line
+    elsif apply_photo && contribution.photos.any?
       photo = contribution.photos.first
       topo = Topo.new(published: true)
       topo.photo.attach(

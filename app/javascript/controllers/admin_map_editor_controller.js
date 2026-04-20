@@ -9,6 +9,11 @@ export default class extends Controller {
   }
 
   connect() {
+    if (typeof maplibregl === 'undefined') {
+      window.addEventListener('maplibre-ready', () => this.connect(), { once: true })
+      return
+    }
+
     this.draggedProblemId = null
     this.draggedProblemName = null
     this.markers = {}

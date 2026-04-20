@@ -7,10 +7,13 @@ Rails.application.routes.draw do
       get "map", to: "maps#show"
       resources :areas, param: :slug do
         resources :problems, only: :index
-        get "map-editor", to: "problems#map_editor", as: :map_editor
+        get  "map-editor",     to: "problems#map_editor",   as: :map_editor
+        get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
+        post "boulders",       to: "boulders#create",       as: :boulders
+        post "request-photos", to: "areas#request_photos",  as: :request_photos
       end
       resources :problems, except: :index
-      resources :boulders
+      resources :boulders, only: [:update, :destroy]
       resources :circuits
       resources :imports do
         get "apply", on: :member

@@ -2,3 +2,18 @@
   <%= form.label :state %>
   <%= form.select :state, Contribution::STATES %>
 </div>
+
+<div class="col-span-6 mt-2">
+  <p class="text-sm font-medium text-gray-700 mb-2">Apply on accept</p>
+  <div class="space-y-2">
+    <label class="flex items-center gap-2 text-sm text-gray-700">
+      <%= form.check_box :apply_photo, checked: true %>
+      Photo &amp; line
+    </label>
+    <label class="flex items-center gap-2 text-sm text-gray-700">
+      <%= form.check_box :apply_gps, checked: true %>
+      GPS coordinates
+    </label>
+  </div>
+  <p class="text-xs text-gray-400 mt-1">Only applied when state is set to "accepted".</p>
+</div>

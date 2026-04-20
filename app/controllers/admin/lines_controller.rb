@@ -18,6 +18,7 @@ class Admin::LinesController < Admin::BaseController
 
     @line = Line.new(problem_id: problem.id)
     @line.build_topo # for topo nested attributes (photo)
+    @area_topos = area_topos_for(problem)
   end
 
   def update
@@ -45,7 +46,8 @@ class Admin::LinesController < Admin::BaseController
       flash[:notice] = "Line created"
       redirect_to edit_admin_line_path(@line)
     else
-      @line.build_topo # for topo nested attributes (photo)
+      @line.build_topo
+      @area_topos = area_topos_for(@line.problem)
       flash[:error] = @line.errors.full_messages.join("; ")
       render "new", status: :unprocessable_entity
     end
@@ -80,5 +82,14 @@ class Admin::LinesController < Admin::BaseController
 
   def auto_close_contribution_request(line)
     line.problem.contribution_requests.open.first&.update(state: "closed")
+  end
+
+  def area_topos_for(problem)
+    return [] unless problem
+    topo_ids = Line.joins(:problem)
+                   .where(problems: { area_id: problem.area_id })
+                   .pluck(:topo_id)
+                   .uniq
+    Topo.where(id: topo_ids).order(id: :desc)
   end
 end

@@ -86,6 +86,33 @@ export default class extends Controller {
       });
     }
 
+    // BOULDER OUTLINES (added before problems so circles appear on top)
+    if(this.hasMapDataSourceValue) {
+      this.map.addLayer({
+        'id': 'boulders',
+        'type': 'fill',
+        'source': 'problems',
+        'minzoom': 16,
+        'paint': {
+          'fill-color': '#888',
+          'fill-opacity': 1,
+        },
+        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+      });
+
+      this.map.addLayer({
+        'id': 'boulders-outline',
+        'type': 'line',
+        'source': 'problems',
+        'minzoom': 16,
+        'paint': {
+          'line-color': '#555',
+          'line-width': 1.5,
+        },
+        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+      });
+    }
+
     if(true) {
     this.map.addLayer({
       'id': 'problems',
@@ -215,33 +242,6 @@ export default class extends Controller {
       ],
     });
     } // end problems block
-
-    // BOULDER OUTLINES
-    if(this.hasMapDataSourceValue) {
-      this.map.addLayer({
-        'id': 'boulders',
-        'type': 'fill',
-        'source': 'problems',
-        'minzoom': 16,
-        'paint': {
-          'fill-color': '#888',
-          'fill-opacity': 1,
-        },
-        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
-      });
-
-      this.map.addLayer({
-        'id': 'boulders-outline',
-        'type': 'line',
-        'source': 'problems',
-        'minzoom': 16,
-        'paint': {
-          'line-color': '#555',
-          'line-width': 1.5,
-        },
-        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
-      });
-    }
 
     // AREA LABELS
     if (this.hasAreaLabelsSourceValue) {

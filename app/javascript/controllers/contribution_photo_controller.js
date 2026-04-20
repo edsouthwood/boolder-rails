@@ -4,7 +4,7 @@ import exifr from 'exifr/full'
 export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
-    'latField', 'lonField', 'gpsStatus'
+    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField'
   ]
 
   connect() {
@@ -40,6 +40,41 @@ export default class extends Controller {
     } catch (_e) {
       // silently ignore EXIF read errors
     }
+  }
+
+  selectExistingTopo(event) {
+    const btn = event.currentTarget
+    const topoId = btn.dataset.topoId
+    const mediumUrl = btn.dataset.mediumUrl
+
+    // Toggle deselect
+    if (this.hasExistingTopoFieldTarget && this.existingTopoFieldTarget.value === topoId) {
+      this.existingTopoFieldTarget.value = ''
+      btn.classList.remove('border-emerald-500')
+      btn.classList.add('border-transparent')
+      this.lineEditorTarget.classList.add('hidden')
+      this.linePromptTarget.classList.remove('hidden')
+      this.points = []
+      if (this.hasCoordsFieldTarget) this.coordsFieldTarget.value = ''
+      return
+    }
+
+    // Deselect any previously selected thumbnail
+    this.topoThumbnailTargets.forEach(t => {
+      t.classList.remove('border-emerald-500')
+      t.classList.add('border-transparent')
+    })
+
+    btn.classList.remove('border-transparent')
+    btn.classList.add('border-emerald-500')
+
+    if (this.hasExistingTopoFieldTarget) this.existingTopoFieldTarget.value = topoId
+
+    this.lineEditorTarget.classList.remove('hidden')
+    this.linePromptTarget.classList.add('hidden')
+
+    this.previewImageTarget.onload = () => { this.setupCanvas() }
+    this.previewImageTarget.src = mediumUrl
   }
 
   setupCanvas() {
