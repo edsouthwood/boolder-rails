@@ -1,82 +1,152 @@
-# Boolder Rails
+# Boolder Dartmoor
 
-Boolder is the best way to discover bouldering in Fontainebleau. 
+A Rails web platform for discovering and mapping bouldering problems on Dartmoor. This is a fork of [boolder-org/boolder-rails](https://github.com/boolder-org/boolder-rails), adapted from its original Fontainebleau focus for the Dartmoor climbing community.
 
-This is the code powering the [Boolder website](https://www.boolder.com) and all the backend & data processing.
+The app manages areas, boulder formations, climbing problems, circuits (colour-coded collections), topos (guidebook images with drawn lines), community contributions, and map data.
 
-NB: if you just want a quick access to the data, check out [boolder-data](https://github.com/boolder-org/boolder-data)
+---
 
 ## Stack
 
-- Ruby On Rails
-- PostgreSQL
-- Tailwind CSS
-- [Stimulus](https://stimulus.hotwired.dev) and [Turbo](https://turbo.hotwired.dev)
+- Ruby on Rails 8, PostgreSQL + PostGIS
+- Tailwind CSS, Stimulus, Turbo
+- Importmap (no Node bundler)
+- Solid Queue / Cache / Cable
+- Kamal deployment
 
+---
 
-## How to run the app (on a Mac)
+## Running locally (Linux)
 
-### Install homebrew
+### Prerequisites
 
-- See https://brew.sh/
+```bash
+# Ruby (via rbenv)
+rbenv install 3.3.5
 
-### Install Ruby
+# PostgreSQL with PostGIS
+sudo apt install postgresql postgis
+```
 
-- `brew install rbenv libyaml`
-- `rbenv install 3.3.5` (replace `3.3.5` with the content of `.ruby-version`)
+### Setup
 
-### Install Postgre
-- cd to the app directory
-- `brew install postgresql`
-- `brew install postgis`
-- `brew services start postgresql`
-- `createdb dump-prod`
+```bash
+git clone git@github.com:edsouthwood/boolder-rails.git
+cd boolder-rails
+bin/setup
+```
 
-### Set up the app
-- cd to the app directory
-- install rails: `sudo gem install rails`
-- `bundle install`
-- `rake db:setup`
+Create a `.env` file in the project root:
 
-### Import prod data
-- `dropdb dump-prod && createdb dump-prod`
-- `psql -d dump-prod < db/dump-prod.sql`
-- `rake db:migrate`
+```
+MAPBOX_DEV_ACCESS_KEY=<your Mapbox public token>
+ADMIN_USERNAME=<username>
+ADMIN_PASSWORD=<password>
+```
 
-### Run the app
+Get a free Mapbox token at https://account.mapbox.com/access-tokens/
 
-- `bin/dev`
+### Start the development server
 
-### Mapbox credentials
+```bash
+bin/dev
+```
 
-- Create an account on https://www.mapbox.com. 
-- Go to the [Tokens]([url](https://account.mapbox.com/access-tokens/)) page and create a public token with all the public `scopes` (or just use the default token).
-- Back in the Rails app, copy the `.env.example` to `.env` and fill out `MAPBOX_DEV_ACCESS_KEY` with your token
-- Restart the server
+The app runs at http://localhost:3000. If running as a systemd service (see below) it starts automatically at boot.
 
-### Optional: JOSM
+---
 
-Josm is an open source tool used by the OpenStreetMap community.
-We use it to edit GeoJSON files.
+## Development server as a systemd service
 
-- Follow the instructions here: `https://josm.openstreetmap.de/wiki/Download#macOS`
-- Go to File > Preferences > Plugins
-- Click on the checkbox next to `Fastdraw` and `PicLayer`, and then click on OK
-- Restart Josm
-- In the menu bar (on the left), click on `Fast Drawing mode` and then type `Q` to enter the options dialog. Click on `Draw closed polygons only`, choose `3` for `Starting Epsilon` and `Simplify with initial epsilon` for `Enter key mode`
+The server runs as two systemd user services that start at boot automatically:
 
-## Contribute
+| Service | Purpose |
+|---|---|
+| `boolder-rails` | Puma web server on port 3000 |
+| `boolder-css` | Tailwind CSS watcher |
 
-Want to help us improve the app for thousands of climbers? Great!
+```bash
+systemctl --user status boolder-rails boolder-css
+systemctl --user restart boolder-rails
+journalctl --user -u boolder-rails -f
+```
 
-Here are a few ways you can contribute:
-- Open an issue if you find a bug
-- Open an issue if you want to suggest an improvement
-- Open a Pull Request (please get in touch with us beforehand, though)
+---
 
-We already have a lot of features waiting to be built, and lots of new ideas to try out!
-We'd be happy to share the fun with you :)
+## Backups
 
-As the project is still young, the best way to get started is to drop us a line at hello@boolder.com
+Daily automated backups run at midnight via a systemd timer, rsyncing to hosted webspace. What is backed up:
 
-You can also contribute to our mapping efforts at https://www.boolder.com/en/contribute
+- PostgreSQL database (compressed pg_dump, 7-day rolling retention)
+- `storage/` directory (all uploaded topo photos and images)
+- `config/master.key` and `.env`
+
+```bash
+bin/backup          # run immediately
+tail -f log/backup.log
+systemctl --user status boolder-backup.timer
+```
+
+Remote destination is configured in `.env.backup` (not committed to git).
+
+---
+
+## Admin
+
+The admin interface is at `/en/admin`, protected by HTTP basic auth (set via `ADMIN_USERNAME` / `ADMIN_PASSWORD` or Rails credentials).
+
+Full documentation is available in-app at `/en/admin/docs` and in `docs/admin_guide.md`.
+
+### Admin roles
+
+| Role | Access |
+|---|---|
+| `super_admin` | Full access — areas, circuits, imports, bulk uploads, POIs, audits |
+| `area_admin` | Edit assigned areas and their problems, topos, lines, contributions |
+
+Credentials are stored in Rails encrypted credentials (`config/credentials.yml.enc`):
+
+```bash
+rails credentials:edit
+```
+
+---
+
+## Changes from upstream
+
+This fork diverges from [boolder-org/boolder-rails](https://github.com/boolder-org/boolder-rails) in the following ways:
+
+### Content and branding
+- Rebranded for Dartmoor — updated imagery, copy, and area data
+- Map provider updated for UK coverage
+
+### Admin role-based access control
+- Two-tier admin system: `super_admin` and `area_admin`
+- Area admins are scoped to a list of assigned area slugs
+- Stored in Rails credentials with a backward-compatible plain-string format
+
+### In-browser mapping tools
+- **Boulder editor** — draw, edit, and delete boulder polygons directly over satellite imagery (no GeoJSON export needed)
+- **Location editor** — drag-and-drop problem positioning on a map; bulk-clear bad coordinates via runner
+- **Problem position editor** — standalone map view for setting problem locations area by area
+
+### Topo and line improvements
+- **Topo picker** — thumbnail grid for selecting an existing topo when adding a new line
+- **Topo delete** — fixed nested-form bug; delete button moved outside the update form
+- Thumb image variant added for topo picker thumbnails
+
+### Contribution improvements
+- Contributors can draw a line on an **existing area topo** instead of uploading a new photo (`existing_topo_id` stored on contributions)
+- **Partial acceptance** — separate checkboxes to apply photo/line and GPS independently when approving a contribution
+- **Request photos** — bulk-create `ContributionRequest` records for unphotographed problems from the area edit page
+
+### Operations
+- Systemd user services for the dev server (`boolder-rails`, `boolder-css`) with auto-start at boot
+- Daily automated backup script (`bin/backup`) with systemd timer — database, storage files, master key, and `.env`
+- In-app admin documentation at `/en/admin/docs`
+
+---
+
+## Contributing
+
+This is a private fork for the Dartmoor bouldering community. For the original Fontainebleau project, see [boolder-org/boolder-rails](https://github.com/boolder-org/boolder-rails).

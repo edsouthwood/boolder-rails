@@ -9,6 +9,7 @@
     <ol class="space-y-1 text-sm text-blue-600 list-decimal list-inside">
       <li><a href="#project-structure" class="hover:underline">Project Structure</a></li>
       <li><a href="#development-server" class="hover:underline">Development Server</a></li>
+      <li><a href="#backups" class="hover:underline">Backups</a></li>
       <li><a href="#admin-accounts" class="hover:underline">Admin Accounts</a></li>
       <li><a href="#permission-levels" class="hover:underline">Permission Levels</a></li>
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
@@ -94,6 +95,50 @@ journalctl --user -u boolder-css -f</pre>
 
         <p class="font-medium text-gray-800">Service files</p>
         <p>Located at <code class="bg-gray-100 px-1 rounded">~/.config/systemd/user/</code>. Environment variables are loaded from the project's <code class="bg-gray-100 px-1 rounded">.env</code> file. Boot auto-start requires <code class="bg-gray-100 px-1 rounded">loginctl enable-linger ed</code> (already configured).</p>
+      </div>
+    </section>
+
+    <%# Backups %>
+    <section id="backups">
+      <%= render "admin/docs/section_header", title: "Backups" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Daily automated backups run via a systemd timer and rsync to hosted webspace at <code class="bg-gray-100 px-1 rounded">edsouthwood.com</code>.</p>
+
+        <p class="font-medium text-gray-800">What is backed up</p>
+        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Webspace location</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100 text-xs">
+            <tr><td class="px-4 py-2 font-mono">PostgreSQL database</td><td class="px-4 py-2 font-mono">bowda-backup/db/</td><td class="px-4 py-2">Compressed pg_dump, timestamped, 7-day rolling retention</td></tr>
+            <tr><td class="px-4 py-2 font-mono">Uploaded files</td><td class="px-4 py-2 font-mono">bowda-backup/storage/</td><td class="px-4 py-2">Incremental rsync — current state only</td></tr>
+            <tr><td class="px-4 py-2 font-mono">config/master.key</td><td class="px-4 py-2 font-mono">bowda-backup/master.key</td><td class="px-4 py-2">Required to decrypt credentials</td></tr>
+            <tr><td class="px-4 py-2 font-mono">.env</td><td class="px-4 py-2 font-mono">bowda-backup/.env</td><td class="px-4 py-2">Mapbox key, admin credentials</td></tr>
+          </tbody>
+        </table>
+
+        <p class="font-medium text-gray-800">Managing backups</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4 overflow-x-auto"># Run a backup immediately
+bin/backup
+
+# Check backup logs
+tail -f log/backup.log
+
+# Check timer status
+systemctl --user status boolder-backup.timer</pre>
+
+        <p class="font-medium text-gray-800">Recovery</p>
+        <p>To restore after a machine failure:</p>
+        <ol class="list-decimal list-inside space-y-1 text-gray-600">
+          <li>Clone the repo from GitHub</li>
+          <li>Restore <code class="bg-gray-100 px-1 rounded">.env</code> and <code class="bg-gray-100 px-1 rounded">config/master.key</code> from the webspace</li>
+          <li>Restore the database: <code class="bg-gray-100 px-1 rounded">gunzip -c dartmoor-dev-YYYYMMDD.sql.gz | psql dartmoor-dev</code></li>
+          <li>Restore storage files: <code class="bg-gray-100 px-1 rounded">rsync -az u79222@edsouthwood.com:bowda-backup/storage/ storage/</code></li>
+        </ol>
       </div>
     </section>
 

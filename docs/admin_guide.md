@@ -3,21 +3,22 @@
 ## Table of Contents
 1. [Project Structure](#project-structure)
 2. [Development Server](#development-server)
-3. [Admin Accounts](#admin-accounts)
-4. [Permission Levels](#permission-levels)
-5. [Managing Areas](#managing-areas)
-6. [Bulk Upload (Problems)](#bulk-upload-problems)
-7. [Importing Problems from Photos](#importing-from-photos)
-8. [Location Editor (Drag-and-Drop)](#location-editor)
-9. [Adding Boulders (Polygon Map Data)](#adding-boulders)
-10. [Boulder Editor (In-Browser)](#boulder-editor)
-11. [GeoJSON Import Workflow](#geojson-import-workflow)
-12. [Individual Problem Editing](#individual-problem-editing)
-13. [Problem Description](#problem-description)
-14. [Topos and Line Drawing](#topos-and-line-drawing)
-15. [Circuits](#circuits)
-16. [POIs and Routes](#pois-and-routes)
-17. [Contributions](#contributions)
+3. [Backups](#backups)
+4. [Admin Accounts](#admin-accounts)
+5. [Permission Levels](#permission-levels)
+6. [Managing Areas](#managing-areas)
+7. [Bulk Upload (Problems)](#bulk-upload-problems)
+8. [Importing Problems from Photos](#importing-from-photos)
+9. [Location Editor (Drag-and-Drop)](#location-editor)
+10. [Adding Boulders (Polygon Map Data)](#adding-boulders)
+11. [Boulder Editor (In-Browser)](#boulder-editor)
+12. [GeoJSON Import Workflow](#geojson-import-workflow)
+13. [Individual Problem Editing](#individual-problem-editing)
+14. [Problem Description](#problem-description)
+15. [Topos and Line Drawing](#topos-and-line-drawing)
+16. [Circuits](#circuits)
+17. [POIs and Routes](#pois-and-routes)
+18. [Contributions](#contributions)
 
 ---
 
@@ -86,6 +87,65 @@ Located at `~/.config/systemd/user/`:
 Environment variables (`PORT`, `RAILS_ENV`, `MAPBOX_DEV_ACCESS_KEY`, etc.) are loaded from the project's `.env` file via `EnvironmentFile=`.
 
 Boot auto-start is enabled via `loginctl enable-linger ed`, which allows user services to run before login.
+
+---
+
+## Backups
+
+Daily automated backups run via a systemd timer and rsync to hosted webspace at `edsouthwood.com`.
+
+### What is backed up
+
+| Item | Location on webspace | Notes |
+|---|---|---|
+| PostgreSQL database | `bowda-backup/db/` | Compressed pg_dump, timestamped, 7-day rolling retention |
+| Uploaded files | `bowda-backup/storage/` | Incremental rsync of `storage/` — current state only |
+| `config/master.key` | `bowda-backup/master.key` | Required to decrypt `credentials.yml.enc` |
+| `.env` | `bowda-backup/.env` | Mapbox key, admin credentials |
+
+Cache, queue, and cable databases are not backed up — they are ephemeral.
+
+### Size estimate
+
+| | Now (~2% complete) | At 100% |
+|---|---|---|
+| Database dump (compressed) | ~5 MB | ~250 MB |
+| Storage files | ~700 MB | ~37 GB |
+
+### Managing backups
+
+```bash
+# Run a backup immediately
+bin/backup
+
+# Check backup logs
+tail -f log/backup.log
+
+# Check timer status
+systemctl --user status boolder-backup.timer
+
+# Follow systemd logs for a backup run
+journalctl --user -u boolder-backup -f
+```
+
+### Configuration
+
+Remote destination is set in `.env.backup` (not committed to git):
+
+```
+BACKUP_REMOTE=u79222@edsouthwood.com:bowda-backup
+```
+
+SSH key auth is required — the key is at `~/.ssh/boolder_backup`. The timer fires daily at midnight with up to 30 minutes of random jitter; `Persistent=true` means it catches up if the machine was off at midnight.
+
+### Recovery
+
+To restore after a machine failure:
+
+1. Clone the repo from GitHub
+2. Restore `.env` and `config/master.key` from the webspace
+3. Restore the database: `gunzip -c dartmoor-dev-YYYYMMDD.sql.gz | psql dartmoor-dev`
+4. Restore storage files: `rsync -az u79222@edsouthwood.com:bowda-backup/storage/ storage/`
 
 ---
 
