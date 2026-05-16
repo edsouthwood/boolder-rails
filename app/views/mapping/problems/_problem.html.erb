@@ -4,15 +4,24 @@
     <span class="ml-2"><%= problem.name_with_fallback %></span>
     <span class="ml-2 text-gray-500"><%= problem.grade %></span>
   </div>
-  <div>
-    <div class="flex space-x-2">
-      <div>
-        <span class="text-gray-500">
-          <% if problem.contributions.pending.count > 0 %>
-            <%= "#{problem.contributions.pending.count} contrib." %>
-          <% end %>
-        </span>
-      </div>
-    </div>
+  <div class="flex items-center space-x-2">
+    <% needs_line     = !problem.has_line %>
+    <% needs_position = problem.location.nil? %>
+    <% if needs_line && needs_position %>
+      <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+        <%= t("views.mapping.problems.index.needs_both") %>
+      </span>
+    <% elsif needs_line %>
+      <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+        <%= t("views.mapping.problems.index.needs_line") %>
+      </span>
+    <% elsif needs_position %>
+      <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+        <%= t("views.mapping.problems.index.needs_position") %>
+      </span>
+    <% end %>
+    <% if problem.contributions.pending.count > 0 %>
+      <span class="text-gray-400 text-xs"><%= "#{problem.contributions.pending.count} contrib." %></span>
+    <% end %>
   </div>
 </div>

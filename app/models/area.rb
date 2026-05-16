@@ -72,6 +72,22 @@ class Area < ApplicationRecord
     circuits.sort_by(&:average_grade)
   end
 
+  def nearby_areas(limit: 3)
+    sw = bounds[:south_west]
+    ne = bounds[:north_east]
+    return [] unless sw && ne
+
+    center_lon = (sw.lon + ne.lon) / 2.0
+    center_lat = (sw.lat + ne.lat) / 2.0
+
+    Area.published
+      .where.not(id: id)
+      .joins(:boulders)
+      .group("areas.id")
+      .order(Arel.sql("ST_Distance(ST_Centroid(ST_Collect(boulders.polygon::geometry)), ST_SetSRID(ST_MakePoint(#{center_lon}, #{center_lat}), 4326))"))
+      .limit(limit)
+  end
+
   def download_size
     topos_count.to_f * 0.15
   end

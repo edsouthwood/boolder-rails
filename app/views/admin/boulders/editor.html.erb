@@ -15,6 +15,9 @@
   data-admin-boulder-editor-update-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
   data-admin-boulder-editor-delete-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
   data-admin-boulder-editor-bounds-value="<%= @area.serialized_bounds.to_json %>"
+  data-admin-boulder-editor-maptiler-key-value="<%= @maptiler_key %>"
+  data-admin-boulder-editor-azure-key-value="<%= @azure_maps_key %>"
+  data-admin-boulder-editor-mapbox-key-value="<%= @mapbox_key %>"
 >
   <div class="flex border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
 
@@ -33,6 +36,14 @@
           class="w-full px-3 py-2 text-sm font-medium rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
         >
           + Draw boulder
+        </button>
+
+        <button
+          data-action="click->admin-boulder-editor#toggleProblems"
+          data-admin-boulder-editor-target="toggleProblemsBtn"
+          class="w-full px-3 py-2 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          Show problems
         </button>
 
         <div data-admin-boulder-editor-target="selectedActions" class="hidden flex flex-col gap-2">
@@ -79,6 +90,43 @@
         </ul>
       </div>
 
+      <%# Basemap switcher %>
+      <div class="px-3 py-2 border-b flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1.5">Basemap</p>
+        <div class="flex gap-1 flex-wrap">
+          <button data-action="click->admin-boulder-editor#setBasemap"
+                  data-basemap="esri"
+                  data-admin-boulder-editor-target="basemapBtn"
+                  class="px-2 py-1 text-xs rounded border transition-colors">
+            ESRI
+          </button>
+          <% if @maptiler_key.present? %>
+            <button data-action="click->admin-boulder-editor#setBasemap"
+                    data-basemap="maptiler"
+                    data-admin-boulder-editor-target="basemapBtn"
+                    class="px-2 py-1 text-xs rounded border transition-colors">
+              MapTiler
+            </button>
+          <% end %>
+          <% if @azure_maps_key.present? %>
+            <button data-action="click->admin-boulder-editor#setBasemap"
+                    data-basemap="bing"
+                    data-admin-boulder-editor-target="basemapBtn"
+                    class="px-2 py-1 text-xs rounded border transition-colors">
+              Bing
+            </button>
+          <% end %>
+          <% if @mapbox_key.present? %>
+            <button data-action="click->admin-boulder-editor#setBasemap"
+                    data-basemap="mapbox"
+                    data-admin-boulder-editor-target="basemapBtn"
+                    class="px-2 py-1 text-xs rounded border transition-colors">
+              Mapbox
+            </button>
+          <% end %>
+        </div>
+      </div>
+
       <div class="flex-1 overflow-y-auto">
         <div data-admin-boulder-editor-target="boulderList" class="divide-y text-xs text-gray-500 px-3 py-2">
           <p class="italic text-gray-400">Loading boulders…</p>
@@ -97,7 +145,7 @@
 
   </div>
 
-  <p class="mt-2 text-xs text-gray-400">
+  <p data-admin-boulder-editor-target="attribution" class="mt-2 text-xs text-gray-400">
     Satellite imagery © Esri. Boulder data saves automatically on finish.
   </p>
 </div>

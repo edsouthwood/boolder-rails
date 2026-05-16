@@ -19,6 +19,7 @@ class AreasController < ApplicationController
     @circuits = @area.main_circuits
 
     @popular_problems = @area.problems.with_location.where(featured: true).order(grade: :desc, popularity: :desc)
+    @nearby_areas = @area.nearby_areas
   end
 
   def problems

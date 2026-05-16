@@ -21,9 +21,12 @@
   <div class="md:grid md:grid-cols-2 md:gap-16 mb-4">
     <div class="col-span-1">
       <div>
-        <h1 class="text-3xl font-bold mb-4 mt-2 px-4 sm:px-0">
+        <h1 class="text-3xl font-bold mb-1 mt-2 px-4 sm:px-0">
           <%= t("circuit.long_name", name: @circuit.name) %>
         </h1>
+        <% if (range = @circuit.grade_range) %>
+          <p class="text-gray-500 px-4 sm:px-0 mb-3"><%= range %></p>
+        <% end %>
 
         <% if @circuit.beginner_friendly? %>
           <span class="flex mb-2 px-4 sm:px-0">

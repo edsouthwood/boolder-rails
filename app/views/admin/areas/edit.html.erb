@@ -31,23 +31,6 @@
         </ul>
         <%= link_to "New poi route", new_admin_poi_route_path(area_id: @area.id) %>
 
-        <div class="mt-6 border-t pt-4">
-          <p class="text-sm text-gray-600 mb-2">
-            <strong>Request photos</strong> — creates open contribution requests for all
-            problems that have a location but no topo photo, skipping any that already
-            have an open request.
-          </p>
-          <% needs_photos = @area.problems.with_location.without_line.count %>
-          <p class="text-xs text-gray-400 mb-3">
-            <%= needs_photos %> problem<%= "s" if needs_photos != 1 %> currently without a photo.
-          </p>
-          <%= button_to "Request photos (#{needs_photos})",
-                admin_area_request_photos_path(area_slug: @area.slug),
-                method: :post,
-                data: { turbo_confirm: "Create photo contribution requests for #{needs_photos} problem#{"s" if needs_photos != 1}?" },
-                class: "btn",
-                disabled: needs_photos.zero? %>
-        </div>
       </div>
     </div>
   </div>

@@ -37,6 +37,7 @@ gem "rgeo-geojson", "~> 2.1.1" # TODO: update
 gem "differ"
 gem "breadcrumbs_on_rails"
 gem "meta-tags"
+gem "sitemap_generator"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

@@ -82,12 +82,9 @@ en:
       problems:
         index:
           title: Problems to map in %{area}
-          group_header: 
-            one: "1 problem"
-            other: "%{count} problems"
-          rest_warning: These problems aren't placed on the map yet but you can submit contributions.
-          tab_prio: In priority
-          tab_rest: Others
+          needs_line: needs line
+          needs_position: needs position
+          needs_both: needs line & position
           other_problem: Map a problem that isn't listed
           metas:
             title: Mapping the %{area} area
@@ -113,9 +110,10 @@ en:
           ukc_url_label: UKC link (optional)
           boulder: Boulder photo
           boulder_description: Take a picture of the boulder with your phone.
+          boulder_description_existing: "We may already have a picture of that boulder. If we do please draw the line on the existing photo, otherwise please upload an image."
           line: Route line
           line_description: Draw the route on your boulder photo.
-          line_upload_photo_first: Upload a boulder photo above to draw the route line.
+          line_upload_photo_first: Select an existing photo above, or upload a new one, to draw the route line.
           line_draw_instruction: "Click on the photo to mark the route line."
           line_optional: (optional)
           line_undo: Undo

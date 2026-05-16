@@ -5,7 +5,8 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = [
     'mapContainer', 'drawBtn', 'drawingActions', 'selectedActions',
-    'status', 'count', 'countSuffix', 'boulderList',
+    'status', 'count', 'countSuffix', 'boulderList', 'basemapBtn', 'attribution',
+    'toggleProblemsBtn',
   ]
   static values = {
     geojsonUrl: String,
@@ -13,6 +14,9 @@ export default class extends Controller {
     updateUrlTemplate: String,
     deleteUrlTemplate: String,
     bounds: Object,
+    maptilerKey: String,
+    azureKey: String,
+    mapboxKey: String,
   }
 
   connect() {
@@ -27,6 +31,9 @@ export default class extends Controller {
     this.vertexMarkers = []
     this.selectedBoulderId = null
     this.bouldersGeoJSON = { type: 'FeatureCollection', features: [] }
+    this.problemFeatures = []
+    this.problemMarkers = []
+    this.problemsVisible = false
 
     const bounds = this.boundsValue
     const sw = bounds.south_west
@@ -53,7 +60,16 @@ export default class extends Controller {
     this.map.addControl(new maplibregl.NavigationControl())
     this.map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }))
 
-    this.map.on('load', () => this.loadData())
+    this.map.on('load', () => {
+      this.loadData()
+      const saved = localStorage.getItem('boulder-editor-basemap')
+      if (saved && this.basemapSources[saved]) {
+        this.map.getSource('satellite').setTiles(this.basemapSources[saved].tiles)
+        this.highlightBasemapBtn(saved)
+      } else {
+        this.highlightBasemapBtn('esri')
+      }
+    })
 
     // Keyboard: Escape cancels drawing
     this._onKeyDown = (e) => { if (e.key === 'Escape') this.cancelDrawing() }
@@ -148,10 +164,8 @@ export default class extends Controller {
     fetch(this.geojsonUrlValue)
       .then(r => r.json())
       .then(data => {
-        // Keep only Polygon features (boulders), not Points (problems)
-        this.bouldersGeoJSON.features = data.features.filter(
-          f => f.geometry.type === 'Polygon'
-        )
+        this.bouldersGeoJSON.features = data.features.filter(f => f.geometry.type === 'Polygon')
+        this.problemFeatures = data.features.filter(f => f.geometry.type === 'Point')
         this.map.getSource('boulders').setData(this.bouldersGeoJSON)
         this.renderBoulderList()
         this.updateCount(this.bouldersGeoJSON.features.length)
@@ -433,6 +447,47 @@ export default class extends Controller {
     }
   }
 
+  // ─── Problem marker toggle ────────────────────────────────────────────────────
+
+  toggleProblems() {
+    this.problemsVisible = !this.problemsVisible
+    if (this.problemsVisible) {
+      this.showProblemMarkers()
+    } else {
+      this.hideProblemMarkers()
+    }
+    this.toggleProblemsBtnTarget.textContent = this.problemsVisible ? 'Hide problems' : 'Show problems'
+    this.toggleProblemsBtnTarget.classList.toggle('bg-indigo-600', this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('text-white', this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('hover:bg-indigo-700', this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('bg-white', !this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('text-gray-700', !this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('border-gray-300', !this.problemsVisible)
+    this.toggleProblemsBtnTarget.classList.toggle('hover:bg-gray-100', !this.problemsVisible)
+  }
+
+  showProblemMarkers() {
+    this.problemFeatures.forEach(feature => {
+      const [lng, lat] = feature.geometry.coordinates
+      const color = feature.properties['marker-color'] || '#ccc'
+      const name = feature.properties.name || ''
+
+      const el = document.createElement('div')
+      el.title = name
+      el.style.cssText = `width:10px;height:10px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);pointer-events:none;`
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(this.map)
+      this.problemMarkers.push(marker)
+    })
+  }
+
+  hideProblemMarkers() {
+    this.problemMarkers.forEach(m => m.remove())
+    this.problemMarkers = []
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   clearVertexMarkers() {
@@ -462,8 +517,56 @@ export default class extends Controller {
     }, 2700)
   }
 
+  // ─── Basemap switcher ─────────────────────────────────────────────────────────
+
+  get basemapSources() {
+    return {
+      esri: {
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        attribution: 'Satellite imagery © Esri',
+      },
+      maptiler: {
+        tiles: [`https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=${this.maptilerKeyValue}`],
+        attribution: 'Satellite imagery © MapTiler',
+      },
+      bing: {
+        tiles: [`https://atlas.microsoft.com/map/tile?api-version=2.1&tilesetId=microsoft.imagery&zoom={z}&x={x}&y={y}&subscription-key=${this.azureKeyValue}`],
+        attribution: 'Satellite imagery © Microsoft (Bing)',
+      },
+      mapbox: {
+        tiles: [`https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.jpg90?access_token=${this.mapboxKeyValue}`],
+        attribution: 'Satellite imagery © Mapbox',
+      },
+    }
+  }
+
+  setBasemap(event) {
+    const name = event.currentTarget.dataset.basemap
+    const source = this.basemapSources[name]
+    if (!source) return
+    this.map.getSource('satellite').setTiles(source.tiles)
+    localStorage.setItem('boulder-editor-basemap', name)
+    this.highlightBasemapBtn(name)
+    if (this.hasAttributionTarget) {
+      this.attributionTarget.textContent = source.attribution + '. Boulder data saves automatically on finish.'
+    }
+  }
+
+  highlightBasemapBtn(name) {
+    this.basemapBtnTargets.forEach(btn => {
+      const active = btn.dataset.basemap === name
+      btn.classList.toggle('bg-gray-800', active)
+      btn.classList.toggle('text-white', active)
+      btn.classList.toggle('border-gray-800', active)
+      btn.classList.toggle('bg-white', !active)
+      btn.classList.toggle('text-gray-700', !active)
+      btn.classList.toggle('border-gray-300', !active)
+    })
+  }
+
   disconnect() {
     document.removeEventListener('keydown', this._onKeyDown)
+    this.hideProblemMarkers()
     this.map?.remove()
   }
 }

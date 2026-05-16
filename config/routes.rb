@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
+  get "/manifest", to: "pwa/manifests#show", defaults: { format: :json }, as: :pwa_manifest
+
   scope "/:locale", locale: /#{I18n.available_locales.join('|')}/ do
     namespace :admin do
       get "map", to: "maps#show"
@@ -10,7 +12,6 @@ Rails.application.routes.draw do
         get  "map-editor",     to: "problems#map_editor",   as: :map_editor
         get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
         post "boulders",       to: "boulders#create",       as: :boulders
-        post "request-photos", to: "areas#request_photos",  as: :request_photos
       end
       resources :problems, except: :index
       resources :boulders, only: [:update, :destroy]
@@ -79,6 +80,7 @@ Rails.application.routes.draw do
 
       get "/levels", to: "areas#levels", as: :areas_levels
 
+      get ":slug/offline-data", to: "areas/offline_data#show", as: :area_offline_data
       get ":slug/:id", to: "problems#show", as: :area_problem, id: /\d.*/
       get ":slug/map", to: redirect("/%{locale}/map/%{slug}"), as: :map_area_legacy_redirect
       get ":slug/problems", to: "areas#problems", as: :area_problems

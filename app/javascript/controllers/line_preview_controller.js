@@ -7,7 +7,7 @@ export default class extends Controller {
   connect() {
     if (this.hasImageTarget) {
       if (this.imageTarget.complete) {
-        this.draw()
+        requestAnimationFrame(() => this.draw())
       } else {
         this.imageTarget.addEventListener('load', () => this.draw())
       }

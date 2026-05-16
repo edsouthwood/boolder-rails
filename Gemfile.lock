@@ -354,6 +354,8 @@ GEM
       ffi (~> 1.12)
       logger
     securerandom (0.4.1)
+    sitemap_generator (6.3.0)
+      builder (~> 3.0)
     solid_cable (3.0.5)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -445,6 +447,7 @@ DEPENDENCIES
   rails (~> 8.0)
   rgeo-geojson (~> 2.1.1)
   rubocop-rails-omakase
+  sitemap_generator
   solid_cable
   solid_cache
   solid_queue

@@ -45,8 +45,7 @@
 
 <% if params[:circuit_id].nil? %>
   <%= form_with url: admin_area_problems_path(@area), method: :get, class: "my-4" do |form| %>
-    <div class="w-1/2">
-      <%# <label for="missing" class="block text-sm font-medium text-gray-700">Missing?</label> %>
+    <div class="w-full sm:w-1/2">
       <%= form.select :missing, [["All", ""], ["Missing location", "location"], ["Missing line only", "line"]], { selected: params[:missing] }, { onchange: 'this.form.submit()', class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" } %>
     </div>
   <% end %>
@@ -59,55 +58,51 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Steepness</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ascents</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Featured</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contrib</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+              <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Steepness</th>
+              <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Featured</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contrib</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% @problems.each do |problem| %>
               <tr class="place-content-start align-top h-16">
-                <td class="px-6 py-2 whitespace-nowrap w-1/12">
+                <td class="px-3 sm:px-6 py-2 whitespace-nowrap w-1/12">
                   <span class="text-sm text-gray-500"><%= link_to(problem.id, admin_problem_path(problem), id: problem.id) %></span>
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap w-2/12">
-                  <div class="text-sm text-gray-900 shrink max-w-16">
+                <td class="px-3 sm:px-6 py-2 w-2/12">
+                  <div class="text-sm text-gray-900 shrink">
                     <%= problem_circle_view(problem) %>
-                    <span class="ml-2"><%= link_to problem.name_with_fallback&.truncate(50), admin_problem_path(problem) %></span>
+                    <span class="ml-1"><%= link_to problem.name_with_fallback&.truncate(30), admin_problem_path(problem) %></span>
                   </div>
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap w-1/12">
-                  <span class="ml-1 text-gray-500"><%= problem.grade %></span>
+                <td class="px-3 sm:px-6 py-2 whitespace-nowrap w-1/12">
+                  <span class="text-gray-500"><%= problem.grade %></span>
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap w-1/12">
+                <td class="hidden sm:table-cell px-6 py-2 whitespace-nowrap w-1/12">
                   <div class="text-sm text-gray-500">
                     <%= problem.steepness %>
                   </div>
                 </td>
-                <td class="px-6 py-2 whitespace-nowrap w-1/12">
-                  <span class="text-sm text-gray-500"><%= problem.ascents %></span>
-                </td>
-                <td class="px-6 py-2 whitespace-nowrap w-1/12">
+                <td class="hidden sm:table-cell px-6 py-2 whitespace-nowrap w-1/12">
                   <% if problem.featured %>
                     <span class="text-red-400">
                       <%= render 'svg/heart', width: 24, height: 24 %>
                     </span>
                   <% end %>
                 </td>
-                <td class="px-6 py-0 whitespace-nowrap w-1/12">
+                <td class="px-3 sm:px-6 py-0 whitespace-nowrap w-1/12">
                   <% if problem.location.nil? %>
-                    <span class="my-4 mr-1 inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">location</span>
+                    <span class="my-4 mr-1 inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">loc.</span>
                   <% end %>
                   <% if !problem.has_line %>
                     <span class="my-4 mr-1 inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">line</span>
                   <% end %>
                 </td>
-                <td class="px-6 py-0 whitespace-nowrap w-1/12">
+                <td class="px-3 sm:px-6 py-0 whitespace-nowrap w-1/12">
                   <% if problem.contribution_requests.open.any? %>
                     <span class="my-4 mr-1 inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-600/20">req.</span>
                   <% end %>

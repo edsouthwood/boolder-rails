@@ -11,7 +11,7 @@
 </div>
 
 <div data-controller="topo-editor">
-  <div style="" data-topo-editor-target="container">
+  <div style="position:relative" data-topo-editor-target="container">
     <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
     <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
   </div>

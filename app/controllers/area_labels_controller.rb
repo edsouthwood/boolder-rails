@@ -13,6 +13,8 @@ class AreaLabelsController < ApplicationController
 
       factory.feature(center, area.id, {
         name:         area.name,
+        priority:     area.priority,
+        problemCount: area.problems.count,
         southWestLon: b[:south_west].lon,
         southWestLat: b[:south_west].lat,
         northEastLon: b[:north_east].lon,

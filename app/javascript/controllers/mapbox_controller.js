@@ -38,7 +38,6 @@ export default class extends Controller {
       this.addLayers()
       this.centerMap()
       this.cleanHistory()
-      this.geolocate.trigger()
     });
 
     this.popup = null
@@ -53,6 +52,12 @@ export default class extends Controller {
 
     // FIXME: make this DRY (see Problem::GRADE_VALUES)
     this.allGrades = ["1","1+","2","2+","3","3+","4","4+","5","5+","1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+","4a","4a+","4b","4b+","4c","4c+","5a","5a+","5b","5b+","5c","5c+","6a","6a+","6b","6b+","6c","6c+","7a","7a+","7b","7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+",]
+  }
+
+  disconnect() {
+    if (this.map) {
+      this.map.remove()
+    }
   }
 
   addControls() {
@@ -251,12 +256,38 @@ export default class extends Controller {
       });
 
       this.map.addLayer({
+        'id': 'areas-circles',
+        'type': 'circle',
+        'source': 'areas',
+        'minzoom': 8,
+        'maxzoom': 16,
+        'paint': {
+          'circle-color': '#10b981',
+          'circle-opacity': 0.25,
+          'circle-stroke-color': '#10b981',
+          'circle-stroke-width': 1,
+          'circle-stroke-opacity': 0.5,
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            8,  ['interpolate', ['linear'], ['get', 'problemCount'], 0, 4,  50, 10, 250, 18],
+            12, ['interpolate', ['linear'], ['get', 'problemCount'], 0, 7,  50, 18, 250, 32],
+          ],
+        },
+      });
+
+      this.map.addLayer({
         'id': 'areas',
         'type': 'symbol',
         'source': 'areas',
-        'minzoom': 10,
+        'minzoom': 8,
         'maxzoom': 16,
+        'filter': [
+          'any',
+          ['>=', ['zoom'], 10],
+          ['==', ['get', 'priority'], 1],
+        ],
         'layout': {
+          'symbol-sort-key': ['get', 'priority'],
           'text-field': ['get', 'name'],
           'text-size': [
             'interpolate', ['linear'], ['zoom'],
@@ -570,8 +601,7 @@ export default class extends Controller {
         problem => `<div>
         <a href="/${this.localeValue}/mapping/problems/${problem.id}" target="_blank">${problem.name || ""}</a>
         <span class="text-gray-400 ml-1">${problem.grade}</span>
-        <span class="text-gray-400 ml-1 font-semibold">(${problem.ascents})</span>
-        </div>`
+</div>`
       ).join("");
        
       new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
@@ -645,6 +675,24 @@ export default class extends Controller {
     });
 
     this.map.on('click', 'areas', (e) => {
+      if(this.map.getZoom() < 15) {
+        let props = e.features[0].properties
+        this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
+      }
+    });
+
+    this.map.on('mouseenter', 'areas-circles', () => {
+      if(this.map.getZoom() < 15) {
+        this.map.getCanvas().style.cursor = 'pointer';
+      }
+    });
+    this.map.on('mouseleave', 'areas-circles', () => {
+      if(this.map.getZoom() < 15) {
+        this.map.getCanvas().style.cursor = '';
+      }
+    });
+
+    this.map.on('click', 'areas-circles', (e) => {
       if(this.map.getZoom() < 15) {
         let props = e.features[0].properties
         this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])

@@ -12,6 +12,7 @@ class Admin::ContributionsController < Admin::BaseController
 
   def edit
     set_contribution
+    @existing_topo = Topo.find_by(id: @contribution.existing_topo_id)
   end
 
   def update

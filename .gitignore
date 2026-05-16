@@ -31,8 +31,9 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 
-# Ignore dotenv file
+# Ignore dotenv files
 /.env
+/.env.backup
 
 /public/packs
 /public/packs-test

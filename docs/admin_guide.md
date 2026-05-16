@@ -2,21 +2,22 @@
 
 ## Table of Contents
 1. [Project Structure](#project-structure)
-2. [Admin Accounts](#admin-accounts)
-3. [Permission Levels](#permission-levels)
-4. [Managing Areas](#managing-areas)
-5. [Bulk Upload (Problems)](#bulk-upload-problems)
-6. [Importing Problems from Photos](#importing-from-photos)
-7. [Location Editor (Drag-and-Drop)](#location-editor)
-8. [Adding Boulders (Polygon Map Data)](#adding-boulders)
-9. [Boulder Editor (In-Browser)](#boulder-editor)
-10. [GeoJSON Import Workflow](#geojson-import-workflow)
-11. [Individual Problem Editing](#individual-problem-editing)
-12. [Problem Description](#problem-description)
-13. [Topos and Line Drawing](#topos-and-line-drawing)
-14. [Circuits](#circuits)
-15. [POIs and Routes](#pois-and-routes)
-16. [Contributions](#contributions)
+2. [Development Server](#development-server)
+3. [Admin Accounts](#admin-accounts)
+4. [Permission Levels](#permission-levels)
+5. [Managing Areas](#managing-areas)
+6. [Bulk Upload (Problems)](#bulk-upload-problems)
+7. [Importing Problems from Photos](#importing-from-photos)
+8. [Location Editor (Drag-and-Drop)](#location-editor)
+9. [Adding Boulders (Polygon Map Data)](#adding-boulders)
+10. [Boulder Editor (In-Browser)](#boulder-editor)
+11. [GeoJSON Import Workflow](#geojson-import-workflow)
+12. [Individual Problem Editing](#individual-problem-editing)
+13. [Problem Description](#problem-description)
+14. [Topos and Line Drawing](#topos-and-line-drawing)
+15. [Circuits](#circuits)
+16. [POIs and Routes](#pois-and-routes)
+17. [Contributions](#contributions)
 
 ---
 
@@ -48,6 +49,43 @@ db/
 docs/
   admin_guide.md            # This file
 ```
+
+---
+
+## Development Server
+
+The development server runs as two systemd user services that start automatically at boot (no login required).
+
+| Service | Purpose |
+|---|---|
+| `boolder-rails` | Puma web server on port 3000 |
+| `boolder-css` | Tailwind CSS watcher (recompiles on file changes) |
+
+### Managing the services
+
+```bash
+# Status
+systemctl --user status boolder-rails boolder-css
+
+# Stop / start / restart
+systemctl --user stop boolder-rails boolder-css
+systemctl --user start boolder-rails boolder-css
+systemctl --user restart boolder-rails
+
+# Follow logs
+journalctl --user -u boolder-rails -f
+journalctl --user -u boolder-css -f
+```
+
+### Service files
+
+Located at `~/.config/systemd/user/`:
+- `boolder-rails.service` — Rails server
+- `boolder-css.service` — Tailwind watcher (uses `-w always` so it stays running without a TTY)
+
+Environment variables (`PORT`, `RAILS_ENV`, `MAPBOX_DEV_ACCESS_KEY`, etc.) are loaded from the project's `.env` file via `EnvironmentFile=`.
+
+Boot auto-start is enabled via `loginctl enable-linger ed`, which allows user services to run before login.
 
 ---
 

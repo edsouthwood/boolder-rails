@@ -11,6 +11,7 @@
     <%= javascript_importmap_tags %>
     <%= yield :head %>
 
+    <meta name="turbo-visit-control" content="reload">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
@@ -26,7 +27,7 @@
     </script>
   </head>
 
-  <body class="bg-gray-100">
+  <body class="bg-gray-100" data-turbo="false">
 
 <div>
   <nav class="bg-gray-800">
@@ -35,23 +36,23 @@
         <div class="flex items-center w-full ">
           <div class="w-full">
             <div class="flex justify-between w-full ">
-              <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-1 overflow-x-auto">
                 <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-                <%= link_to root_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" do %>
+                <%= link_to root_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" do %>
                   <%= image_tag 'logo.svg', class: "h-8 w-auto", alt:"Boolder admin" %>
                 <% end %>
 
-                <%= link_to "Areas", admin_areas_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Areas", admin_areas_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <%= link_to "Mapping", admin_mapping_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Mapping", admin_mapping_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <%= link_to "Contributions (#{Contribution.pending.count})", admin_contributions_path(state: "pending"), class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Contribs (#{Contribution.pending.count})", admin_contributions_path(state: "pending"), class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <%= link_to "Docs", admin_docs_path, class: "text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Docs", admin_docs_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <div class="flex md:hidden">
+                <div class="flex md:hidden flex-shrink-0">
                   <%= render 'shared/search_modal', show_button: true %>
                 </div>
 
@@ -85,7 +86,7 @@
 <%= render "layouts/flash" %>
 
   <main>
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <%= yield %>
     </div>
   </main>

@@ -1,4 +1,21 @@
 <% set_meta_tags title: t("views.areas.show.metas.title", area: @area.name) %>
+<% content_for :json_ld do %>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TouristAttraction",
+  "name": "<%= j @area.name %>",
+  "description": "<%= j @area.description_en.to_s.truncate(200) %>",
+  "url": "<%= area_url(@area) %>",
+  "sport": "Bouldering",
+  "address": {
+    "@type": "PostalAddress",
+    "addressRegion": "Devon",
+    "addressCountry": "GB"
+  }
+}
+</script>
+<% end %>
 <% set_meta_tags description: t("views.areas.show.metas.description", area: @area.name) %>
 
 <% if @area.cover.persisted? %>
@@ -91,6 +108,24 @@
               </div>
             <% end %>
   
+            <div class="mt-6"
+                 data-controller="offline-download"
+                 data-offline-download-url-value="<%= area_offline_data_path(@area) %>"
+                 data-offline-download-slug-value="<%= @area.slug %>">
+              <button data-offline-download-target="button"
+                      data-action="click->offline-download#download"
+                      class="flex items-center space-x-2 text-gray-500 text-sm hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span>Save for offline</span>
+              </button>
+              <div data-offline-download-target="progress" class="hidden text-sm text-gray-500 mt-1">
+                Downloading photos: <span data-offline-download-target="count"></span>
+              </div>
+              <div data-offline-download-target="status" class="hidden text-sm text-gray-400 mt-1"></div>
+            </div>
+
             <%= link_to map_path(@area) do %>
               <div class="flex items-center space-x-2 text-emerald-600 mt-6">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,6 +160,19 @@
               <% end %>
             </div>
           </div>
+
+          <% if @nearby_areas.any? %>
+            <div>
+              <h2 class="text-2xl font-bold mt-8 mb-4 pt-4 px-4 sm:px-0">Nearby areas</h2>
+              <div class="flex flex-nowrap overflow-x-auto space-x-2 px-4 sm:px-0 pb-2">
+                <% @nearby_areas.each do |area| %>
+                  <%= link_to area_path(area) do %>
+                    <%= render 'shared/area_card', area: area %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
 
           <% if @area.poi_routes.any? %>
             <div>

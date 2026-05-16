@@ -33,13 +33,13 @@ export default class extends Controller {
   createPoint(event) {
     var canvas = this.canvasTarget
     var textarea = this.textareaTarget
-    var container = this.containerTarget
 
-    var x = event.pageX - container.offsetLeft
-    var y = event.pageY - container.offsetTop
+    var rect = canvas.getBoundingClientRect()
+    var x = event.clientX - rect.left
+    var y = event.clientY - rect.top
 
-    var percentX = this.limitPrecision(x/canvas.width)
-    var percentY = this.limitPrecision(y/canvas.height)
+    var percentX = this.limitPrecision(x / rect.width)
+    var percentY = this.limitPrecision(y / rect.height)
 
     var point = {'x': percentX, 'y': percentY }
 

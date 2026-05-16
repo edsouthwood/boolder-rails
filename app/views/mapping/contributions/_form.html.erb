@@ -78,7 +78,7 @@
     <div class="px-4 sm:px-0">
       <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.contributions.new.boulder") %></h2>
       <p class="mt-1 text-sm leading-6 text-gray-600">
-        <%= t("views.mapping.contributions.new.boulder_description") %>
+        <%= @area_topos.present? ? t("views.mapping.contributions.new.boulder_description_existing") : t("views.mapping.contributions.new.boulder_description") %>
         <div data-controller="reveal">
           <a href="javascript:void(0)" class="block" data-action="reveal#toggle">
             <div class="flex items-center space-x-2 text-emerald-600 mt-6">
@@ -100,32 +100,55 @@
 
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <div class="px-4 py-6 sm:p-8">
-        <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
-          <div class="col-span-full">
-            <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-              <div class="text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-                </svg>
-                <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600 text-center">
-                  <%= form.file_field :photos, multiple: true,
-                        data: { "contribution-photo-target": "input",
-                                action: "change->contribution-photo#handlePhotoChange" },
-                        class: "" %>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-4">
-              <%= warning_box do %>
-                <%= t("views.mapping.contributions.new.warning_horizontal_html") %>
+        <%# Existing topo picker — shown first when area topos are available %>
+        <% if @area_topos.present? %>
+          <div class="mb-4">
+            <p class="text-sm font-semibold text-gray-800 mb-3">Use an existing photo:</p>
+            <div class="flex flex-wrap gap-3">
+              <% @area_topos.each do |topo| %>
+                <button type="button"
+                        data-contribution-photo-target="topoThumbnail"
+                        data-action="click->contribution-photo#selectExistingTopo"
+                        data-topo-id="<%= topo.id %>"
+                        data-medium-url="<%= url_for(topo.photo.variant(:medium)) %>"
+                        class="border-2 border-transparent rounded-lg overflow-hidden hover:border-emerald-500 focus:outline-none focus:border-emerald-500 transition-colors">
+                  <%= image_tag topo.photo.variant(:thumb), class: "block w-32 h-20 object-cover", alt: "Topo #{topo.id}" %>
+                </button>
               <% end %>
             </div>
-
           </div>
 
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="bg-white px-3 text-gray-400">or upload a new photo</span>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+          <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+            </svg>
+            <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600 text-center">
+              <%= form.file_field :photos, multiple: true,
+                    data: { "contribution-photo-target": "input",
+                            action: "change->contribution-photo#handlePhotoChange" },
+                    class: "" %>
+            </div>
+          </div>
         </div>
+
+        <div class="mt-4">
+          <%= warning_box do %>
+            <%= t("views.mapping.contributions.new.warning_horizontal_html") %>
+          <% end %>
+        </div>
+
       </div>
     </div>
   </div>
@@ -140,26 +163,6 @@
 
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <div class="px-4 py-6 sm:p-8">
-
-        <%# Existing topo picker — only shown when area topos are available %>
-        <% if @area_topos.present? %>
-          <div class="mb-4" data-contribution-photo-target="topoPicker">
-            <p class="text-sm font-medium text-gray-700 mb-2">Draw on an existing photo:</p>
-            <div class="flex flex-wrap gap-2">
-              <% @area_topos.each do |topo| %>
-                <button type="button"
-                        data-contribution-photo-target="topoThumbnail"
-                        data-action="click->contribution-photo#selectExistingTopo"
-                        data-topo-id="<%= topo.id %>"
-                        data-medium-url="<%= url_for(topo.photo.variant(:medium)) %>"
-                        class="border-2 border-transparent rounded-lg overflow-hidden hover:border-emerald-500 focus:outline-none focus:border-emerald-500 transition-colors">
-                  <%= image_tag topo.photo.variant(:thumb), class: "block w-24 h-16 object-cover", alt: "Topo #{topo.id}" %>
-                </button>
-              <% end %>
-            </div>
-            <p class="mt-2 text-xs text-gray-400">Or upload a new photo in the section above.</p>
-          </div>
-        <% end %>
 
         <%= form.hidden_field :existing_topo_id, data: { "contribution-photo-target": "existingTopoField" } %>
 

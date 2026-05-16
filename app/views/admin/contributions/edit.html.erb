@@ -67,12 +67,24 @@
 
       <% if @contribution.line_coordinates.present? && @contribution.photos.any? %>
         <div class="mb-4 relative" data-controller="line-preview"
-             data-line-preview-coordinates-value="<%= @contribution.line_coordinates.to_json %>">
+             data-line-preview-coordinates-value="<%= @contribution.line_coordinates %>">
           <%= image_tag(@contribution.photos.first, class: "w-full object-cover block rounded",
                 data: { "line-preview-target": "image" }) %>
           <canvas data-line-preview-target="canvas"
                   class="absolute top-0 left-0 pointer-events-none rounded"
                   style="width:100%;height:100%"></canvas>
+        </div>
+      <% elsif @contribution.line_coordinates.present? && @existing_topo %>
+        <div class="mb-4">
+          <p class="text-xs text-gray-500 mb-1">Line drawn on <%= link_to "Topo ##{@existing_topo.id}", edit_admin_topo_path(@existing_topo), class: "text-emerald-600 hover:underline" %>:</p>
+          <div class="relative" data-controller="line-preview"
+               data-line-preview-coordinates-value="<%= @contribution.line_coordinates %>">
+            <%= cdn_image_tag(@existing_topo.photo.variant(:medium), class: "w-full object-cover block rounded",
+                  data: { "line-preview-target": "image" }) %>
+            <canvas data-line-preview-target="canvas"
+                    class="absolute top-0 left-0 pointer-events-none rounded"
+                    style="width:100%;height:100%"></canvas>
+          </div>
         </div>
       <% else %>
         <% @contribution.photos.each do |photo| %>

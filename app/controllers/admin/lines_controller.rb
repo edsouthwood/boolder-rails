@@ -43,6 +43,10 @@ class Admin::LinesController < Admin::BaseController
     if @line.save
       auto_close_contribution_request(@line)
 
+      if params[:use_gps_location] == "1" && params[:gps_lat].present? && params[:gps_lon].present?
+        @line.problem.update(lat: params[:gps_lat], lon: params[:gps_lon])
+      end
+
       flash[:notice] = "Line created"
       redirect_to edit_admin_line_path(@line)
     else

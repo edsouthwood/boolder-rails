@@ -1,6 +1,6 @@
 class CircuitsController < ApplicationController
   def index
-    @circuits = Circuit.all.select { |c| c.problems.any? }.sort_by(&:average_grade)
+    @circuits = Circuit.joins(:problems).distinct.sort_by(&:average_grade)
   end
 
   def show

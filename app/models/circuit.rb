@@ -27,6 +27,15 @@ class Circuit < ApplicationRecord
     }
   end
 
+  def grade_range
+    grades = problems.pluck(:grade).compact.select { |g| g.in?(Problem::GRADE_VALUES) }
+    return nil if grades.empty?
+    sorted = grades.sort_by { |g| Problem::GRADE_VALUES.index(g) }
+    min = sorted.first
+    max = sorted.last
+    min == max ? min : "#{min}–#{max}"
+  end
+
   def average_grade
     problems_with_grade = problems.select { |p| p.grade.in?(Problem::GRADE_VALUES) }
     grades_int = problems_with_grade.map { |p| Problem::GRADE_VALUES.index(p.grade) }

@@ -25,5 +25,6 @@ module Boolder
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.time_zone = "London"
+    config.session_store :cache_store, key: "_boolder_session"
   end
 end

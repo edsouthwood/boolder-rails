@@ -1,4 +1,24 @@
 <% set_meta_tags title: t("views.problems.show.metas.title", problem: @problem.name_with_fallback, grade: @problem.grade, area: @problem.area.name) %>
+<% content_for :json_ld do %>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "<%= j @problem.name_with_fallback %> (<%= j @problem.grade %>)",
+  "url": "<%= area_problem_url(@problem.area, @problem) %>",
+  "sport": "Bouldering",
+  "location": {
+    "@type": "Place",
+    "name": "<%= j @problem.area.name %>",
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "Devon",
+      "addressCountry": "GB"
+    }<%= @problem.location ? ",\n    \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": #{@problem.lat}, \"longitude\": #{@problem.lon} }" : "" %>
+  }
+}
+</script>
+<% end %>
 
 <% set_meta_tags canonical: area_problem_url(@problem.area, @problem) %>
 
@@ -34,11 +54,15 @@
         <% if @line %>
           <%= render 'shared/topo_with_line', line: @line, scope: :front %>
         <% else %>
-          <div class="w-full aspect-w-4 aspect-h-3 bg-gray-300 sm:rounded-lg">
-            <div class="flex flex-wrap justify-center content-center">
+          <div class="w-full aspect-w-4 aspect-h-3 bg-gray-200 sm:rounded-lg">
+            <div class="flex flex-col items-center justify-center space-y-2">
               <span class="text-gray-400">
-                <%= render 'svg/nophoto', width: 98, height: 98 %>
+                <%= render 'svg/nophoto', width: 64, height: 64 %>
               </span>
+              <p class="text-sm text-gray-500">No photo yet.</p>
+              <%= link_to mapping_map_path(@problem.area), class: "text-sm text-emerald-600 hover:underline" do %>
+                Help us add one &rarr;
+              <% end %>
             </div>
           </div>
         <% end %>
