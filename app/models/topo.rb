@@ -10,6 +10,14 @@ class Topo < ApplicationRecord
   audited
 
   scope :published, -> { where(published: true) }
+  scope :near_location, ->(point, distance_m = 10) {
+    joins(lines: :problem)
+      .where(
+        "ST_DWithin(problems.location::geography, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :dist)",
+        lon: point.lon, lat: point.lat, dist: distance_m
+      )
+      .distinct
+  }
 
   validates :photo, presence: true
 

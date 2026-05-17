@@ -1,6 +1,6 @@
 class Admin::ProblemsController < Admin::BaseController
   before_action :require_index_area_access,   only: [:index, :map_editor]
-  before_action :require_problem_area_access, only: [:new, :create, :show, :edit, :update]
+  before_action :require_problem_area_access, only: [:new, :create, :show, :edit, :update, :destroy]
 
   def index
     @area = Area.find_by(slug: params[:area_slug])
@@ -62,6 +62,14 @@ class Admin::ProblemsController < Admin::BaseController
 
   def edit
     set_problem
+  end
+
+  def destroy
+    set_problem
+    area = @problem.area
+    @problem.destroy!
+    flash[:notice] = "Problem deleted"
+    redirect_to admin_area_problems_path(area_slug: area.slug)
   end
 
   def map_editor

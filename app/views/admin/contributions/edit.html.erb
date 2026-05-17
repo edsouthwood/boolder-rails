@@ -27,6 +27,12 @@
     </div>
 
     <div class="mt-5 md:mt-0 md:col-span-2">
+      <% if @nearby_topos.any? %>
+        <div class="mb-4 rounded bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
+          &#9888; <%= pluralize(@nearby_topos.size, "existing photo") %> found within 10 m &mdash; check below before importing.
+        </div>
+      <% end %>
+
       <% if problem = @contribution.problem %>
         <p class="my-4">
           <%= problem_circle_view(problem) %>
@@ -102,3 +108,26 @@
     </div>
   </div>
 </div>
+
+<% if @contribution.location.present? %>
+  <div class="mt-8 border-t pt-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Existing photos within 10 m</h3>
+    <% if @nearby_topos.any? %>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <% @nearby_topos.each do |topo| %>
+          <%= link_to edit_admin_topo_path(topo), target: "_blank", class: "block" do %>
+            <%= cdn_image_tag topo.photo.variant(:thumb),
+                  class: "w-full h-28 object-cover rounded border border-gray-200" %>
+            <% prob = topo.problems.first %>
+            <% if prob %>
+              <p class="text-xs text-gray-600 mt-1 truncate"><%= prob.name_with_fallback %></p>
+              <p class="text-xs text-gray-400 truncate"><%= prob.area.name %></p>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-gray-400 italic">No existing photos found nearby.</p>
+    <% end %>
+  </div>
+<% end %>

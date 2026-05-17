@@ -1,6 +1,6 @@
 class Admin::ContributionsController < Admin::BaseController
   def index
-    arel = Contribution.all.order(id: :desc)
+    arel = Contribution.includes(problem: :area).order(id: :desc)
 
     if params[:state].in?(Contribution::STATES)
       session[:contributions_filter] = params[:state]
@@ -13,6 +13,12 @@ class Admin::ContributionsController < Admin::BaseController
   def edit
     set_contribution
     @existing_topo = Topo.find_by(id: @contribution.existing_topo_id)
+    @nearby_topos = []
+    if (loc = @contribution.location)
+      @nearby_topos = Topo.near_location(loc, 10)
+                          .where.not(id: @contribution.existing_topo_id.to_i)
+                          .includes(lines: :problem)
+    end
   end
 
   def update
@@ -84,7 +90,7 @@ class Admin::ContributionsController < Admin::BaseController
 
   def contribution_params
     params.require(:contribution).
-      permit(:state)
+      permit(:state, :existing_topo_id)
   end
 
   def set_contribution

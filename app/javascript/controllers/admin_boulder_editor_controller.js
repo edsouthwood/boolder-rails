@@ -32,7 +32,6 @@ export default class extends Controller {
     this.selectedBoulderId = null
     this.bouldersGeoJSON = { type: 'FeatureCollection', features: [] }
     this.problemFeatures = []
-    this.problemMarkers = []
     this.problemsVisible = false
 
     const bounds = this.boundsValue
@@ -133,6 +132,34 @@ export default class extends Controller {
       paint: { 'line-color': '#f59e0b', 'line-width': 2, 'line-dasharray': [2, 2] },
     })
 
+    // Problem markers (toggled on/off; starts hidden)
+    this.map.addSource('problems', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    })
+    this.map.addLayer({
+      id: 'problems',
+      type: 'circle',
+      source: 'problems',
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': 5,
+        'circle-color': ['coalesce', ['get', 'marker-color'], '#cccccc'],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#ffffff',
+      }
+    })
+
+    const problemPopup = new maplibregl.Popup({ offset: 8, closeButton: false, closeOnClick: false })
+    this.map.on('mousemove', 'problems', (e) => {
+      this.map.getCanvas().style.cursor = 'default'
+      problemPopup.setLngLat(e.lngLat).setText(e.features[0].properties.name).addTo(this.map)
+    })
+    this.map.on('mouseleave', 'problems', () => {
+      this.map.getCanvas().style.cursor = ''
+      problemPopup.remove()
+    })
+
     // Click on boulders-fill to select
     this.map.on('click', 'boulders-fill', (e) => {
       if (this.state !== 'idle' && this.state !== 'selected') return
@@ -167,6 +194,7 @@ export default class extends Controller {
         this.bouldersGeoJSON.features = data.features.filter(f => f.geometry.type === 'Polygon')
         this.problemFeatures = data.features.filter(f => f.geometry.type === 'Point')
         this.map.getSource('boulders').setData(this.bouldersGeoJSON)
+        this.map.getSource('problems').setData({ type: 'FeatureCollection', features: this.problemFeatures })
         this.renderBoulderList()
         this.updateCount(this.bouldersGeoJSON.features.length)
       })
@@ -467,25 +495,11 @@ export default class extends Controller {
   }
 
   showProblemMarkers() {
-    this.problemFeatures.forEach(feature => {
-      const [lng, lat] = feature.geometry.coordinates
-      const color = feature.properties['marker-color'] || '#ccc'
-      const name = feature.properties.name || ''
-
-      const el = document.createElement('div')
-      el.title = name
-      el.style.cssText = `width:10px;height:10px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);pointer-events:none;`
-
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([lng, lat])
-        .addTo(this.map)
-      this.problemMarkers.push(marker)
-    })
+    this.map.setLayoutProperty('problems', 'visibility', 'visible')
   }
 
   hideProblemMarkers() {
-    this.problemMarkers.forEach(m => m.remove())
-    this.problemMarkers = []
+    this.map.setLayoutProperty('problems', 'visibility', 'none')
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -566,7 +580,6 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener('keydown', this._onKeyDown)
-    this.hideProblemMarkers()
     this.map?.remove()
   }
 }

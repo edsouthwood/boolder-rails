@@ -1,6 +1,12 @@
 class Admin::ToposController < Admin::BaseController
   before_action :require_super_admin,      only: [:new, :create]
   before_action :require_topo_area_access, only: [:show, :edit, :update, :destroy]
+  before_action :set_area_and_check_access, only: [:index]
+
+  def index
+    topo_ids = Topo.joins(:problems).where(problems: { area_id: @area.id }).select(:id)
+    @topos = Topo.where(id: topo_ids).includes(lines: :problem)
+  end
 
   def new
     @topo = Topo.new
@@ -77,6 +83,11 @@ class Admin::ToposController < Admin::BaseController
   end
 
   private
+
+  def set_area_and_check_access
+    @area = Area.find_by!(slug: params[:area_slug])
+    require_area_access(@area.slug)
+  end
 
   def require_topo_area_access
     slug = Topo.find(params[:id]).problems.first&.area&.slug

@@ -10,6 +10,11 @@
       <%= form.check_box :apply_photo, checked: true %>
       Photo &amp; line
     </label>
+    <% if @contribution.problem&.topos&.any? && @contribution.photos.any? && @contribution.existing_topo_id.blank? %>
+      <p class="text-xs text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1">
+        &#9888; This problem already has <%= pluralize(@contribution.problem.topos.count, "topo") %> &mdash; importing will create a duplicate.
+      </p>
+    <% end %>
     <label class="flex items-center gap-2 text-sm text-gray-700">
       <%= form.check_box :apply_gps, checked: true %>
       GPS coordinates
@@ -17,3 +22,22 @@
   </div>
   <p class="text-xs text-gray-400 mt-1">Only applied when state is set to "accepted".</p>
 </div>
+
+<% if @contribution.problem&.topos&.any? && @contribution.line_coordinates.present? %>
+  <div class="col-span-6 mt-4 border-t pt-4">
+    <p class="text-sm font-medium text-gray-700 mb-2">Draw line on</p>
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= radio_button_tag "contribution[existing_topo_id]", "", @contribution.existing_topo_id.blank? %>
+        New topo from contributed photo
+      </label>
+      <% @contribution.problem.topos.each do |topo| %>
+        <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+          <%= radio_button_tag "contribution[existing_topo_id]", topo.id, @contribution.existing_topo_id == topo.id %>
+          <%= cdn_image_tag topo.photo.variant(:thumb), class: "w-20 h-14 object-cover rounded border border-gray-200" %>
+          <span>Topo #<%= topo.id %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -8,6 +8,7 @@
   <% if params[:circuit_id].to_i > 0 %>
     <% items << { text: "Edit circuit", link: edit_admin_circuit_path(id: params[:circuit_id]) } %>
   <% end %>
+  <% items << { text: "Topos", link: admin_area_topos_path(area_slug: @area.slug) } %>
   <% items << { text: "Location editor", link: admin_area_map_editor_path(area_slug: @area.slug) } %>
   <% items << { text: "Boulder editor", link: admin_area_boulder_editor_path(area_slug: @area.slug) } %>
   <% items << { text: "Map edit", link: geojson_io_url(@area), target: "_blank" } %>
