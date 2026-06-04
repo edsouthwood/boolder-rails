@@ -4,7 +4,7 @@ class AreaLabelsController < ApplicationController
 
     features = Area.published.filter_map do |area|
       b = area.bounds
-      next if b[:south_west].lon.nil? || b[:north_east].lon.nil?
+      next if b[:south_west]&.lon.nil? || b[:north_east]&.lon.nil?
 
       center = FACTORY.point(
         (b[:south_west].lon + b[:north_east].lon) / 2.0,

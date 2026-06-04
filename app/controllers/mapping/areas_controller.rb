@@ -7,5 +7,6 @@ class Mapping::AreasController < ApplicationController
         )
       }.
       sort_by { |area_with_count| I18n.transliterate(area_with_count.area.name) }
+    @top_contributors = Contribution.top_contributors
   end
 end

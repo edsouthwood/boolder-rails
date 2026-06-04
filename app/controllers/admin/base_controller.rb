@@ -8,12 +8,14 @@ class Admin::BaseController < ApplicationController
   private
 
   def authenticate
+    return true if session[:admin_user_name].present? && accounts[session[:admin_user_name]].present?
+
     authenticate_or_request_with_http_basic("admin") do |id, password|
       account = accounts[id.to_s]
       if account
         session[:admin_user_name] = id
         expected = account.is_a?(String) ? account : account.with_indifferent_access[:password]
-        password == expected
+        ActiveSupport::SecurityUtils.secure_compare(password, expected)
       end
     end
   end

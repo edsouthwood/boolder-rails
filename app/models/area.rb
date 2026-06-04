@@ -49,17 +49,31 @@ class Area < ApplicationRecord
   end
 
   def bounds
-    relevant_boulders = boulders.where(ignore_for_area_hull: false)
-    @bounds ||= {
-      south_west: FACTORY.point(relevant_boulders.minimum("st_xmin(polygon::geometry)"), relevant_boulders.minimum("st_ymin(polygon::geometry)")),
-      north_east: FACTORY.point(relevant_boulders.maximum("st_xmax(polygon::geometry)"), relevant_boulders.maximum("st_ymax(polygon::geometry)"))
-    }
+    @bounds ||= begin
+      relevant_boulders = boulders.where(ignore_for_area_hull: false)
+      if relevant_boulders.exists?
+        {
+          south_west: FACTORY.point(relevant_boulders.minimum("st_xmin(polygon::geometry)"), relevant_boulders.minimum("st_ymin(polygon::geometry)")),
+          north_east: FACTORY.point(relevant_boulders.maximum("st_xmax(polygon::geometry)"), relevant_boulders.maximum("st_ymax(polygon::geometry)"))
+        }
+      else
+        located = problems.with_location
+        if located.exists?
+          {
+            south_west: FACTORY.point(located.minimum("ST_X(location::geometry)"), located.minimum("ST_Y(location::geometry)")),
+            north_east: FACTORY.point(located.maximum("ST_X(location::geometry)"), located.maximum("ST_Y(location::geometry)"))
+          }
+        else
+          { south_west: nil, north_east: nil }
+        end
+      end
+    end
   end
 
   def serialized_bounds
     {
-      south_west: { lat: bounds[:south_west]&.lat || 0.0, lng: bounds[:south_west]&.lon || 0.0 },
-      north_east: { lat: bounds[:north_east]&.lat || 0.0, lng: bounds[:north_east]&.lon || 0.0 }
+      south_west: { lat: bounds[:south_west]&.lat || 50.50, lng: bounds[:south_west]&.lon || -4.10 },
+      north_east: { lat: bounds[:north_east]&.lat || 50.65, lng: bounds[:north_east]&.lon || -3.75 }
     }
   end
 
