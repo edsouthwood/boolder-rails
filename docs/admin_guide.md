@@ -760,7 +760,12 @@ removed at the same time (`/en/app` now redirects to the map).
 
 ## Open Data Export
 
-The full problems dataset is publicly downloadable as CSV, released under
+> **Development-only for now (since June 2026):** the export is disabled in production until
+> the other contributors have agreed to releasing the data under CC0. To re-enable it, remove
+> the `Rails.env.local?` guards in `config/routes.rb`, `app/views/pages/about.html.erb` and
+> `app/views/layouts/_footer.html.erb`.
+
+The full problems dataset is downloadable as CSV, intended for release under
 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain):
 
 ```

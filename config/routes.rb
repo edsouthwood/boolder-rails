@@ -112,8 +112,12 @@ Rails.application.routes.draw do
     get "/p/:id", to: "welcome#problem_permalink", as: :problem_permalink # used by the apps to redirect to a problem webpage
   end
 
-  # Open data: full problems dataset as CSV (CC0). Non-localized so the URL is stable.
-  get "/data/problems.csv", to: "open_data#problems", as: :open_data_problems
+  # Open data: full problems dataset as CSV. Non-localized so the URL is stable.
+  # Development-only until the contributors have agreed the CC0 license — do not
+  # expose in production before that's confirmed.
+  if Rails.env.local?
+    get "/data/problems.csv", to: "open_data#problems", as: :open_data_problems
+  end
 
   # French support was removed (the translations described Fontainebleau, not Dartmoor).
   # Send any old /fr links to the English equivalent.

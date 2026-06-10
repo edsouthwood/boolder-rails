@@ -22,11 +22,14 @@
           </a>
         </div>
 
+        <%# Hidden in production until the contributors have agreed the CC0 license. %>
+        <% if Rails.env.local? %>
         <div class="px-4 py-2">
           <a href="<%= about_path(anchor: "open-data") %>" class="text-base text-gray-400 hover:text-gray-900">
             <%= t('views.layout.footer.open_data') %>
           </a>
         </div>
+        <% end %>
       </nav>
     </div>
   </div>

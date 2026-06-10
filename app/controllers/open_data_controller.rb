@@ -1,7 +1,9 @@
 require "csv"
 
-# Open-data export, released under CC0 (public domain): every publicly visible
-# problem as a single CSV. Linked from the About page and the footer.
+# Open-data export, intended for release under CC0 (public domain): every publicly
+# visible problem as a single CSV. Linked from the About page and the footer.
+# Routed only in development/test (see config/routes.rb) until the contributors
+# have agreed the license.
 class OpenDataController < ApplicationController
   CSV_COLUMNS = %w[id name grade steepness latitude longitude area url].freeze
 

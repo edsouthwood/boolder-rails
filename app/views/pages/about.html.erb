@@ -60,6 +60,8 @@
     </div>
   </section>
 
+  <%# Hidden in production until the contributors have agreed the CC0 license. %>
+  <% if Rails.env.local? %>
   <section id="open-data">
     <div class="mx-auto max-w-7xl py-8 px-6 lg:px-8">
       <h2 class="text-3xl font-bold tracking-tight text-warm-gray-900">
@@ -79,6 +81,7 @@
       </p>
     </div>
   </section>
+  <% end %>
 
   <div class="bg-warm-gray-50">
     <section id="contact">
