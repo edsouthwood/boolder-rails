@@ -12,6 +12,8 @@ class Mapping::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "div[data-controller*=location-picker]"
     assert_select "div[data-location-picker-target=map]"
+    # The picker is wired to the area's boulder geojson so outlines are drawn.
+    assert_select "div[data-location-picker-map-data-url-value*=?]", "area_id=#{@area.id}"
   end
 
   test "renders the contribution detail page" do

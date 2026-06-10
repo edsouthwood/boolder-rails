@@ -5,7 +5,7 @@ import { Controller } from '@hotwired/stimulus'
 // (the contribution-photo controller dispatches `input` on those fields).
 export default class extends Controller {
   static targets = ['map', 'latField', 'lonField']
-  static values = { bounds: Object }
+  static values = { bounds: Object, mapDataUrl: String }
 
   connect() {
     if (typeof maplibregl === 'undefined') {
@@ -35,8 +35,32 @@ export default class extends Controller {
     this.latFieldTarget.addEventListener('input', this.onFieldInput)
     this.lonFieldTarget.addEventListener('input', this.onFieldInput)
 
-    // If the fields already hold coords, show the marker there.
-    this.map.on('load', () => this.syncFromFields())
+    this.map.on('load', () => {
+      this.addBoulders()
+      // If the fields already hold coords, show the marker there.
+      this.syncFromFields()
+    })
+  }
+
+  // Draw the area's boulder outlines so the contributor has a visual reference.
+  addBoulders() {
+    if (!this.hasMapDataUrlValue) return
+
+    this.map.addSource('area-data', { type: 'geojson', data: this.mapDataUrlValue })
+    this.map.addLayer({
+      id: 'boulders',
+      type: 'fill',
+      source: 'area-data',
+      paint: { 'fill-color': '#888', 'fill-opacity': 0.65 },
+      filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+    })
+    this.map.addLayer({
+      id: 'boulders-outline',
+      type: 'line',
+      source: 'area-data',
+      paint: { 'line-color': '#555', 'line-width': 1.5 },
+      filter: ['match', ['geometry-type'], ['Polygon'], true, false],
+    })
   }
 
   disconnect() {

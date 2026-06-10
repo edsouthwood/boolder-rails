@@ -28,7 +28,8 @@
 
 <div class="space-y-10 divide-y divide-gray-900/10"
      data-controller="contribution-photo location-picker"
-     data-location-picker-bounds-value="<%= picker_bounds.to_json %>">
+     data-location-picker-bounds-value="<%= picker_bounds.to_json %>"
+     <% if @contribution.problem&.area_id %>data-location-picker-map-data-url-value="<%= map_data_path(format: :geojson, area_id: @contribution.problem.area_id) %>"<% end %>>
 
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">

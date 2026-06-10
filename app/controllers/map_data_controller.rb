@@ -2,7 +2,17 @@ class MapDataController < ApplicationController
   def index
     factory = RGeo::GeoJSON::EntityFactory.instance
 
-    problem_features = Problem.with_location.joins(:area).where(areas: { published: true }).map do |problem|
+    problems = Problem.with_location.joins(:area).where(areas: { published: true })
+    boulders = Boulder.joins(:area).where(areas: { published: true })
+
+    # Optionally scope to a single area (used by the contribution location picker) to keep
+    # the payload small.
+    if params[:area_id].present?
+      problems = problems.where(area_id: params[:area_id])
+      boulders = boulders.where(area_id: params[:area_id])
+    end
+
+    problem_features = problems.map do |problem|
       hash = {
         id: problem.id,
         name: problem.name_with_fallback,
@@ -10,13 +20,13 @@ class MapDataController < ApplicationController
         steepness: problem.steepness,
         circuitColor: problem.circuit&.color,
         circuitNumber: problem.circuit_number_simplified,
-        circuitId: problem.circuit_id_simplified,
+        circuitId: problem.circuit_id_simplified
       }.with_indifferent_access.deep_transform_keys { |key| key.camelize(:lower) }
 
       factory.feature(problem.location, problem.id, hash)
     end
 
-    boulder_features = Boulder.joins(:area).where(areas: { published: true }).map do |boulder|
+    boulder_features = boulders.map do |boulder|
       factory.feature(boulder.polygon, boulder.id, { boulderId: boulder.id })
     end
 
