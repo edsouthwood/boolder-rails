@@ -31,6 +31,9 @@ export default class extends Controller {
       if (gps && gps.latitude && gps.longitude) {
         this.latFieldTarget.value = gps.latitude.toFixed(6)
         this.lonFieldTarget.value = gps.longitude.toFixed(6)
+        // Notify the location-picker (and any listeners) that coords changed.
+        this.latFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
+        this.lonFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
         this.gpsStatusTarget.textContent = 'GPS location read from photo'
         this.gpsStatusTarget.className = 'text-xs text-emerald-600'
       } else {

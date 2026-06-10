@@ -1,4 +1,18 @@
 fr:
+  contribute_mailer:
+    greeting: "Bonjour %{name},"
+    fallback_name: à vous
+    signoff: "Merci de nous aider à cartographier Dartmoor — l'équipe Boolder"
+    acknowledgement_email:
+      subject: "Nous avons bien reçu votre contribution"
+      body: "Merci pour votre contribution à %{problem}. Elle est en attente de relecture par notre équipe — nous vous tiendrons informé."
+    accepted_email:
+      subject: "Votre contribution a été acceptée"
+      body: "Bonne nouvelle — votre contribution à %{problem} a été acceptée et est maintenant visible sur Boolder. Merci de nous aider à améliorer la carte !"
+    declined_email:
+      subject: "À propos de votre contribution récente"
+      body: "Merci pour votre contribution à %{problem}. Après relecture, nous n'avons pas pu l'ajouter à la carte cette fois-ci."
+      note_intro: "Un mot de l'équipe :"
   circuit:
     name:
       white_for_kids: Blanc (enfant)
@@ -114,6 +128,14 @@ fr:
           metas:
             title: Contribuer à une voie
       contributions:
+        show:
+          title: Votre contribution
+          pending_explanation: Merci ! Cette contribution est en attente de relecture par notre équipe. Nous vous écrirons dès qu'elle aura été examinée.
+          gps: GPS
+          state:
+            pending: En attente de relecture
+            accepted: Acceptée
+            closed: Fermée
         new:
           title: Ajouter une contribution
           how_to: Lire le mode d'emploi
@@ -135,6 +157,7 @@ fr:
           leaderboard_hint_html: Votre nom apparaît sur notre %{link} — utilisez un nom cohérent pour suivre votre impact.
           leaderboard_link: classement des contributeurs
           submit: Envoyer
+          submitting: Envoi…
           flash_success: Merci pour votre contribution !
           metas:
             title: Nouvelle contribution

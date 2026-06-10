@@ -1,0 +1,7 @@
+<% problem_name = @contribution.problem&.name_with_fallback || @contribution.problem_name %>
+
+<p><%= t("contribute_mailer.greeting", name: @contribution.contributor_name.presence || t("contribute_mailer.fallback_name")) %></p>
+
+<p><%= t("contribute_mailer.acknowledgement_email.body", problem: problem_name) %></p>
+
+<p><%= t("contribute_mailer.signoff") %></p>

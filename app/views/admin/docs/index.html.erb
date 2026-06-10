@@ -519,12 +519,14 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li><strong>UKC link</strong> — optional link to the problem on UK Climbing</li>
           <li><strong>GPS location</strong> — auto-populated from photo, or entered manually</li>
         </ul>
-        <p>Go to <strong>Admin → Contributions</strong> to review pending submissions. The review page shows the boulder photo with any drawn route line overlaid, the UKC link, GPS coordinates, and contributor comments.</p>
+        <p>The location is set by dragging a pin on a map (it stays in sync with the lat/lon fields and the photo's EXIF GPS). The public form is rate-limited and honeypot-protected against spam, and rejects empty submissions.</p>
+        <p>Go to <strong>Admin → Contributions</strong> to review submissions. The list opens on the <strong>pending</strong> queue, with photo thumbnails, dates and comment previews for quick triage, a pending-count badge, and pagination. The review page shows the boulder photo with any drawn route line overlaid, the UKC link, GPS coordinates, and contributor comments.</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
-          <li><strong>Pending</strong> — awaiting review</li>
-          <li><strong>Approved</strong> — accepted and visible</li>
-          <li><strong>Rejected</strong> — declined</li>
+          <li><strong>pending</strong> — awaiting review</li>
+          <li><strong>accepted</strong> — accepted and applied to the data</li>
+          <li><strong>closed</strong> — declined</li>
         </ul>
+        <p class="text-gray-600">Contributors who left an email are notified automatically on submit, acceptance and decline. When declining, fill in the <strong>Note to contributor</strong> field to tell them why — it's included in the decline email. Staff alerts for new contributions go to the addresses in the <code>CONTRIBUTION_EMAILS</code> env var (comma-separated).</p>
         <p class="font-medium text-gray-800">Partial acceptance</p>
         <p>When setting state to <strong>accepted</strong>, two checkboxes control what gets applied:</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">

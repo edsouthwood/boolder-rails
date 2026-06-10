@@ -166,6 +166,8 @@ GEM
       actionpack (>= 6.0.0)
       activesupport (>= 6.0.0)
       railties (>= 6.0.0)
+    invisible_captcha (2.3.0)
+      rails (>= 5.2)
     io-console (0.8.0)
     irb (1.14.3)
       rdoc (>= 4.0.0)
@@ -271,6 +273,8 @@ GEM
     raabro (1.4.0)
     racc (1.8.1)
     rack (3.1.8)
+    rack-attack (6.8.0)
+      rack (>= 1.0, < 4)
     rack-cors (2.0.2)
       rack (>= 2.0.0)
     rack-session (2.0.0)
@@ -432,6 +436,7 @@ DEPENDENCIES
   httparty
   image_processing (~> 1.2)
   importmap-rails
+  invisible_captcha
   kamal
   kaminari
   meta-tags
@@ -443,6 +448,7 @@ DEPENDENCIES
   propshaft
   pry
   puma (>= 5.0)
+  rack-attack
   rack-cors
   rails (~> 8.0)
   rgeo-geojson (~> 2.1.1)

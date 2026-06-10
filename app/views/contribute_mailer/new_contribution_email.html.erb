@@ -1,12 +1,16 @@
 <p>
-  <%= @contribution&.problem&.name %>
+  <%= @contribution&.problem&.name || @contribution.problem_name %>
 </p>
 
 <p>
-  <%= edit_admin_contribution_url(@contribution, locale: :fr) %>
+  <%= edit_admin_contribution_url(@contribution, locale: I18n.default_locale) %>
 </p>
 
 <ul>
   <li>Name: <%= @contribution.contributor_name %></li>
   <li>Email: <%= @contribution.contributor_email %></li>
 </ul>
+
+<% if @contribution.comment.present? %>
+  <p><%= @contribution.comment %></p>
+<% end %>

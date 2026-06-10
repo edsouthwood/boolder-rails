@@ -1,35 +1,60 @@
 <% set_meta_tags nofollow: true %>
 
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pb-8">
+<div class="max-w-3xl mx-auto sm:px-6 lg:px-8 pb-8">
   <div class="mt-10 sm:mt-0">
-    <h1 class="text-3xl font-bold mt-8 mb-4 px-4 sm:px-0">Contribution</h1>
+    <% if @contribution.problem %>
+      <div class="px-4 sm:px-0 mt-6">
+        <%= link_to [:mapping, @contribution.problem], class: "text-sm font-medium text-gray-500 hover:text-gray-700" do %>
+          ← <%= t("views.breadcrumbs.back") %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <h1 class="text-3xl font-bold mt-6 mb-2 px-4 sm:px-0"><%= t("views.mapping.contributions.show.title") %></h1>
 
     <div class="px-4 sm:px-0">
-      <p class="my-4">
-        <%= @contribution.problem_name %>
-      </p>
-      <p class="my-4">
-        <%= @contribution.problem_url %>
-      </p>
+      <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-600/20">
+        <%= t("views.mapping.contributions.show.state.#{@contribution.state}") %>
+      </span>
 
-      <%= simple_format @contribution.comment %>
-
-      <% if (location = @contribution.location) %>
-        <span>GPS : </span>
-        <%= [location.lat, location.lon].join(",") %>
+      <% if @contribution.pending? %>
+        <p class="mt-3 text-sm text-gray-600"><%= t("views.mapping.contributions.show.pending_explanation") %></p>
       <% end %>
     </div>
 
-    <% @contribution.photos.each do |photo| %>
-      <%= image_tag(photo, class: "w-full object-cover") %>
-    <% end %>
+    <div class="px-4 sm:px-0 mt-6 space-y-4">
+      <% if @contribution.problem %>
+        <p class="font-medium"><%= @contribution.problem.name_with_fallback %></p>
+      <% elsif @contribution.problem_name.present? %>
+        <p class="font-medium"><%= @contribution.problem_name %></p>
+      <% end %>
 
-    <% @contribution.line_drawings.each do |line_drawing| %>
-      <%= image_tag(line_drawing, class: "w-full object-cover") %>
-    <% end %>
+      <% if @contribution.problem_url.present? %>
+        <%# Rendered as plain text on purpose: this is unmoderated, public, user-submitted input. %>
+        <p class="text-gray-700 break-all"><%= @contribution.problem_url %></p>
+      <% end %>
 
-    <% @contribution.location_drawings.each do |location_drawing| %>
-      <%= image_tag(location_drawing, class: "w-full object-cover") %>
-    <% end %>
+      <% if @contribution.comment.present? %>
+        <%= simple_format @contribution.comment, class: "text-gray-700" %>
+      <% end %>
+
+      <% if (location = @contribution.location) %>
+        <p class="text-sm text-gray-500"><%= t("views.mapping.contributions.show.gps") %>: <%= [location.lat, location.lon].join(", ") %></p>
+      <% end %>
+    </div>
+
+    <div class="px-4 sm:px-0 mt-6 space-y-3">
+      <% @contribution.photos.each do |photo| %>
+        <%= image_tag(photo, class: "w-full object-cover rounded-lg") %>
+      <% end %>
+
+      <% @contribution.line_drawings.each do |line_drawing| %>
+        <%= image_tag(line_drawing, class: "w-full object-cover rounded-lg") %>
+      <% end %>
+
+      <% @contribution.location_drawings.each do |location_drawing| %>
+        <%= image_tag(location_drawing, class: "w-full object-cover rounded-lg") %>
+      <% end %>
+    </div>
   </div>
 </div>

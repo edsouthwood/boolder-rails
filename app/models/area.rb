@@ -57,8 +57,8 @@ class Area < ApplicationRecord
 
   def bounds
     @bounds ||=
-      bounds_from(boulders.where(ignore_for_area_hull: false), "polygon") ||
-      bounds_from(problems.with_location, "location") ||
+      bounds_from(boulders.where(ignore_for_area_hull: false), :polygon) ||
+      bounds_from(problems.with_location, :location) ||
       { south_west: nil, north_east: nil }
   end
 
@@ -106,17 +106,28 @@ class Area < ApplicationRecord
 
   private
 
+  # Pre-built, fully-literal extent expressions keyed by column. Kept as literals
+  # (no interpolation) so the column name can never carry untrusted input into SQL.
+  BOUNDS_EXTENT_EXPRESSIONS = {
+    polygon: [
+      Arel.sql("ST_XMin(ST_Extent(polygon::geometry))"),
+      Arel.sql("ST_YMin(ST_Extent(polygon::geometry))"),
+      Arel.sql("ST_XMax(ST_Extent(polygon::geometry))"),
+      Arel.sql("ST_YMax(ST_Extent(polygon::geometry))")
+    ],
+    location: [
+      Arel.sql("ST_XMin(ST_Extent(location::geometry))"),
+      Arel.sql("ST_YMin(ST_Extent(location::geometry))"),
+      Arel.sql("ST_XMax(ST_Extent(location::geometry))"),
+      Arel.sql("ST_YMax(ST_Extent(location::geometry))")
+    ]
+  }.freeze
+
   # Derives a bounding box from `relation` using the geometry/geography column
-  # `column` in a single query. Returns nil when the relation is empty so callers
-  # can fall through to the next source.
+  # `column` (:polygon or :location) in a single query. Returns nil when the
+  # relation is empty so callers can fall through to the next source.
   def bounds_from(relation, column)
-    geom = "#{column}::geometry"
-    min_lon, min_lat, max_lon, max_lat = relation.pick(
-      Arel.sql("ST_XMin(ST_Extent(#{geom}))"),
-      Arel.sql("ST_YMin(ST_Extent(#{geom}))"),
-      Arel.sql("ST_XMax(ST_Extent(#{geom}))"),
-      Arel.sql("ST_YMax(ST_Extent(#{geom}))")
-    )
+    min_lon, min_lat, max_lon, max_lat = relation.pick(*BOUNDS_EXTENT_EXPRESSIONS.fetch(column))
     return nil if min_lon.nil?
 
     {

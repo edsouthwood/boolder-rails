@@ -1,4 +1,18 @@
 en:
+  contribute_mailer:
+    greeting: "Hi %{name},"
+    fallback_name: there
+    signoff: "Thanks for helping map Dartmoor — the Boolder team"
+    acknowledgement_email:
+      subject: "We received your contribution"
+      body: "Thanks for your contribution to %{problem}. It's now pending review by our team — we'll let you know once it's been looked at."
+    accepted_email:
+      subject: "Your contribution was accepted"
+      body: "Good news — your contribution to %{problem} has been accepted and is now live on Boolder. Thank you for helping improve the map!"
+    declined_email:
+      subject: "About your recent contribution"
+      body: "Thanks for your contribution to %{problem}. After review we weren't able to add this one to the map."
+      note_intro: "A note from the team:"
   circuit:
     name:
       white_for_kids: White (kids)
@@ -107,6 +121,14 @@ en:
           metas:
             title: Contribute to a problem
       contributions:
+        show:
+          title: Your contribution
+          pending_explanation: Thanks! This contribution is pending review by our team. We'll email you once it's been looked at.
+          gps: GPS
+          state:
+            pending: Pending review
+            accepted: Accepted
+            closed: Closed
         new:
           title: Add a contribution
           how_to: Read the instructions
@@ -135,6 +157,7 @@ en:
           leaderboard_hint_html: Your name appears on our %{link} — use a consistent name to track your impact.
           leaderboard_link: contributors leaderboard
           submit: Submit
+          submitting: Submitting…
           flash_success: Thank you for your contribution!
           metas:
             title: New contribution

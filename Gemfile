@@ -38,6 +38,8 @@ gem "differ"
 gem "breadcrumbs_on_rails"
 gem "meta-tags"
 gem "sitemap_generator"
+gem "rack-attack"
+gem "invisible_captcha"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

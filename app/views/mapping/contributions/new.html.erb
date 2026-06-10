@@ -1,6 +1,12 @@
 <% set_meta_tags nofollow: true %>
 <% set_meta_tags title: t("views.mapping.contributions.new.metas.title") %>
 
+<% content_for :head do %>
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"
+          onload="window.dispatchEvent(new Event('maplibre-ready'))"></script>
+<% end %>
+
 <div class="max-w-7xl mx-auto pt-6 sm:px-6 lg:px-8">
   <div class="px-4 sm:px-0">
     <%= link_to [:mapping, @contribution.problem], class: "hover:text-gray-700" do %>
@@ -23,6 +29,7 @@
 
   <div class="mt-8">
     <%= form_with model: [:mapping, @contribution] do |form| %>
+      <%= invisible_captcha %>
       <%= form.hidden_field :problem_id %>
       <%= render "form", form: form %>
     <% end %>

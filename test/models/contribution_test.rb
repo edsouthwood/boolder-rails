@@ -1,11 +1,42 @@
 require "test_helper"
 
 class ContributionTest < ActiveSupport::TestCase
+  # --- validations ---
+
+  test "is invalid when it carries no useful content" do
+    contribution = Contribution.new(state: "pending", contributor_name: "Ed")
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:base].join, "must include"
+  end
+
+  test "is valid with any one piece of content" do
+    assert Contribution.new(state: "pending", comment: "found a new boulder").valid?
+    assert Contribution.new(state: "pending", problem_name: "Unnamed slab").valid?
+  end
+
+  test "rejects a malformed contributor email" do
+    contribution = Contribution.new(state: "pending", comment: "hi", contributor_email: "not-an-email")
+    assert_not contribution.valid?
+    assert_includes contribution.errors.attribute_names, :contributor_email
+  end
+
+  test "accepts a blank contributor email" do
+    assert Contribution.new(state: "pending", comment: "hi", contributor_email: "").valid?
+  end
+
+  test "has accepted?/closed?/pending? predicates" do
+    assert Contribution.new(state: "accepted").accepted?
+    assert Contribution.new(state: "closed").closed?
+    assert Contribution.new(state: "pending").pending?
+  end
+
+  # --- top_contributors ---
+
   test "top_contributors counts only accepted contributions" do
-    Contribution.create!(contributor_name: "Alice", state: "accepted")
-    Contribution.create!(contributor_name: "Alice", state: "accepted")
-    Contribution.create!(contributor_name: "Bob",   state: "pending")
-    Contribution.create!(contributor_name: "Carol", state: "closed")
+    accepted_contribution(name: "Alice")
+    accepted_contribution(name: "Alice")
+    contribution(name: "Bob",   state: "pending")
+    contribution(name: "Carol", state: "closed")
 
     result = Contribution.top_contributors
     names = result.map(&:display_name)
@@ -17,9 +48,9 @@ class ContributionTest < ActiveSupport::TestCase
   end
 
   test "top_contributors groups case-insensitively and ignores surrounding whitespace" do
-    Contribution.create!(contributor_name: "Sam",   state: "accepted")
-    Contribution.create!(contributor_name: "sam",   state: "accepted")
-    Contribution.create!(contributor_name: " SAM ", state: "accepted")
+    accepted_contribution(name: "Sam")
+    accepted_contribution(name: "sam")
+    accepted_contribution(name: " SAM ")
 
     rows = Contribution.top_contributors.to_a
 
@@ -28,23 +59,33 @@ class ContributionTest < ActiveSupport::TestCase
   end
 
   test "top_contributors ignores blank contributor names" do
-    Contribution.create!(contributor_name: nil, state: "accepted")
-    Contribution.create!(contributor_name: "",  state: "accepted")
+    accepted_contribution(name: nil)
+    accepted_contribution(name: "")
 
     assert_empty Contribution.top_contributors.to_a
   end
 
   test "top_contributors ranks by count desc then name for a stable order" do
-    3.times { Contribution.create!(contributor_name: "Top", state: "accepted") }
-    Contribution.create!(contributor_name: "Beta",  state: "accepted")
-    Contribution.create!(contributor_name: "Alpha", state: "accepted")
+    3.times { accepted_contribution(name: "Top") }
+    accepted_contribution(name: "Beta")
+    accepted_contribution(name: "Alpha")
 
     assert_equal %w[Top Alpha Beta], Contribution.top_contributors.map(&:display_name)
   end
 
   test "top_contributors honours the limit" do
-    5.times { |i| Contribution.create!(contributor_name: "Person #{i}", state: "accepted") }
+    5.times { |i| accepted_contribution(name: "Person #{i}") }
 
     assert_equal 2, Contribution.top_contributors(limit: 2).to_a.size
+  end
+
+  private
+
+  def contribution(name:, state:)
+    Contribution.create!(contributor_name: name, state: state, comment: "test content")
+  end
+
+  def accepted_contribution(name:)
+    contribution(name: name, state: "accepted")
   end
 end

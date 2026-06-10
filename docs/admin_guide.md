@@ -517,11 +517,15 @@ Users can submit photos and route information to improve topos. The contribution
 - **UKC link** — optional link to the problem on UK Climbing (ukclimbing.com)
 - **GPS location** — auto-populated from photo EXIF, or entered manually
 
-**Admin → Contributions** — review pending submissions
+**Admin → Contributions** — review pending submissions. The list opens on the **pending**
+queue by default, shows a photo thumbnail, submission date and comment preview for quick
+triage, and is paginated. A badge at the top shows how many contributions are still pending.
 
-- **Pending** — awaiting review
-- **Approved** — accepted and visible
-- **Rejected** — declined
+The three states are:
+
+- **pending** — awaiting review
+- **accepted** — accepted and applied to the data
+- **closed** — declined
 
 When reviewing a contribution, the admin edit page shows:
 - The contributor's UKC link (if provided) as a clickable link
@@ -542,3 +546,43 @@ Accepting a contribution automatically closes any open contribution request for 
 ### Existing topo line contributions
 
 If the contributor selected an existing topo photo and drew a line on it (rather than uploading a new photo), the contribution will have an `existing_topo_id` set. When you accept the **Photo & line** part, the system creates a new Line record on that existing topo using the submitted coordinates — no new topo is created.
+
+The whole acceptance import (GPS + line + topo + closing requests) runs in a single database
+transaction (`ContributionImporter`). If any step fails, **nothing** is applied and the edit
+page shows an error — you never end up with GPS applied but the line missing.
+
+### Contributor emails and the moderator note
+
+Contributors who leave an email address are kept in the loop automatically:
+
+- **On submit** — an acknowledgement email ("we received your contribution, pending review").
+- **On accept** — a confirmation email.
+- **On close (decline)** — a decline email. If you fill in the **Note to contributor** field
+  on the edit form, that note is included in the decline email so the contributor knows why.
+
+Contributors with no email address simply don't receive anything; no action is needed.
+
+### Notification recipients
+
+Staff "new contribution" alerts go to the address(es) in the `CONTRIBUTION_EMAILS`
+environment variable (comma-separated for multiple), or the `contribution_emails` Rails
+credential. If neither is set it falls back to the Dartmoor team address. Set this so the
+right people are notified:
+
+```
+CONTRIBUTION_EMAILS=you@example.com,teammate@example.com
+```
+
+### Spam protection and data integrity
+
+The public form is rate-limited per IP (rack-attack) and carries a honeypot
+(invisible_captcha), so automated spam is dropped before it reaches the queue. Contributions
+are also validated server-side: a submission must carry at least one piece of real content
+(photo, location, line, comment or problem name) and any email address must be well-formed —
+empty/garbage rows can no longer be saved.
+
+### Location pin picker (contributor side)
+
+On the public form, contributors set the GPS location by dragging a pin on an interactive map
+(MapLibre + OpenFreeMap), centred on the problem's area. The pin and the latitude/longitude
+fields stay in sync, and both auto-fill from the photo's EXIF GPS data when present.

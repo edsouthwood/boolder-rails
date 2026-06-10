@@ -1,4 +1,6 @@
 class Mapping::ContributionsController < ApplicationController
+  invisible_captcha only: [ :create ], on_spam: :handle_spam
+
   def show
     @contribution = Contribution.find(params[:id])
   end
@@ -22,6 +24,7 @@ class Mapping::ContributionsController < ApplicationController
       flash[:notice] = t("views.mapping.contributions.new.flash_success")
 
       ContributeMailer.with(contribution: @contribution).new_contribution_email.deliver_later
+      ContributeMailer.with(contribution: @contribution).acknowledgement_email.deliver_later
 
       redirect_to [ :mapping, @contribution.problem ]
     else
@@ -31,6 +34,11 @@ class Mapping::ContributionsController < ApplicationController
   end
 
   private
+
+  # invisible_captcha honeypot tripped — silently drop and send the bot home.
+  def handle_spam
+    redirect_to mapping_path
+  end
 
   def area_topos_for_problem(problem_id)
     problem = Problem.find_by(id: problem_id)
@@ -46,7 +54,7 @@ class Mapping::ContributionsController < ApplicationController
     params.require(:contribution).permit(
       :location_lat, :location_lon, :comment, :problem_id, :contributor_name, :contributor_email,
       :problem_name, :problem_url, :ukc_url, :line_coordinates, :existing_topo_id,
-      photos: [], line_drawings: [], location_drawings: []
+      photos: [], line_drawings: []
     )
   end
 end

@@ -21,7 +21,14 @@
 <% end %>
 
 
-<div class="space-y-10 divide-y divide-gray-900/10" data-controller="contribution-photo">
+<% picker_bounds = @contribution.problem&.area&.serialized_bounds || {
+     south_west: { lat: Area::DEFAULT_BOUNDS[:south_west][:lat], lng: Area::DEFAULT_BOUNDS[:south_west][:lon] },
+     north_east: { lat: Area::DEFAULT_BOUNDS[:north_east][:lat], lng: Area::DEFAULT_BOUNDS[:north_east][:lon] }
+   } %>
+
+<div class="space-y-10 divide-y divide-gray-900/10"
+     data-controller="contribution-photo location-picker"
+     data-location-picker-bounds-value="<%= picker_bounds.to_json %>">
 
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
@@ -215,14 +222,18 @@
         <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
           <div class="col-span-full">
-            <p class="text-sm text-emerald-700 font-medium">Latitude and longitude is the preferred method for providing a location. These will auto-fill if the photo you uploaded above contains GPS data.</p>
+            <p class="text-sm text-emerald-700 font-medium">Drop a pin on the map where the problem starts, or enter coordinates below. These auto-fill if the photo you uploaded above contains GPS data.</p>
+          </div>
+
+          <div class="col-span-full">
+            <div data-location-picker-target="map" class="w-full h-72 rounded-lg border border-gray-200 bg-gray-100"></div>
           </div>
 
           <div class="sm:col-span-3">
             <%= form.label :location_lat, "Latitude", class: "block text-sm font-medium leading-6 text-gray-900" %>
             <div class="mt-2">
               <%= form.text_field :location_lat, placeholder: "50.123456",
-                    data: { "contribution-photo-target": "latField" },
+                    data: { "contribution-photo-target": "latField", "location-picker-target": "latField" },
                     class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300  placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
             </div>
           </div>
@@ -231,7 +242,7 @@
             <%= form.label :location_lon, "Longitude", class: "block text-sm font-medium leading-6 text-gray-900" %>
             <div class="mt-2">
               <%= form.text_field :location_lon, placeholder: "-3.123456",
-                    data: { "contribution-photo-target": "lonField" },
+                    data: { "contribution-photo-target": "lonField", "location-picker-target": "lonField" },
                     class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300   placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" %>
             </div>
           </div>
@@ -311,5 +322,7 @@
 </div>
 
 <div class="px-4 sm:px-0 mx-auto mt-12 flex items-center justify-end gap-x-6">
-  <%= form.submit t("views.mapping.contributions.new.submit"), class: "flex w-full sm:w-64 justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" %>
+  <%= form.submit t("views.mapping.contributions.new.submit"),
+        data: { turbo_submits_with: t("views.mapping.contributions.new.submitting") },
+        class: "flex w-full sm:w-64 justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" %>
 </div>

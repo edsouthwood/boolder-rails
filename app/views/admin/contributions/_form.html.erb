@@ -3,6 +3,11 @@
   <%= form.select :state, Contribution::STATES %>
 </div>
 
+<div class="col-span-6">
+  <%= form.label :moderator_note, "Note to contributor (optional)" %>
+  <%= form.text_area :moderator_note, rows: 2, placeholder: "Shown in the email when a contribution is declined", class: "block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" %>
+</div>
+
 <div class="col-span-6 mt-2">
   <p class="text-sm font-medium text-gray-700 mb-2">Apply on accept</p>
   <div class="space-y-2">

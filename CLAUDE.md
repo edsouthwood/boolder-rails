@@ -69,4 +69,7 @@ ADMIN_USERNAME=<username>
 ADMIN_PASSWORD=<password>
 ```
 
+Optional: `CONTRIBUTION_EMAILS` (comma-separated) sets who receives "new contribution" staff
+alerts; falls back to the `contribution_emails` credential, then the Dartmoor team address.
+
 Development database is `dartmoor-dev` (PostGIS required). Production uses Docker + Kamal (`config/deploy.yml`), S3 for file storage, and PostGIS 16-3.5.
