@@ -3,22 +3,24 @@
 ## Table of Contents
 1. [Project Structure](#project-structure)
 2. [Development Server](#development-server)
-3. [Backups](#backups)
-4. [Admin Accounts](#admin-accounts)
-5. [Permission Levels](#permission-levels)
-6. [Managing Areas](#managing-areas)
-7. [Bulk Upload (Problems)](#bulk-upload-problems)
-8. [Importing Problems from Photos](#importing-from-photos)
-9. [Location Editor (Drag-and-Drop)](#location-editor)
-10. [Adding Boulders (Polygon Map Data)](#adding-boulders)
-11. [Boulder Editor (In-Browser)](#boulder-editor)
-12. [GeoJSON Import Workflow](#geojson-import-workflow)
-13. [Individual Problem Editing](#individual-problem-editing)
-14. [Problem Description](#problem-description)
-15. [Topos and Line Drawing](#topos-and-line-drawing)
-16. [Circuits](#circuits)
-17. [POIs and Routes](#pois-and-routes)
-18. [Contributions](#contributions)
+3. [Moving to Production (Runbook)](#moving-to-production-runbook)
+4. [Backups](#backups)
+5. [Admin Accounts](#admin-accounts)
+6. [Permission Levels](#permission-levels)
+7. [Managing Areas](#managing-areas)
+8. [Bulk Upload (Problems)](#bulk-upload-problems)
+9. [Importing Problems from Photos](#importing-from-photos)
+10. [Location Editor (Drag-and-Drop)](#location-editor)
+11. [Adding Boulders (Polygon Map Data)](#adding-boulders)
+12. [Boulder Editor (In-Browser)](#boulder-editor)
+13. [GeoJSON Import Workflow](#geojson-import-workflow)
+14. [Individual Problem Editing](#individual-problem-editing)
+15. [Problem Description](#problem-description)
+16. [Topos and Line Drawing](#topos-and-line-drawing)
+17. [Circuits](#circuits)
+18. [POIs and Routes](#pois-and-routes)
+19. [Contributions](#contributions)
+20. [Email Setup](#email-setup)
 
 ---
 
@@ -87,6 +89,85 @@ Located at `~/.config/systemd/user/`:
 Environment variables (`PORT`, `RAILS_ENV`, `MAPBOX_DEV_ACCESS_KEY`, etc.) are loaded from the project's `.env` file via `EnvironmentFile=`.
 
 Boot auto-start is enabled via `loginctl enable-linger ed`, which allows user services to run before login.
+
+---
+
+## Moving to Production (Runbook)
+
+The app was originally served in development mode. Production mode fixes the serious
+problems with that: error pages no longer leak stack traces/env vars, emails actually send
+(once SES credentials are set), background jobs persist in Solid Queue, and the app runs
+precompiled assets with no code reloading.
+
+### What is already prepared (one-time, done June 2026)
+
+- `config/environments/production.rb` — host set to `bowda.edsouthwood.com` (asset host and
+  mailer URLs), Active Storage on `:local` disk, host authorization enabled. The upstream
+  values (`assets.boolder.com`, the upstream S3 bucket) are gone.
+- `config/database.yml` — production uses `dartmoor-production` / `-cache` / `-queue` /
+  `-cable` over the local socket (peer auth). `DB_HOST` / `POSTGRES_USER` /
+  `POSTGRES_PASSWORD` env vars override this for a future external database.
+- `deploy/boolder-rails.service` — production systemd unit: `RAILS_ENV=production`,
+  `SOLID_QUEUE_IN_PUMA=true` (jobs run inside Puma), binds to `127.0.0.1` so all traffic
+  must come through Caddy's TLS.
+- Production databases created, data restored, assets precompiled, smoke-tested on port 3001.
+
+### Cutover steps (~10 minutes of downtime)
+
+```bash
+# 1. Safety snapshot of the live data
+bin/backup
+
+# 2. Stop the dev services (site goes down here)
+systemctl --user stop boolder-rails boolder-css
+
+# 3. Re-copy the data so nothing submitted since the last sync is lost
+dropdb dartmoor-production && createdb dartmoor-production
+pg_dump dartmoor-dev | psql -q dartmoor-production
+
+# 4. Install the production unit and drop the CSS watcher (not needed: assets are precompiled)
+cp deploy/boolder-rails.service ~/.config/systemd/user/boolder-rails.service
+systemctl --user disable boolder-css
+systemctl --user daemon-reload
+
+# 5. Start production (site comes back up)
+systemctl --user start boolder-rails
+
+# 6. Point backups at the production database
+echo 'BACKUP_DB=dartmoor-production' >> .env.backup
+bin/backup   # confirm it dumps dartmoor-production
+```
+
+Then verify: site loads at https://bowda.edsouthwood.com, photos display, admin login works,
+and a test contribution can be submitted and accepted.
+
+### Post-cutover tasks
+
+- **Rotate `ADMIN_PASSWORD`** in `.env` (the old one travelled over plain HTTP in dev mode),
+  then `systemctl --user restart boolder-rails`.
+- **Fix the Caddyfile**: `/etc/caddy/Caddyfile` has a stray `EOF` line after the site block —
+  remove it and `sudo systemctl reload caddy`.
+- **Set up email**: add the `amazon_smtp` credentials (see [Email Setup](#email-setup)).
+  Until then, contributor emails fail inside background jobs.
+- The dev database `dartmoor-dev` is left untouched as a fallback.
+
+### Rollback
+
+Restore the old unit (`RAILS_ENV=development`, `-b 0.0.0.0`, re-enable `boolder-css`),
+`systemctl --user daemon-reload && systemctl --user start boolder-rails boolder-css`.
+The dev database was never modified, so the site resumes exactly where it left off
+(minus anything submitted while production was live — merge that manually if needed).
+
+### Deploying code changes after cutover
+
+Production does not reload code. After pulling changes:
+
+```bash
+bundle install
+RAILS_ENV=production bin/rails db:migrate
+RAILS_ENV=production bin/rails assets:precompile
+systemctl --user restart boolder-rails
+```
 
 ---
 
@@ -539,14 +620,22 @@ When reviewing a contribution, the admin edit page shows:
 
 ### Partial acceptance
 
-When setting state to **accepted** you can choose which parts to apply using the checkboxes on the edit form:
+When setting state to **accepted** you can choose which parts to apply using the checkboxes on the edit form. The labels adapt to what the contribution actually contains:
 
-- **Photo & line** — attaches the contributor's photo as a topo and creates the line overlay (or, if the contributor drew on an existing topo, creates the line on that existing topo)
-- **GPS coordinates** — copies the contributor's GPS location to the problem (only applied if the problem has no existing location)
+- **Line on Topo #N (no new photo is created)** — shown when the contributor drew on an existing topo; accepting only adds a Line record to that topo
+- **Photo & line (new topo)** — shown when the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay
+- **Photo (new topo, no line drawn)** — shown when the contributor uploaded a photo without drawing a line
+- **GPS coordinates** — copies the contributor's GPS location to the problem (only applied if the problem has no existing location; a hint appears if the problem is already located)
 
-Both are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa.
+If the contribution carries no photo/line or no GPS, the corresponding checkbox is replaced by a "nothing to import" note. Checkboxes are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa.
 
 Accepting a contribution automatically closes any open contribution request for that problem.
+
+After accepting or closing, you are returned to the contributions list so you can carry on
+triaging. The green banner summarises what was applied — e.g. "Contribution #123 accepted ·
+line added to Topo #74 · 2 pending remaining" — with the topo linked so you can verify the
+import in one click. Updates that don't change the state (e.g. editing the moderator note)
+stay on the edit page.
 
 ### Existing topo line contributions
 
@@ -600,3 +689,57 @@ empty/garbage rows can no longer be saved.
 On the public form, contributors set the GPS location by dragging a pin on an interactive map
 (MapLibre + OpenFreeMap), centred on the problem's area. The pin and the latitude/longitude
 fields stay in sync, and both auto-fill from the photo's EXIF GPS data when present.
+
+---
+
+## Email Setup
+
+### What gets sent and when
+
+All emails come from `ContributeMailer` (`app/mailers/contribute_mailer.rb`):
+
+| Email | Recipient | Trigger |
+|---|---|---|
+| New contribution | Staff | A contribution is submitted |
+| Acknowledgement | Contributor | A contribution is submitted |
+| Accepted | Contributor | A contribution is accepted |
+| Declined | Contributor | A contribution is closed (includes the moderator note if set) |
+
+Contributor-facing emails are **silently skipped when the contribution has no contributor
+email** — the email field on the public form is optional. Staff recipients come from the
+`contribution_emails` credential, then the `CONTRIBUTION_EMAILS` env var, then the Dartmoor
+team address (see [Contributions](#contributions)).
+
+### Development
+
+Emails are **not sent** in development. They are written as files to `tmp/mails/<recipient>`
+— open the file to see exactly what would have gone out. The server log also shows each
+mailer job being enqueued and performed.
+
+### Production
+
+Production sends through Amazon SES SMTP (`email-smtp.eu-north-1.amazonaws.com`, configured
+in `config/environments/production.rb`). For it to work you need:
+
+1. **SES SMTP credentials** stored in Rails credentials (`bin/rails credentials:edit`):
+
+   ```yaml
+   amazon_smtp:
+     username: <SES SMTP username>
+     password: <SES SMTP password>
+   ```
+
+   Create these in the AWS console under SES → SMTP settings (region `eu-north-1`). If these
+   credentials are missing, every send fails — and since the emails are sent from background
+   jobs, the admin UI won't show an error; check the production logs.
+
+2. **A verified sender identity.** The from address is set in
+   `app/mailers/application_mailer.rb` (currently `Boolder <hello@boolder.com>`, inherited
+   from the upstream project). SES refuses to send from an unverified address, so verify your
+   own domain or address in SES and update the `default from:` line to match.
+
+3. **SES out of sandbox mode** (or every *recipient* must also be verified) — new SES
+   accounts start sandboxed.
+
+To test on the server: `bin/rails runner 'ContributeMailer.with(contribution: Contribution.last).acknowledgement_email.deliver_now'`
+— `deliver_now` surfaces SMTP errors directly in the terminal instead of hiding them in a job.

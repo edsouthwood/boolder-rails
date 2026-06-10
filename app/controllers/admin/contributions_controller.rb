@@ -29,17 +29,26 @@ class Admin::ContributionsController < Admin::BaseController
   def update
     set_contribution
     previous_state = @contribution.state
+    importer = nil
 
     ActiveRecord::Base.transaction do
       @contribution.assign_attributes(contribution_params)
       stamp_review_metadata(previous_state)
       @contribution.save!
-      import_if_newly_accepted(previous_state)
+      importer = import_if_newly_accepted(previous_state)
     end
 
     send_transition_emails(previous_state)
-    flash[:notice] = "Contribution updated"
-    redirect_to edit_admin_contribution_path(@contribution)
+
+    # Accept/close are queue actions: go back to the list so the reviewer can
+    # carry on triaging. Plain edits (e.g. moderator note) stay on the page.
+    if @contribution.state != previous_state && @contribution.state.in?(%w[accepted closed])
+      flash[:notice] = state_change_notice(importer)
+      redirect_to admin_contributions_path(state: session[:contributions_filter].presence)
+    else
+      flash[:notice] = "Contribution updated"
+      redirect_to edit_admin_contribution_path(@contribution)
+    end
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:error] = @contribution.errors.full_messages.join("; ").presence || e.message
     render "edit", status: :unprocessable_entity
@@ -102,11 +111,31 @@ class Admin::ContributionsController < Admin::BaseController
   def import_if_newly_accepted(previous_state)
     return unless @contribution.state == "accepted" && previous_state == "pending"
 
-    ContributionImporter.new(
+    importer = ContributionImporter.new(
       @contribution,
       apply_photo: param_flag(:apply_photo),
       apply_gps: param_flag(:apply_gps)
-    ).import!
+    )
+    importer.import!
+    importer
+  end
+
+  # "Contribution #123 accepted · line added to Topo #74 · 2 pending remaining",
+  # with the topo linked so the import is one click away to verify.
+  def state_change_notice(importer)
+    parts = [ "Contribution ##{@contribution.id} #{@contribution.state}" ]
+
+    if importer&.created_topo
+      parts << helpers.link_to("new Topo ##{importer.created_topo.id} created",
+        edit_admin_topo_path(importer.created_topo), class: "underline")
+    elsif importer&.created_line
+      parts << helpers.link_to("line added to Topo ##{importer.created_line.topo_id}",
+        edit_admin_topo_path(importer.created_line.topo), class: "underline")
+    end
+    parts << "GPS applied" if importer&.applied_gps
+    parts << "#{Contribution.pending.count} pending remaining"
+
+    helpers.safe_join(parts, " · ")
   end
 
   # Records who reviewed the contribution and when it changed state.

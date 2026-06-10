@@ -20,7 +20,9 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+  # The session store is cache-backed (see application.rb), so a null store here
+  # would silently drop sessions and flash between requests in integration tests.
+  config.cache_store = :memory_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

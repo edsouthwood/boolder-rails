@@ -10,7 +10,9 @@
         <div class="w-0 flex-1 flex items-center">
           <p class="ml-3 font-medium text-white truncate">
             <span>
-              <%= msg %>
+              <%# Allow links in flash messages (e.g. "line added to Topo #74"); html_safe
+                  doesn't survive the session round-trip on redirect, so sanitize instead. %>
+              <%= sanitize msg, tags: %w[a], attributes: %w[href class] %>
             </span>
           </p>
         </div>

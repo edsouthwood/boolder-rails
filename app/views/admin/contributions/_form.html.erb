@@ -11,19 +11,36 @@
 <div class="col-span-6 mt-2">
   <p class="text-sm font-medium text-gray-700 mb-2">Apply on accept</p>
   <div class="space-y-2">
-    <label class="flex items-center gap-2 text-sm text-gray-700">
-      <%= form.check_box :apply_photo, checked: true %>
-      Photo &amp; line
-    </label>
-    <% if @contribution.problem&.topos&.any? && @contribution.photos.any? && @contribution.existing_topo_id.blank? %>
-      <p class="text-xs text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1">
-        &#9888; This problem already has <%= pluralize(@contribution.problem.topos.count, "topo") %> &mdash; importing will create a duplicate.
-      </p>
+    <% if @contribution.existing_topo_id.present? %>
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :apply_photo, checked: true %>
+        Line on Topo #<%= @contribution.existing_topo_id %> (no new photo is created)
+      </label>
+    <% elsif @contribution.photos.any? %>
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :apply_photo, checked: true %>
+        <%= @contribution.line_coordinates.present? ? "Photo & line (new topo)" : "Photo (new topo, no line drawn)" %>
+      </label>
+      <% if @contribution.problem&.topos&.any? %>
+        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1">
+          &#9888; This problem already has <%= pluralize(@contribution.problem.topos.count, "topo") %> &mdash; importing will create a duplicate.
+        </p>
+      <% end %>
+    <% else %>
+      <p class="text-sm text-gray-400 italic">No photo or line to import</p>
     <% end %>
-    <label class="flex items-center gap-2 text-sm text-gray-700">
-      <%= form.check_box :apply_gps, checked: true %>
-      GPS coordinates
-    </label>
+
+    <% if @contribution.location.present? %>
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :apply_gps, checked: true %>
+        GPS coordinates
+        <% if @contribution.problem&.location.present? %>
+          <span class="text-xs text-gray-400">(problem already has a location &mdash; won't be overwritten)</span>
+        <% end %>
+      </label>
+    <% else %>
+      <p class="text-sm text-gray-400 italic">No GPS in this contribution</p>
+    <% end %>
   </div>
   <p class="text-xs text-gray-400 mt-1">Only applied when state is set to "accepted".</p>
 </div>

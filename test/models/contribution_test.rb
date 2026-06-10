@@ -30,6 +30,27 @@ class ContributionTest < ActiveSupport::TestCase
     assert Contribution.new(state: "pending").pending?
   end
 
+  # Regression: Line's default order scope leaked into topo.problems and broke
+  # the SELECT DISTINCT in this validation (PG::InvalidColumnReference).
+  test "existing_topo area check runs despite Line default order scope" do
+    area = Area.create!(name: "Area A", slug: "area-a", published: true)
+    other_area = Area.create!(name: "Area B", slug: "area-b", published: true)
+    topo_problem = Problem.create!(area: area, steepness: "wall")
+    topo = Topo.new
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    Line.create!(problem: topo_problem, topo: topo)
+
+    same_area = Contribution.new(state: "pending", problem: Problem.create!(area: area, steepness: "wall"),
+      existing_topo: topo, line_coordinates: '[{"x":0.1,"y":0.1}]')
+    assert same_area.valid?
+
+    cross_area = Contribution.new(state: "pending", problem: Problem.create!(area: other_area, steepness: "wall"),
+      existing_topo: topo, line_coordinates: '[{"x":0.1,"y":0.1}]')
+    assert_not cross_area.valid?
+    assert_includes cross_area.errors.attribute_names, :existing_topo_id
+  end
+
   # --- top_contributors ---
 
   test "top_contributors counts only accepted contributions" do

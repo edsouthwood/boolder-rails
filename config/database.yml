@@ -18,31 +18,34 @@ test:
   <<: *default
   database: boolder-test
 
+# With no DB_HOST/POSTGRES_USER set, connections go over the local unix socket
+# as the OS user (peer auth) — the same way development connects. Set the env
+# vars when pointing at an external/containerised database (e.g. Kamal).
 production:
   primary:
     <<: *default
-    database: boolder-production
-    username: dartmoor
+    database: dartmoor-production
+    username: <%= ENV["POSTGRES_USER"] %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   cache:
     <<: *default
-    database: boolder-cache
+    database: dartmoor-cache
     migrations_paths: db/cache_migrate
-    username: dartmoor
+    username: <%= ENV["POSTGRES_USER"] %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   queue:
     <<: *default
-    database: boolder-queue
+    database: dartmoor-queue
     migrations_paths: db/queue_migrate
-    username: dartmoor
+    username: <%= ENV["POSTGRES_USER"] %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>
   cable:
     <<: *default
-    database: boolder-cable
+    database: dartmoor-cable
     migrations_paths: db/cable_migrate
-    username: dartmoor
+    username: <%= ENV["POSTGRES_USER"] %>
     password: <%= ENV["POSTGRES_PASSWORD"] %>
     host: <%= ENV["DB_HOST"] %>

@@ -1,0 +1,20 @@
+[Unit]
+Description=Boolder Rails Server (production)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ed/projects/boolder-rails
+Environment="PATH=/home/ed/.rbenv/shims:/home/ed/.rbenv/bin:/home/ed/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="RBENV_ROOT=/home/ed/.rbenv"
+Environment="RAILS_ENV=production"
+# Run Solid Queue inside Puma so background jobs (emails) work without a separate worker.
+Environment="SOLID_QUEUE_IN_PUMA=true"
+EnvironmentFile=/home/ed/projects/boolder-rails/.env
+# Bind to localhost only: all external traffic must come through Caddy (TLS).
+ExecStart=/home/ed/.rbenv/shims/bundle exec rails server -b 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

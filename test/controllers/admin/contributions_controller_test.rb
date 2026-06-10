@@ -41,6 +41,31 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='problem[area_id]']"
   end
 
+  test "edit shows a line-only label for an existing-topo contribution, with no photo checkbox confusion" do
+    topo = Topo.new(published: true)
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    Line.create!(problem: @problem, topo: topo)
+    contribution = Contribution.create!(state: "pending", problem: @problem,
+      existing_topo_id: topo.id, line_coordinates: '[{"x":0.1,"y":0.1}]')
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+
+    assert_response :success
+    assert_match "Line on Topo ##{topo.id}", response.body
+    assert_match "No GPS in this contribution", response.body
+  end
+
+  test "edit shows nothing-to-import notes for a comment-only contribution" do
+    contribution = Contribution.create!(state: "pending", problem: @problem, comment: "just a note")
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+
+    assert_response :success
+    assert_match "No photo or line to import", response.body
+    assert_match "No GPS in this contribution", response.body
+  end
+
   # --- B8: lifecycle metadata ---
 
   test "accepting a contribution stamps accepted_at and reviewer" do
@@ -63,6 +88,46 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "closed", contribution.state
     assert_not_nil contribution.closed_at
     assert_equal "tester", contribution.reviewed_by
+  end
+
+  # --- accept/close return to the queue ---
+
+  test "accepting redirects to the contributions list with a summary linking the topo" do
+    topo = Topo.new(published: true)
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    contribution = Contribution.create!(state: "pending", problem: @problem,
+      existing_topo_id: topo.id, line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
+
+    assert_difference -> { topo.lines.count }, 1 do
+      patch admin_contribution_url(contribution, locale: :en),
+            params: { contribution: { state: "accepted", apply_photo: "1", apply_gps: "1" } }
+    end
+
+    assert_redirected_to admin_contributions_path
+    follow_redirect!
+    assert_match "Contribution ##{contribution.id} accepted", response.body
+    assert_select "a[href=?]", edit_admin_topo_path(topo), text: "line added to Topo ##{topo.id}"
+    assert_match "pending remaining", response.body
+  end
+
+  test "closing redirects to the contributions list" do
+    contribution = Contribution.create!(state: "pending", problem: @problem, comment: "spam")
+
+    patch admin_contribution_url(contribution, locale: :en), params: { contribution: { state: "closed" } }
+
+    assert_redirected_to admin_contributions_path
+    follow_redirect!
+    assert_match "Contribution ##{contribution.id} closed", response.body
+  end
+
+  test "an update without a state change stays on the edit page" do
+    contribution = Contribution.create!(state: "pending", problem: @problem, comment: "hi")
+
+    patch admin_contribution_url(contribution, locale: :en),
+          params: { contribution: { state: "pending", moderator_note: "checking" } }
+
+    assert_redirected_to edit_admin_contribution_path(contribution)
   end
 
   # --- B9: create problem from an unlisted contribution ---

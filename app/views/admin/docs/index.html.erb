@@ -528,16 +528,21 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         </ul>
         <p class="text-gray-600">Contributors who left an email are notified automatically on submit, acceptance and decline. When declining, fill in the <strong>Note to contributor</strong> field to tell them why — it's included in the decline email. Staff alerts for new contributions go to the addresses in the <code>CONTRIBUTION_EMAILS</code> env var (comma-separated).</p>
         <p class="font-medium text-gray-800">Partial acceptance</p>
-        <p>When setting state to <strong>accepted</strong>, two checkboxes control what gets applied:</p>
+        <p>When setting state to <strong>accepted</strong>, checkboxes control what gets applied. Their labels adapt to what the contribution contains:</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
-          <li><strong>Photo &amp; line</strong> — attaches the contributor's photo as a new topo and creates the line overlay. If the contributor drew on an existing topo instead of uploading a photo, this creates the line on that existing topo.</li>
-          <li><strong>GPS coordinates</strong> — copies the contributor's location to the problem (only if the problem has no existing location)</li>
+          <li><strong>Line on Topo #N</strong> — the contributor drew on an existing topo; accepting only adds the line, no new photo is created</li>
+          <li><strong>Photo &amp; line (new topo)</strong> — the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay</li>
+          <li><strong>Photo (new topo, no line drawn)</strong> — photo uploaded without a line</li>
+          <li><strong>GPS coordinates</strong> — copies the contributor's location to the problem (only if the problem has no existing location; a hint shows if it's already located)</li>
         </ul>
-        <p class="text-gray-500 text-xs">Both are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa. Accepting always closes any open contribution request for that problem.</p>
+        <p class="text-gray-500 text-xs">Checkboxes are checked by default; if the contribution has no photo/line or no GPS, a "nothing to import" note shows instead. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa. Accepting always closes any open contribution request for that problem.</p>
+        <p>Accepting or closing returns you to the contributions list, with a banner summarising what was applied (e.g. "line added to Topo #74", with the topo linked) and how many contributions are still pending. Updates that don't change the state stay on the edit page.</p>
         <p class="font-medium text-gray-800">Unlisted problems</p>
         <p>Submissions for a problem that isn't on the map yet arrive with a name/URL but no linked problem. The edit page shows a <strong>Create &amp; link problem</strong> form — pick the area and set name/grade/steepness to create a real problem (it inherits the submitted GPS), then accept to import the photo and line.</p>
         <p class="font-medium text-gray-800">Bulk close</p>
         <p>On the list, tick rows and use <strong>Close selected</strong> to decline several at once, with an optional shared note for the decline emails. The edit page also records when each contribution was accepted/closed and by whom.</p>
+        <p class="font-medium text-gray-800">Email delivery</p>
+        <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending requires Amazon SES SMTP credentials in Rails credentials (<code>amazon_smtp.username</code> / <code>amazon_smtp.password</code>) and a verified sender address. See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist (sandbox mode, testing from the console).</p>
       </div>
     </section>
 

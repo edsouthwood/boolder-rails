@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 LOG="$SCRIPT_DIR/log/backup.log"
 ENV_FILE="$SCRIPT_DIR/.env.backup"
-DB_NAME="dartmoor-dev"
 STORAGE_DIR="$SCRIPT_DIR/storage"
 MASTER_KEY="$SCRIPT_DIR/config/master.key"
 KEEP_DUMPS=7
@@ -22,6 +21,9 @@ if [[ -z "${BACKUP_REMOTE:-}" ]]; then
   log "ERROR: BACKUP_REMOTE is not set in $ENV_FILE"
   exit 1
 fi
+
+# Which database to dump; set BACKUP_DB=dartmoor-production in .env.backup after cutover.
+DB_NAME="${BACKUP_DB:-dartmoor-dev}"
 
 BACKUP_HOST="${BACKUP_REMOTE%%:*}"
 BACKUP_PATH="${BACKUP_REMOTE#*:}"

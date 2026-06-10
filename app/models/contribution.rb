@@ -59,7 +59,9 @@ class Contribution < ApplicationRecord
   def existing_topo_in_problem_area
     return if existing_topo.blank? || problem.blank?
 
-    topo_area_ids = existing_topo.problems.distinct.pluck(:area_id)
+    # reorder(nil) drops the ORDER BY inherited from Line's default scope,
+    # which Postgres rejects in a SELECT DISTINCT on a different column
+    topo_area_ids = existing_topo.problems.reorder(nil).distinct.pluck(:area_id)
     return if topo_area_ids.empty? || topo_area_ids.include?(problem.area_id)
 
     errors.add(:existing_topo_id, "must belong to the same area as the problem")

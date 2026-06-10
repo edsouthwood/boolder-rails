@@ -19,11 +19,13 @@ Rails.application.configure do
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  config.asset_host = "assets.boolder.com"
+  # Serve assets and Active Storage proxy URLs (see the cdn_image direct route)
+  # from our own host. Upstream pointed this at their CDN (assets.boolder.com).
+  config.asset_host = "bowda.edsouthwood.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :amazon
+  # Uploaded files live on local disk (backed up by bin/backup). The :amazon
+  # service in storage.yml points at the upstream project's S3 bucket.
+  config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -60,7 +62,7 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "www.boolder.com", protocol: "https" }
+  config.action_mailer.default_url_options = { host: "bowda.edsouthwood.com", protocol: "https" }
 
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
@@ -82,11 +84,9 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
+  # localhost is allowed so the app can be smoke-tested directly on the box.
+  config.hosts = [ "bowda.edsouthwood.com", "localhost", "127.0.0.1" ]
+
   # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
