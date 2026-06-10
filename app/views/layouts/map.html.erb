@@ -19,7 +19,10 @@
 
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet"></noscript>
-    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js" data-turbo-track="reload"></script>
+    <%# defer keeps parsing unblocked; deferred scripts still run before the importmap
+        modules (same execution queue, document order), so maplibregl is defined by the
+        time the Stimulus map controller connects. %>
+    <script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js" data-turbo-track="reload"></script>
     <style>
       #map { position: absolute; top: 0; bottom: 0; width: 100%; }
     </style>

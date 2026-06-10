@@ -98,22 +98,26 @@ Rails.application.routes.draw do
     end
 
     get "map(/:slug)", to: "map#index", as: :map
-    get "app", to: "pages#app", as: :app
+    # The old "app" page advertised the upstream (Fontainebleau-only) mobile apps.
+    get "app", to: redirect("/%{locale}/map")
     get "privacy", to: "pages#privacy", as: :privacy
     get "about", to: "pages#about", as: :about
     get "ethics", to: "pages#ethics", as: :ethics
     get "contribute", to: "pages#contribute", as: :contribute
-    get "circuit7a", to: "circuit7a#index", as: :circuit7a
-    get "circuit7a/problems", to: "circuit7a#problems", as: :circuit7a_problems
-    get "circuit7a/map", to: "map#index", as: :circuit7a_map, defaults: { circuit7a: true }
-
     get "map-data", to: "map_data#index", as: :map_data
     get "area-labels", to: "area_labels#index", as: :area_labels
     resources :redirects, only: :new # useful for redirects where we only know the problem_id or area_id, eg. mapbox
 
     # Permalinks (don't remove!)
-    get "/p/:id", to: "welcome#problem_permalink" # used by the apps to redirect to a problem webpage
+    get "/p/:id", to: "welcome#problem_permalink", as: :problem_permalink # used by the apps to redirect to a problem webpage
   end
+
+  # Open data: full problems dataset as CSV (CC0). Non-localized so the URL is stable.
+  get "/data/problems.csv", to: "open_data#problems", as: :open_data_problems
+
+  # French support was removed (the translations described Fontainebleau, not Dartmoor).
+  # Send any old /fr links to the English equivalent.
+  get "/fr(/*path)", to: redirect { |params, _req| "/en/#{params[:path]}".chomp("/") }, format: false
 
   # Deprecated
   namespace :api do

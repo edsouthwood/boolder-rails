@@ -21,6 +21,8 @@
 18. [POIs and Routes](#pois-and-routes)
 19. [Contributions](#contributions)
 20. [Email Setup](#email-setup)
+21. [Language Support](#language-support)
+22. [Open Data Export](#open-data-export)
 
 ---
 
@@ -743,3 +745,32 @@ Notes:
 
 To test on the server: `RAILS_ENV=production bin/rails runner 'ContributeMailer.with(contribution: Contribution.last).acknowledgement_email.deliver_now'`
 — `deliver_now` surfaces SMTP errors directly in the terminal instead of hiding them in a job.
+
+---
+
+## Language Support
+
+The site is **English-only** (June 2026). The French locale inherited from upstream was
+removed because its translations described Fontainebleau, not Dartmoor. Old `/fr/...` URLs
+301-redirect to their `/en/...` equivalents. URLs keep the `/en/` prefix so existing links
+stay valid. The Fontainebleau "circuit 7a" feature and the upstream mobile-app page were
+removed at the same time (`/en/app` now redirects to the map).
+
+---
+
+## Open Data Export
+
+The full problems dataset is publicly downloadable as CSV, released under
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain):
+
+```
+https://bowda.edsouthwood.com/data/problems.csv
+```
+
+- **Columns:** `id, name, grade, steepness, latitude, longitude, area, url`
+- **What's included:** problems in a *published* area that have a location — the same
+  visibility rule as the public site (`Problem#published?`). Unnamed problems export with a
+  blank name. Nothing else (contributor details, drafts, unpublished areas) is exposed.
+- **Implementation:** `app/controllers/open_data_controller.rb`; generated on the fly with an
+  ETag so repeat downloads get 304 responses.
+- The download is linked from the About page ("Open data" section) and the site footer.

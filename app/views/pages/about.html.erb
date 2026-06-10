@@ -60,6 +60,26 @@
     </div>
   </section>
 
+  <section id="open-data">
+    <div class="mx-auto max-w-7xl py-8 px-6 lg:px-8">
+      <h2 class="text-3xl font-bold tracking-tight text-warm-gray-900">
+        Open data
+      </h2>
+      <p class="mt-6 max-w-3xl text-lg text-warm-gray-500">
+        The full Dartmoor problems dataset is free to download and use for any purpose. It is
+        released under <%= link_to "CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/", class: "font-medium underline text-emerald-600" %>
+        (public domain) — no permission or attribution required, though a mention is always appreciated.
+      </p>
+      <p class="mt-6 max-w-3xl text-lg text-warm-gray-500">
+        The CSV contains every published problem with its name, grade, steepness, latitude,
+        longitude, area and a link back to its page.
+      </p>
+      <p class="mt-6 max-w-3xl text-lg">
+        <%= link_to "Download the problems dataset (CSV)", open_data_problems_path, class: "font-medium underline text-emerald-600" %>
+      </p>
+    </div>
+  </section>
+
   <div class="bg-warm-gray-50">
     <section id="contact">
       <div class="mx-auto max-w-7xl py-8 px-6 lg:px-8">

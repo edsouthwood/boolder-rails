@@ -12,10 +12,7 @@ class Mapping::ContributionRequestsController < ApplicationController
 
       group_name = problems.count > 1 ? "#{problem.name_debug} + #{problems.count - 1}" : problem.name_debug
 
-      name_fr = I18n.with_locale(:fr) { group_name }
-      name_en = I18n.with_locale(:en) { group_name }
-      hash[:name] = name_fr
-      hash[:name_en] = (name_en != name_fr) ? name_en : ""
+      hash[:name] = group_name
 
       hash[:problems] = problems.map { |p| { name: p.name_debug, id: p.id, grade: p.grade, ascents: (p.ascents || 0) } }
 

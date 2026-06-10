@@ -17,8 +17,6 @@ export default class extends Controller {
     draft: { type: Boolean, default: false },
     contribute: { type: Boolean, default: false },
     contributeSource: String,
-    circuit7a: { type: Boolean, default: false },
-    circuit7aSource: String,
     mapDataSource: String,
     areaLabelsSource: String,
   }
@@ -404,94 +402,6 @@ export default class extends Controller {
       });
     }
 
-    // CIRCUIT 7A LAYERS
-
-    if(this.circuit7aValue) {
-
-      this.map.addSource('circuit7a', {
-        type: 'geojson',
-        data: this.circuit7aSourceValue,
-      });
-  
-      this.map.addLayer({
-      'id': 'circuit7a-problems',
-      'type': 'circle',
-      'source': 'circuit7a',
-      // 'source-layer': '',
-      // 'minzoom': 12,
-      'layout': {
-        'visibility': 'visible',
-        'circle-sort-key': 
-          [
-            "case",
-            ["has", "circuitId"],
-            2,
-            1
-          ]
-      },
-      'paint': {
-        'circle-radius': 
-          [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            12,
-            6,
-            22,
-            15
-          ]
-        ,
-        'circle-color': "#FFDC36",
-        // 'circle-opacity': 0.25,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#fff'
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-      }
-      );
-
-      this.map.addLayer({
-      'id': 'circuit7a-problems-texts',
-      'type': 'symbol',
-      'source': 'circuit7a',
-      // 'source-layer': '',
-      'minzoom': 13,
-      'layout': {
-        'visibility': 'visible',
-        // 'text-allow-overlap': true,
-        'text-field': [
-          "to-string",
-          ["get", "index"]
-        ],
-        'text-size': [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          12,
-          10,
-          22,
-          20
-        ],
-      },
-      'paint': {
-        'text-color': "#fff",
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-      });
-
-    }
   }
 
   centerMap() {
@@ -510,7 +420,7 @@ export default class extends Controller {
         speed: 2
       });
 
-      if(!this.contributeValue && !this.circuit7aValue) {
+      if(!this.contributeValue) {
 
         // FIXME: make it DRY
         const coordinates = [problem.lon, problem.lat];
@@ -537,9 +447,6 @@ export default class extends Controller {
       if(this.contributeValue) {
         url = `/${this.localeValue}/mapping/map`
       }
-      else if(this.circuit7aValue) {
-        url = `/${this.localeValue}/circuit7a/map`
-      }
       else {
         url = `/${this.localeValue}/map`
       }
@@ -550,32 +457,30 @@ export default class extends Controller {
 
   setupClickEvents() {
 
-    if(!this.circuit7aValue) {
-      this.map.on('mouseenter', 'problems', () => {
-        this.map.getCanvas().style.cursor = 'pointer';
-      });
-      this.map.on('mouseleave', 'problems', () => {
-        this.map.getCanvas().style.cursor = '';
-      });
-  
-      this.map.on('click', 'problems', (e) => {
-  
-        let problem = e.features[0].properties
-  
-        // FIXME: make it DRY
-        const coordinates = e.features[0].geometry.coordinates.slice();
-        var name = problem.name
-        if(this.localeValue == 'en' && problem.nameEn) {
-          name = problem.nameEn
-        }        
-        const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
-         
-        new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-        .setLngLat(coordinates)
-        .setHTML(html)
-        .addTo(this.map);
-      });
-    }
+    this.map.on('mouseenter', 'problems', () => {
+      this.map.getCanvas().style.cursor = 'pointer';
+    });
+    this.map.on('mouseleave', 'problems', () => {
+      this.map.getCanvas().style.cursor = '';
+    });
+
+    this.map.on('click', 'problems', (e) => {
+
+      let problem = e.features[0].properties
+
+      // FIXME: make it DRY
+      const coordinates = e.features[0].geometry.coordinates.slice();
+      var name = problem.name
+      if(this.localeValue == 'en' && problem.nameEn) {
+        name = problem.nameEn
+      }
+      const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
+
+      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+      .setLngLat(coordinates)
+      .setHTML(html)
+      .addTo(this.map);
+    });
 
     this.map.on('mouseenter', ['contribute-problems','contribute-problems-texts'], () => {
       this.map.getCanvas().style.cursor = 'pointer';
@@ -603,32 +508,6 @@ export default class extends Controller {
         <span class="text-gray-400 ml-1">${problem.grade}</span>
 </div>`
       ).join("");
-       
-      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-      .setLngLat(coordinates)
-      .setHTML(html)
-      .addTo(this.map);
-    });
-
-    this.map.on('mouseenter', ['circuit7a-problems','circuit7a-problems-texts'], () => {
-      this.map.getCanvas().style.cursor = 'pointer';
-    });
-    this.map.on('mouseleave', ['circuit7a-problems','circuit7a-problems-texts'], () => {
-      this.map.getCanvas().style.cursor = '';
-    });
-
-    // FIXME: make DRY
-    this.map.on('click', ['circuit7a-problems','circuit7a-problems-texts'], (e) => {
-
-      let problem = e.features[0].properties
-
-      // FIXME: make it DRY
-      const coordinates = e.features[0].geometry.coordinates.slice();
-      var name = problem.name
-      if(this.localeValue == 'en' && problem.nameEn) {
-        name = problem.nameEn
-      }        
-      const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
        
       new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
       .setLngLat(coordinates)

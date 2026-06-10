@@ -5,12 +5,6 @@
 
       <nav class="flex flex-wrap justify-center" aria-label="Footer">
         <div class="pr-4 py-2">
-          <a href="<%= app_path %>" class="text-base text-gray-400 hover:text-gray-900">
-            <%= t('views.layout.nav.app') %>
-          </a>
-        </div>
-
-        <div class="px-4 py-2">
           <a href="<%= about_path %>" class="text-base text-gray-400 hover:text-gray-900">
             <%= t('views.layout.footer.about') %>
           </a>
@@ -25,6 +19,12 @@
         <div class="px-4 py-2">
           <a href="<%= privacy_path %>" class="text-base text-gray-400 hover:text-gray-900">
             <%= t('views.layout.footer.privacy') %>
+          </a>
+        </div>
+
+        <div class="px-4 py-2">
+          <a href="<%= about_path(anchor: "open-data") %>" class="text-base text-gray-400 hover:text-gray-900">
+            <%= t('views.layout.footer.open_data') %>
           </a>
         </div>
       </nav>

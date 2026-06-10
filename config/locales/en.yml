@@ -343,11 +343,6 @@ en:
       index:
         metas:
           title: All Dartmoor circuits
-    circuit7a:
-      title: Fond of Font
-      subtitle_html: The impossible circuit of 100 7a by Seb Berthe and Hugo Parmentier in 2023.
-      see_on_map: See on map
-      see_movie: See the movie
       metas:
         title: Fond of Font - 100 7a circuit
         description: The impossible circuit of 100 7a in Dartmoor by Seb Berthe and Hugo Parmentier.
@@ -371,11 +366,11 @@ en:
         open_menu: Open main menu
         discover: Discover
         map: Map
-        app: App
       footer:
         contact: Contact
         privacy: Privacy Policy
         about: About
+        open_data: Open data
         contribute: Contribute
     pagination:
       first: "First"

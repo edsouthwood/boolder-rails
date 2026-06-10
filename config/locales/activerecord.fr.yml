@@ -1,8 +1,0 @@
-fr:
-  activerecord:
-    models:
-    attributes:
-      contribution:
-        contributor_name: Nom
-        contributor_email: Email
-        problem_name: Nom de la voie
