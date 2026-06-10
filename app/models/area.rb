@@ -48,32 +48,26 @@ class Area < ApplicationRecord
     [ id, name ].join(" - ")
   end
 
+  # Fallback viewport (roughly Dartmoor) used when an area has no located
+  # boulders or problems to derive real bounds from.
+  DEFAULT_BOUNDS = {
+    south_west: { lat: 50.50, lon: -4.10 },
+    north_east: { lat: 50.65, lon: -3.75 }
+  }.freeze
+
   def bounds
-    @bounds ||= begin
-      relevant_boulders = boulders.where(ignore_for_area_hull: false)
-      if relevant_boulders.exists?
-        {
-          south_west: FACTORY.point(relevant_boulders.minimum("st_xmin(polygon::geometry)"), relevant_boulders.minimum("st_ymin(polygon::geometry)")),
-          north_east: FACTORY.point(relevant_boulders.maximum("st_xmax(polygon::geometry)"), relevant_boulders.maximum("st_ymax(polygon::geometry)"))
-        }
-      else
-        located = problems.with_location
-        if located.exists?
-          {
-            south_west: FACTORY.point(located.minimum("ST_X(location::geometry)"), located.minimum("ST_Y(location::geometry)")),
-            north_east: FACTORY.point(located.maximum("ST_X(location::geometry)"), located.maximum("ST_Y(location::geometry)"))
-          }
-        else
-          { south_west: nil, north_east: nil }
-        end
-      end
-    end
+    @bounds ||=
+      bounds_from(boulders.where(ignore_for_area_hull: false), "polygon") ||
+      bounds_from(problems.with_location, "location") ||
+      { south_west: nil, north_east: nil }
   end
 
   def serialized_bounds
+    sw = bounds[:south_west]
+    ne = bounds[:north_east]
     {
-      south_west: { lat: bounds[:south_west]&.lat || 50.50, lng: bounds[:south_west]&.lon || -4.10 },
-      north_east: { lat: bounds[:north_east]&.lat || 50.65, lng: bounds[:north_east]&.lon || -3.75 }
+      south_west: { lat: sw&.lat || DEFAULT_BOUNDS[:south_west][:lat], lng: sw&.lon || DEFAULT_BOUNDS[:south_west][:lon] },
+      north_east: { lat: ne&.lat || DEFAULT_BOUNDS[:north_east][:lat], lng: ne&.lon || DEFAULT_BOUNDS[:north_east][:lon] }
     }
   end
 
@@ -108,5 +102,26 @@ class Area < ApplicationRecord
 
   def topos_count
     Topo.published.joins(lines: :problem).where(problems: { area_id: id }).uniq.count
+  end
+
+  private
+
+  # Derives a bounding box from `relation` using the geometry/geography column
+  # `column` in a single query. Returns nil when the relation is empty so callers
+  # can fall through to the next source.
+  def bounds_from(relation, column)
+    geom = "#{column}::geometry"
+    min_lon, min_lat, max_lon, max_lat = relation.pick(
+      Arel.sql("ST_XMin(ST_Extent(#{geom}))"),
+      Arel.sql("ST_YMin(ST_Extent(#{geom}))"),
+      Arel.sql("ST_XMax(ST_Extent(#{geom}))"),
+      Arel.sql("ST_YMax(ST_Extent(#{geom}))")
+    )
+    return nil if min_lon.nil?
+
+    {
+      south_west: FACTORY.point(min_lon, min_lat),
+      north_east: FACTORY.point(max_lon, max_lat)
+    }
   end
 end

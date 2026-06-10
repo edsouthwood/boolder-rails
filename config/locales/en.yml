@@ -76,6 +76,12 @@ en:
           subtitle: Go to an area and take pictures of the missing problems with your phone.
           core_mapping_team: Want to help map new areas?
           core_mapping_team_email_html: Drop us a line at %{link}, we'll be happy to discuss!
+          top_contributors_title: Top contributors
+          top_contributors_subtitle: Ranked by accepted contributions
+          no_contributors: No accepted contributions yet — be the first!
+          contribution_count:
+            one: "1 contribution"
+            other: "%{count} contributions"
           metas:
             title: Mapping
             description: Help map all the bouldering routes on Dartmoor
@@ -126,6 +132,8 @@ en:
           private: Private
           private_info: Personal information
           private_info_description: To allow us to contact you in case of questions.
+          leaderboard_hint_html: Your name appears on our %{link} — use a consistent name to track your impact.
+          leaderboard_link: contributors leaderboard
           submit: Submit
           flash_success: Thank you for your contribution!
           metas:

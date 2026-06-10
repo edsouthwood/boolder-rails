@@ -21,7 +21,7 @@ class Contribution < ApplicationRecord
       .where.not(contributor_name: [ nil, "" ])
       .group("LOWER(TRIM(contributor_name))")
       .select("MIN(contributor_name) AS display_name, COUNT(*) AS contributions_count")
-      .order("contributions_count DESC")
+      .order(Arel.sql("contributions_count DESC, display_name ASC"))
       .limit(limit)
   end
 end

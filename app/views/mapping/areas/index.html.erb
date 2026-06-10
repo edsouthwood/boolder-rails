@@ -65,10 +65,10 @@
       </div>
 
       <div id="contributors" class="mt-10">
-        <h2 class="text-xl font-bold text-gray-900 mb-1 px-4 sm:px-0">Top contributors</h2>
-        <p class="text-sm text-gray-500 mb-4 px-4 sm:px-0">Ranked by accepted contributions</p>
+        <h2 class="text-xl font-bold text-gray-900 mb-1 px-4 sm:px-0"><%= t("views.mapping.areas.index.top_contributors_title") %></h2>
+        <p class="text-sm text-gray-500 mb-4 px-4 sm:px-0"><%= t("views.mapping.areas.index.top_contributors_subtitle") %></p>
         <% if @top_contributors.any? %>
-          <div class="overflow-hidden bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+          <div class="overflow-hidden bg-white shadow ring-1 ring-black/5 md:rounded-lg">
             <ol class="divide-y divide-gray-200">
               <% @top_contributors.each_with_index do |c, i| %>
                 <li class="flex items-center justify-between px-4 py-3 sm:px-6">
@@ -76,13 +76,13 @@
                     <span class="w-5 text-sm font-medium text-gray-400"><%= i + 1 %></span>
                     <span class="text-sm font-medium text-gray-900"><%= c.display_name %></span>
                   </div>
-                  <span class="text-sm text-gray-500"><%= pluralize(c.contributions_count, "contribution") %></span>
+                  <span class="text-sm text-gray-500"><%= t("views.mapping.areas.index.contribution_count", count: c.contributions_count) %></span>
                 </li>
               <% end %>
             </ol>
           </div>
         <% else %>
-          <p class="text-sm text-gray-400 italic px-4 sm:px-0">No accepted contributions yet — be the first!</p>
+          <p class="text-sm text-gray-400 italic px-4 sm:px-0"><%= t("views.mapping.areas.index.no_contributors") %></p>
         <% end %>
       </div>
 

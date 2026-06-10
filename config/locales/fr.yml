@@ -78,9 +78,15 @@ fr:
         index:
           title: Cartographier
           subtitle: Pour nous aider à améliorer Boolder, rendez-vous sur un secteur et prenez en photo les blocs manquants avec votre téléphone.
-          core_mapping_team: Vous souhaitez nous aider à cartographier de nouveaux secteurs ? 
+          core_mapping_team: Vous souhaitez nous aider à cartographier de nouveaux secteurs ?
           core_mapping_team_email_html: Envoyez-nous un email à %{link}, nous serons ravis de discuter !
-          metas: 
+          top_contributors_title: Meilleurs contributeurs
+          top_contributors_subtitle: Classés par contributions acceptées
+          no_contributors: Aucune contribution acceptée pour l'instant — soyez le premier !
+          contribution_count:
+            one: "1 contribution"
+            other: "%{count} contributions"
+          metas:
             title: Cartographier
             description: Aidez Boolder à cartographier toutes les voies de bloc à Fontainebleau
       problems:
@@ -126,6 +132,8 @@ fr:
           private: Privé
           private_info: Informations personnelles
           private_info_description: Pour nous permettre de vous contacter en cas de question.
+          leaderboard_hint_html: Votre nom apparaît sur notre %{link} — utilisez un nom cohérent pour suivre votre impact.
+          leaderboard_link: classement des contributeurs
           submit: Envoyer
           flash_success: Merci pour votre contribution !
           metas:
