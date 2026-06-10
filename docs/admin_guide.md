@@ -96,7 +96,7 @@ Boot auto-start is enabled via `loginctl enable-linger ed`, which allows user se
 
 The app was originally served in development mode. Production mode fixes the serious
 problems with that: error pages no longer leak stack traces/env vars, emails actually send
-(once SES credentials are set), background jobs persist in Solid Queue, and the app runs
+(once SMTP credentials are set), background jobs persist in Solid Queue, and the app runs
 precompiled assets with no code reloading.
 
 ### What is already prepared (one-time, done June 2026)
@@ -147,7 +147,7 @@ and a test contribution can be submitted and accepted.
   then `systemctl --user restart boolder-rails`.
 - **Fix the Caddyfile**: `/etc/caddy/Caddyfile` has a stray `EOF` line after the site block —
   remove it and `sudo systemctl reload caddy`.
-- **Set up email**: add the `amazon_smtp` credentials (see [Email Setup](#email-setup)).
+- **Set up email**: add the `smtp` credentials (see [Email Setup](#email-setup)).
   Until then, contributor emails fail inside background jobs.
 - The dev database `dartmoor-dev` is left untouched as a fallback.
 
@@ -718,28 +718,28 @@ mailer job being enqueued and performed.
 
 ### Production
 
-Production sends through Amazon SES SMTP (`email-smtp.eu-north-1.amazonaws.com`, configured
-in `config/environments/production.rb`). For it to work you need:
+Production sends through whatever SMTP server is configured under the `smtp` key in Rails
+credentials (`bin/rails credentials:edit`):
 
-1. **SES SMTP credentials** stored in Rails credentials (`bin/rails credentials:edit`):
+```yaml
+smtp:
+  address: mail.enmail.co        # outgoing/SMTP server (incoming/IMAP is not used)
+  port: 587                      # 587 = STARTTLS, 465 = implicit TLS (both handled)
+  username: <mailbox username>
+  password: <mailbox password>
+  from: Bowda <you@yourdomain>   # must be an address this server may send as
+```
 
-   ```yaml
-   amazon_smtp:
-     username: <SES SMTP username>
-     password: <SES SMTP password>
-   ```
+Notes:
 
-   Create these in the AWS console under SES → SMTP settings (region `eu-north-1`). If these
-   credentials are missing, every send fails — and since the emails are sent from background
-   jobs, the admin UI won't show an error; check the production logs.
+- `from` is used as the sender on all outgoing email (`app/mailers/application_mailer.rb`).
+  Most mail servers refuse to send as an address that isn't yours, so use the mailbox's own
+  address. Check the recipient's spam folder on the first test — if it lands there, ask your
+  mail host about SPF/DKIM records for the sending domain.
+- If the credentials are missing or wrong, every send fails — and since emails go out from
+  background jobs, the admin UI won't show an error. Failed jobs are visible at `/jobs`
+  (admin login) and in `journalctl --user -u boolder-rails`.
+- After editing credentials, restart the app: `systemctl --user restart boolder-rails`.
 
-2. **A verified sender identity.** The from address is set in
-   `app/mailers/application_mailer.rb` (currently `Boolder <hello@boolder.com>`, inherited
-   from the upstream project). SES refuses to send from an unverified address, so verify your
-   own domain or address in SES and update the `default from:` line to match.
-
-3. **SES out of sandbox mode** (or every *recipient* must also be verified) — new SES
-   accounts start sandboxed.
-
-To test on the server: `bin/rails runner 'ContributeMailer.with(contribution: Contribution.last).acknowledgement_email.deliver_now'`
+To test on the server: `RAILS_ENV=production bin/rails runner 'ContributeMailer.with(contribution: Contribution.last).acknowledgement_email.deliver_now'`
 — `deliver_now` surfaces SMTP errors directly in the terminal instead of hiding them in a job.

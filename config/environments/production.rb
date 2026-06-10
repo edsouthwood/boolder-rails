@@ -64,13 +64,20 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "bowda.edsouthwood.com", protocol: "https" }
 
+  # Outgoing mail server, configured under the `smtp` key in Rails credentials
+  # (address, port, username, password, from). See "Email Setup" in the admin guide.
+  smtp = Rails.application.credentials.smtp || {}
+  # Port 465 expects TLS from the first byte; other ports (587) upgrade via STARTTLS.
+  smtp_implicit_tls = smtp[:port].to_i == 465
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    address: "email-smtp.eu-north-1.amazonaws.com",
-    port: "587",
+    address: smtp[:address],
+    port: smtp[:port] || 587,
+    user_name: smtp[:username],
+    password: smtp[:password],
     authentication: :plain,
-    user_name: Rails.application.credentials.dig(:amazon_smtp, :username),
-    password: Rails.application.credentials.dig(:amazon_smtp, :password)
+    ssl: smtp_implicit_tls,
+    enable_starttls_auto: !smtp_implicit_tls
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

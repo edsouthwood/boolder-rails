@@ -542,7 +542,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p class="font-medium text-gray-800">Bulk close</p>
         <p>On the list, tick rows and use <strong>Close selected</strong> to decline several at once, with an optional shared note for the decline emails. The edit page also records when each contribution was accepted/closed and by whom.</p>
         <p class="font-medium text-gray-800">Email delivery</p>
-        <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending requires Amazon SES SMTP credentials in Rails credentials (<code>amazon_smtp.username</code> / <code>amazon_smtp.password</code>) and a verified sender address. See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist (sandbox mode, testing from the console).</p>
+        <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending uses the SMTP server configured under the <code>smtp</code> key in Rails credentials (address, port, username, password, from). See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist and how to test from the console.</p>
       </div>
     </section>
 
