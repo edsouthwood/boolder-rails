@@ -13,9 +13,11 @@ class Admin::BaseController < ApplicationController
     authenticate_or_request_with_http_basic("admin") do |id, password|
       account = accounts[id.to_s]
       if account
-        session[:admin_user_name] = id
         expected = account.is_a?(String) ? account : account.with_indifferent_access[:password]
-        ActiveSupport::SecurityUtils.secure_compare(password, expected)
+        if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password, expected)
+          session[:admin_user_name] = id
+          true
+        end
       end
     end
   end

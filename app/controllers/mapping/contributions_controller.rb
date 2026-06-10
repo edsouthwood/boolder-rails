@@ -19,8 +19,6 @@ class Mapping::ContributionsController < ApplicationController
     session[:contribution_email] = @contribution.contributor_email
 
     if @contribution.save
-      auto_set_problem_location(@contribution)
-
       flash[:notice] = t("views.mapping.contributions.new.flash_success")
 
       ContributeMailer.with(contribution: @contribution).new_contribution_email.deliver_later
@@ -33,13 +31,6 @@ class Mapping::ContributionsController < ApplicationController
   end
 
   private
-
-  def auto_set_problem_location(contribution)
-    return unless contribution.location.present?
-    problem = contribution.problem
-    return unless problem&.location.nil?
-    problem.update(location: contribution.location)
-  end
 
   def area_topos_for_problem(problem_id)
     problem = Problem.find_by(id: problem_id)
