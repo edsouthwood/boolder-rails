@@ -31,7 +31,9 @@ class Admin::ContributionsController < Admin::BaseController
     previous_state = @contribution.state
 
     ActiveRecord::Base.transaction do
-      @contribution.update!(contribution_params)
+      @contribution.assign_attributes(contribution_params)
+      stamp_review_metadata(previous_state)
+      @contribution.save!
       import_if_newly_accepted(previous_state)
     end
 
@@ -46,7 +48,56 @@ class Admin::ContributionsController < Admin::BaseController
     render "edit", status: :unprocessable_entity
   end
 
+  # Creates a real Problem from an "unlisted problem" contribution and links it, so the
+  # contribution can then be accepted to import the photo/line/GPS as usual.
+  def create_problem
+    set_contribution
+
+    if @contribution.problem.present?
+      flash[:error] = "This contribution is already linked to a problem."
+      return redirect_to edit_admin_contribution_path(@contribution)
+    end
+
+    problem = Problem.new(new_problem_params)
+    problem.location = @contribution.location if @contribution.location.present?
+
+    if problem.save
+      @contribution.update!(problem: problem)
+      flash[:notice] = "Problem ##{problem.id} created and linked. Accept the contribution to import the photo and line."
+    else
+      flash[:error] = "Could not create problem: #{problem.errors.full_messages.join(', ')}"
+    end
+    redirect_to edit_admin_contribution_path(@contribution)
+  end
+
+  # Closes (declines) several contributions at once, with an optional shared note. Accept is
+  # deliberately not bulk: each acceptance needs per-contribution photo/line/GPS decisions.
+  def bulk_close
+    ids = Array(params[:contribution_ids]).reject(&:blank?)
+    note = params[:moderator_note].presence
+    closed = 0
+
+    Contribution.where(id: ids).where.not(state: "closed").find_each do |contribution|
+      attrs = { state: "closed", closed_at: Time.current, reviewed_by: current_admin_user&.username }
+      attrs[:moderator_note] = note if note
+      begin
+        contribution.update!(attrs)
+        ContributeMailer.with(contribution: contribution).declined_email.deliver_later
+        closed += 1
+      rescue ActiveRecord::RecordInvalid
+        next
+      end
+    end
+
+    flash[:notice] = "Closed #{closed} #{'contribution'.pluralize(closed)}."
+    redirect_to admin_contributions_path(state: session[:contributions_filter].presence)
+  end
+
   private
+
+  def new_problem_params
+    params.require(:problem).permit(:area_id, :name, :grade, :steepness)
+  end
 
   def import_if_newly_accepted(previous_state)
     return unless @contribution.state == "accepted" && previous_state == "pending"
@@ -56,6 +107,20 @@ class Admin::ContributionsController < Admin::BaseController
       apply_photo: param_flag(:apply_photo),
       apply_gps: param_flag(:apply_gps)
     ).import!
+  end
+
+  # Records who reviewed the contribution and when it changed state.
+  def stamp_review_metadata(previous_state)
+    return if @contribution.state == previous_state
+
+    case @contribution.state
+    when "accepted"
+      @contribution.accepted_at = Time.current
+      @contribution.reviewed_by = current_admin_user&.username
+    when "closed"
+      @contribution.closed_at = Time.current
+      @contribution.reviewed_by = current_admin_user&.username
+    end
   end
 
   def send_transition_emails(previous_state)

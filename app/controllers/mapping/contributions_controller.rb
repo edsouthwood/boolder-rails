@@ -26,7 +26,8 @@ class Mapping::ContributionsController < ApplicationController
       ContributeMailer.with(contribution: @contribution).new_contribution_email.deliver_later
       ContributeMailer.with(contribution: @contribution).acknowledgement_email.deliver_later
 
-      redirect_to [ :mapping, @contribution.problem ]
+      # Unlisted-problem submissions have no problem to return to; show the contribution instead.
+      redirect_to(@contribution.problem ? [ :mapping, @contribution.problem ] : [ :mapping, @contribution ])
     else
       @area_topos = area_topos_for_problem(@contribution.problem_id)
       render "new", status: :unprocessable_entity

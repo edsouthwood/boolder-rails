@@ -520,12 +520,17 @@ Users can submit photos and route information to improve topos. The contribution
 **Admin → Contributions** — review pending submissions. The list opens on the **pending**
 queue by default, shows a photo thumbnail, submission date and comment preview for quick
 triage, and is paginated. A badge at the top shows how many contributions are still pending.
+Tick the checkboxes to **bulk-close** several at once (with an optional shared note that goes
+into the decline emails) — handy for clearing spam or duplicates. Acceptance stays one-at-a-
+time because each import needs its own photo/line/GPS decisions.
 
 The three states are:
 
 - **pending** — awaiting review
 - **accepted** — accepted and applied to the data
 - **closed** — declined
+
+The edit page records when a contribution was accepted or closed and which admin did it.
 
 When reviewing a contribution, the admin edit page shows:
 - The contributor's UKC link (if provided) as a clickable link
@@ -550,6 +555,15 @@ If the contributor selected an existing topo photo and drew a line on it (rather
 The whole acceptance import (GPS + line + topo + closing requests) runs in a single database
 transaction (`ContributionImporter`). If any step fails, **nothing** is applied and the edit
 page shows an error — you never end up with GPS applied but the line missing.
+
+### Unlisted problems (creating a problem from a contribution)
+
+Contributors can submit a problem that isn't on the map yet — these arrive with a
+**problem name / URL** but no linked problem. On the edit page for such a contribution,
+a **Create & link problem** form lets you pick the area and set the name, grade and
+steepness. Creating it makes a real `Problem` (inheriting the contribution's GPS), links the
+contribution to it, and then you accept the contribution as normal to import the photo and
+line.
 
 ### Contributor emails and the moderator note
 

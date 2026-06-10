@@ -39,17 +39,58 @@
           <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "ml-2", target: "_blank" %>
         </p>
       <% else %>
-        <p class="my-4">
-          <%= @contribution.problem_name %>
-        </p>
-        <p class="my-4">
-          <%= @contribution.problem_url %>
-        </p>
+        <div class="my-4 rounded border border-gray-200 bg-gray-50 p-4">
+          <p class="text-sm font-semibold text-gray-800 mb-1">Unlisted problem</p>
+          <% if @contribution.problem_name.present? %><p class="text-sm">Name: <%= @contribution.problem_name %></p><% end %>
+          <% if @contribution.problem_url.present? %><p class="text-sm break-all">URL: <%= @contribution.problem_url %></p><% end %>
+
+          <%= form_with url: create_problem_admin_contribution_path(@contribution), method: :post, class: "mt-4 space-y-3" do %>
+            <p class="text-xs text-gray-500">Create a real problem from this submission, then accept the contribution to import the photo, line and GPS.</p>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Area</label>
+              <%= select_tag "problem[area_id]",
+                    options_from_collection_for_select(Area.order(:name), :id, :name),
+                    include_blank: "Select an area…", class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-700">Name</label>
+              <%= text_field_tag "problem[name]", @contribution.problem_name, class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+            </div>
+
+            <div class="flex gap-3">
+              <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-700">Grade</label>
+                <%= select_tag "problem[grade]",
+                      options_for_select(Problem::DISPLAY_GRADE_VALUES),
+                      include_blank: "—", class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+              </div>
+              <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-700">Steepness</label>
+                <%= select_tag "problem[steepness]",
+                      options_for_select(Problem::STEEPNESS_VALUES, "other"),
+                      class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+              </div>
+            </div>
+
+            <button type="submit" class="btn">Create &amp; link problem</button>
+          <% end %>
+        </div>
       <% end %>
 
       <div class="mb-4">
         <div><%= @contribution.contributor_name %></div>
         <div class="text-gray-400 mb-4"><%= @contribution.contributor_email %></div>
+      </div>
+
+      <div class="mb-4 text-xs text-gray-500 space-y-0.5">
+        <div>Submitted <%= @contribution.created_at.to_fs(:long) %></div>
+        <% if @contribution.accepted_at %>
+          <div>Accepted <%= @contribution.accepted_at.to_fs(:long) %><%= " by #{@contribution.reviewed_by}" if @contribution.reviewed_by %></div>
+        <% elsif @contribution.closed_at %>
+          <div>Closed <%= @contribution.closed_at.to_fs(:long) %><%= " by #{@contribution.reviewed_by}" if @contribution.reviewed_by %></div>
+        <% end %>
       </div>
 
       <div class="mb-4">

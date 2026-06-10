@@ -31,7 +31,14 @@ Rails.application.routes.draw do
       resources :pois
       resources :poi_routes
       resources :contribution_requests
-      resources :contributions
+      resources :contributions do
+        member do
+          post :create_problem
+        end
+        collection do
+          post :bulk_close
+        end
+      end
       resources :audits
       resources :redirects, only: :new
       resources :bulk_uploads, only: [:new, :create]
