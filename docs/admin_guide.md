@@ -23,6 +23,7 @@
 20. [Email Setup](#email-setup)
 21. [Language Support](#language-support)
 22. [Open Data Export](#open-data-export)
+23. [Offline Use (Map & Photos)](#offline-use)
 
 ---
 
@@ -779,3 +780,47 @@ https://bowda.edsouthwood.com/data/problems.csv
 - **Implementation:** `app/controllers/open_data_controller.rb`; generated on the fly with an
   ETag so repeat downloads get 304 responses.
 - The download is linked from the About page ("Open data" section) and the site footer.
+
+---
+
+## Offline Use (Map & Photos) {#offline-use}
+
+Mobile signal often drops out on the moor, so each area page has a **"Save map & photos
+for offline"** button (under the area description). One tap makes the whole area usable
+with no connection — both the topo photos *and* the interactive map.
+
+### What gets downloaded
+
+- **Topo photos** for the area (as before).
+- **The problem pages** for the area, so tapping a problem on the map opens its page (with
+  the topo and route line) offline.
+- **The base map** for the area's bounding box: the OpenFreeMap style, vector map tiles
+  (zoom 0–14; the map over-zooms these for the close-up problem view), plus the map's
+  glyphs and sprites.
+- **The overlay data**: the problem/boulder and area-label GeoJSON.
+- **The app itself**: the area page, the map page, and the JS/CSS they need (including the
+  MapLibre map library), so the map renders with no network.
+
+Sizes are small — a single area is on the order of a few MB. A timestamp and a "Remove"
+link appear once saved; **Remove** clears that area's tiles and photos again.
+
+### How it works (for developers)
+
+- A **service worker** (`public/service-worker.js`) serves the cached assets when offline:
+  cache-first for map tiles, map libraries and fingerprinted `/assets/`; network-first
+  (with offline fallback) for the GeoJSON and HTML pages; cache-first for topo images.
+- The **download controller** (`app/javascript/controllers/offline_download_controller.js`)
+  pre-fetches everything when the button is tapped. It reads the area's bounds and map URLs
+  from `Areas::OfflineDataController` (`/dartmoor/:slug/offline-data`), enumerates the map
+  tiles covering the bounds, and parses the map page for the JS/CSS assets to cache.
+- The base map style URL is defined in both `mapbox_controller.js` (the live map) and
+  `offline_download_controller.js` (the offline pre-download) — keep the two in sync.
+- The map popups link straight to the canonical problem page (`problem.path` from the
+  map-data GeoJSON), not the `/redirects/new` 302, so the cached page resolves offline.
+- The service worker never resolves a navigation with `null`; uncached pages fall back to a
+  small "You're offline" page (and the overlay GeoJSON to an empty FeatureCollection), so
+  visiting something you didn't download degrades gracefully instead of erroring.
+
+**Known limitation:** only an area's *own* problem pages are cached. Following a link to a
+problem in a different (un-downloaded) area still needs a connection — it shows the offline
+fallback page rather than erroring.

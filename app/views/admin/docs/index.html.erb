@@ -25,6 +25,7 @@
       <li><a href="#circuits" class="hover:underline">Circuits</a></li>
       <li><a href="#pois" class="hover:underline">POIs and Routes</a></li>
       <li><a href="#contributions" class="hover:underline">Contributions</a></li>
+      <li><a href="#offline-use" class="hover:underline">Offline Use (Map &amp; Photos)</a></li>
     </ol>
   </nav>
 
@@ -545,6 +546,24 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p><strong>Currently development-only</strong> — disabled in production until the other contributors have agreed to the CC0 license. In development, the problems dataset is downloadable as CSV from <code>/data/problems.csv</code> (linked from the About page and footer). It includes <code>id, name, grade, steepness, latitude, longitude, area, url</code> for problems in <strong>published areas with a location</strong> — unpublished areas, unlocated problems and contributor details are never exported.</p>
         <p class="font-medium text-gray-800">Email delivery</p>
         <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending uses the SMTP server configured under the <code>smtp</code> key in Rails credentials (address, port, username, password, from). See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist and how to test from the console.</p>
+      </div>
+    </section>
+
+    <%# Offline Use %>
+    <section id="offline-use">
+      <%= render "admin/docs/section_header", title: "Offline Use (Map & Photos)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Mobile signal often drops out on the moor, so every area page has a <strong>"Save map &amp; photos for offline"</strong> button (under the area description). One tap makes the whole area usable with no connection — both the topo photos and the interactive map.</p>
+        <p class="font-medium text-gray-800">What gets saved</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>Topo photos</strong> for the area</li>
+          <li><strong>Problem pages</strong> for the area — tap a problem on the map offline and its page (topo + route line) opens</li>
+          <li><strong>The base map</strong> for the area's bounding box — map tiles (zoom 0–14, over-zoomed for the close-up view), style, glyphs and sprites</li>
+          <li><strong>Overlay data</strong> — the problem/boulder and area-label data shown on the map</li>
+          <li><strong>The app shell</strong> — the area and map pages plus the JS/CSS (incl. the MapLibre map library) so the map renders with no network</li>
+        </ul>
+        <p>A single area is only a few MB. After saving, a timestamp and a <strong>Remove</strong> link appear; Remove clears that area's tiles, photos and pages.</p>
+        <p class="text-gray-500 text-xs">Implementation: a service worker (<code>public/service-worker.js</code>) serves cached assets offline (and falls back to a friendly offline page instead of crashing on an un-saved page); <code>offline_download_controller.js</code> pre-fetches everything using the area's bounds/URLs from <code>Areas::OfflineDataController</code>. Map popups link straight to the canonical problem page so it resolves offline. <strong>Known limitation:</strong> problems in a <em>different</em>, un-downloaded area still need a connection.</p>
       </div>
     </section>
 

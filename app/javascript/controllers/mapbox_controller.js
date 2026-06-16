@@ -4,6 +4,10 @@
 
 import { Controller } from '@hotwired/stimulus'
 
+// Base map style. Keep in sync with MAP_STYLE_URL in offline_download_controller.js,
+// which pre-downloads this style's tiles/glyphs/sprites for offline use.
+const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
+
 export default class extends Controller {
   static targets = [ 
     "map", 
@@ -25,7 +29,7 @@ export default class extends Controller {
     this.map = new maplibregl.Map({
       container: 'map',
       hash: true,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: MAP_STYLE_URL,
       bounds: [[-4.1, 50.45],[-3.7, 50.70]],
       padding: 5,
     });
@@ -428,8 +432,8 @@ export default class extends Controller {
         if(this.localeValue == 'en' && problem.nameEn) {
           name = problem.nameEn
         }  
-        const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
-           
+        const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
+
         // will be displayed thanks to the 'moveend' event code above
         this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
           .setLngLat(coordinates)
@@ -474,7 +478,8 @@ export default class extends Controller {
       if(this.localeValue == 'en' && problem.nameEn) {
         name = problem.nameEn
       }
-      const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${problem.id})" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
+      // Link directly to the canonical problem page (no redirect hop) so it works offline
+      const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
 
       new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
       .setLngLat(coordinates)

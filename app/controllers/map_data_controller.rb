@@ -2,7 +2,7 @@ class MapDataController < ApplicationController
   def index
     factory = RGeo::GeoJSON::EntityFactory.instance
 
-    problems = Problem.with_location.joins(:area).where(areas: { published: true })
+    problems = Problem.with_location.joins(:area).includes(:area).where(areas: { published: true })
     boulders = Boulder.joins(:area).where(areas: { published: true })
 
     # Optionally scope to a single area (used by the contribution location picker) to keep
@@ -20,7 +20,10 @@ class MapDataController < ApplicationController
         steepness: problem.steepness,
         circuitColor: problem.circuit&.color,
         circuitNumber: problem.circuit_number_simplified,
-        circuitId: problem.circuit_id_simplified
+        circuitId: problem.circuit_id_simplified,
+        # Canonical problem page URL — lets the map link directly (no redirect hop) so the
+        # page works offline from the pre-downloaded cache.
+        path: helpers.problem_friendly_path(problem)
       }.with_indifferent_access.deep_transform_keys { |key| key.camelize(:lower) }
 
       factory.feature(problem.location, problem.id, hash)

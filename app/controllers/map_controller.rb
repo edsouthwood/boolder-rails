@@ -27,7 +27,8 @@ class MapController < ApplicationController
         lat: location.lat,
         lon: location.lon,
         name: problem.name_with_fallback,
-        grade: problem.grade
+        grade: problem.grade,
+        path: helpers.problem_friendly_path(problem)
       }.
       with_indifferent_access.deep_transform_keys { |key| key.camelize(:lower) }
     end
