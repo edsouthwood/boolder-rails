@@ -36,7 +36,12 @@ const STATUS_URL = `${BASE_URL}/${LOCALE}/offline-status`
 const ARTIFACT_DIR = process.env.ARTIFACT_DIR || join(tmpdir(), "offline-check-artifacts")
 
 // SwiftShader keeps WebGL (needed by MapLibre) working in headless Chromium.
-const COMMON_ARGS = ["--enable-unsafe-swiftshader"]
+// EXTRA_CHROMIUM_ARGS: space-separated extra flags, e.g. a host-resolver-rules
+// mapping when checking production from the server itself (hairpin NAT to the
+// public IP fails in Chromium):
+//   EXTRA_CHROMIUM_ARGS="--host-resolver-rules=MAP bowda.edsouthwood.com 127.0.0.1"
+const EXTRA_ARGS = process.env.EXTRA_CHROMIUM_ARGS ? [process.env.EXTRA_CHROMIUM_ARGS] : []
+const COMMON_ARGS = ["--enable-unsafe-swiftshader", ...EXTRA_ARGS]
 // A dead proxy that even loopback traffic must go through = total offline,
 // including service-worker-initiated fetches (unlike DevTools' offline toggle).
 const OFFLINE_ARGS = [
