@@ -127,6 +127,21 @@ try {
   check(served.overlay > 0, "problem overlay geojson served from cache")
   await page.screenshot({ path: join(ARTIFACT_DIR, "offline-map.png") })
 
+  // "See on the map" from a problem page: /en/map/<slug>?pid=<id>. The bare map
+  // page is served from cache (ignoreSearch) and the pid resolved client-side.
+  const pid = (state.problemUrls[0].match(/\/(\d+)[^/]*$/) || [])[1]
+  const pidResponse = await page.goto(`${MAP_URL}?pid=${pid}`, { waitUntil: "load", timeout: 30000 })
+  check(pidResponse.ok(), `"See on the map" page served offline (status ${pidResponse.status()})`)
+  check(!(await page.content()).includes("You're offline"), '"See on the map" is not the offline fallback')
+  await page.waitForSelector(`.maplibregl-popup a[href="${state.problemUrls[0]}"]`, { timeout: 25000 })
+    .then(() => check(true, "problem popup opens offline from ?pid link"))
+    .catch(() => check(false, "problem popup opens offline from ?pid link"))
+
+  // The header "Map" link (bare /en/map) is pre-cached too.
+  const bareMapResponse = await page.goto(`${BASE_URL}/${LOCALE}/map`, { waitUntil: "load", timeout: 30000 })
+  check(bareMapResponse.ok(), `bare map page served offline (status ${bareMapResponse.status()})`)
+  check(!(await page.content()).includes("You're offline"), "bare map page is not the offline fallback")
+
   const problemResponse = await page.goto(problemUrl, { waitUntil: "load", timeout: 30000 })
   check(problemResponse.ok(), `problem page served offline (status ${problemResponse.status()})`)
   check(!(await page.content()).includes("You're offline"), "problem page is not the offline fallback")

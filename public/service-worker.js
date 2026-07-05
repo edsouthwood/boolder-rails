@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '2'
+const SW_VERSION = '3'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -172,8 +172,18 @@ self.addEventListener('fetch', event => {
 
   // HTML pages (real navigations and Turbo visits): network-first, cached page as
   // fallback when offline, then a friendly offline page so we never crash with a
-  // null response.
+  // null response. Map pages get an extra fallback that ignores the query string:
+  // "See on the map" links carry ?pid=<problem>, but only the bare map page is
+  // pre-cached (mapbox_controller re-resolves the pid client-side from cached data).
   if (isHtmlRequest(request)) {
-    networkFirst(event, APP_CACHE, offlinePage)
+    const fallback = isMapPage(url)
+      ? () => caches.match(request, { ignoreSearch: true, ignoreVary: true })
+          .then(cached => cached || offlinePage())
+      : offlinePage
+    networkFirst(event, APP_CACHE, fallback)
   }
 })
+
+function isMapPage(url) {
+  return /^\/[a-z]{2}\/map(\/|$)/.test(url.pathname)
+}

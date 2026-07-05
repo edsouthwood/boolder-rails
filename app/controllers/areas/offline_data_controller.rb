@@ -33,6 +33,8 @@ module Areas
           northEastLat: ne[:lat], northEastLon: ne[:lng]
         },
         map_url: map_path(area),
+        # The bare map page too, so the header "Map" link works offline.
+        map_index_url: map_path,
         # Exact URLs the area map page requests, so cached entries match live requests.
         map_data_url: map_data_path(format: :geojson),
         area_labels_url: area_labels_path(format: :geojson)

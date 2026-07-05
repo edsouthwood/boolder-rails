@@ -848,6 +848,11 @@ mode ever misbehaves in the field, a screenshot of this page is the bug report.
   `offline_download_controller.js` (the offline pre-download) — keep the two in sync.
 - The map popups link straight to the canonical problem page (`problem.path` from the
   map-data GeoJSON), not the `/redirects/new` 302, so the cached page resolves offline.
+- "See on the map" links carry `?pid=<problem>`, but only the bare map page is cached
+  (the Cache API matches query strings exactly). The worker serves map pages with
+  `ignoreSearch` as a fallback, and `mapbox_controller` re-resolves the `pid`
+  client-side from the cached map-data GeoJSON to fly to the problem and open its
+  popup. The bare `/en/map` page (the header link) is pre-cached too.
 - The service worker never resolves a navigation with `null`; uncached pages fall back to a
   small "You're offline" page (and the overlay GeoJSON to an empty FeatureCollection), so
   visiting something you didn't download degrades gracefully instead of erroring.

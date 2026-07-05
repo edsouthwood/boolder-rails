@@ -124,6 +124,7 @@ export default class extends Controller {
     // bundle, stylesheets).
     await this.cachePage(appCache, window.location.pathname)
     await this.cachePage(appCache, this.offlineStatusPath)
+    if (data.map_index_url) await this.cachePage(appCache, data.map_index_url)
     const shellUrls = await this.cacheMapPage(appCache, data.map_url)
 
     // Base map style + its tiles/glyphs/sprites, and the overlay GeoJSON. The style

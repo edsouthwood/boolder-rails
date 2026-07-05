@@ -419,30 +419,62 @@ export default class extends Controller {
       this.flyToBounds([[bounds.southWestLon, bounds.southWestLat], [bounds.northEastLon, bounds.northEastLat]])
     }
 
-    if(this.hasProblemValue) { 
-      let problem = this.problemValue
+    if(this.hasProblemValue) {
+      this.showProblem(this.problemValue)
+    }
+    else {
+      // Offline, the service worker serves the cached bare map page for
+      // "See on the map" links (?pid=...), so the server couldn't embed the
+      // problem — resolve it from the (cached) map-data GeoJSON instead.
+      this.resolveProblemFromPid().then(problem => {
+        if(problem) this.showProblem(problem)
+      })
+    }
+  }
 
-      this.map.flyTo({
-        center: [problem.lon, problem.lat],
-        zoom: 20,
-        speed: 2
-      });
+  showProblem(problem) {
+    this.map.flyTo({
+      center: [problem.lon, problem.lat],
+      zoom: 20,
+      speed: 2
+    });
 
-      if(!this.contributeValue) {
+    if(!this.contributeValue) {
 
-        // FIXME: make it DRY
-        const coordinates = [problem.lon, problem.lat];
-        var name = problem.name
-        if(this.localeValue == 'en' && problem.nameEn) {
-          name = problem.nameEn
-        }  
-        const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
-
-        // will be displayed thanks to the 'moveend' event code above
-        this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
-          .setLngLat(coordinates)
-          .setHTML(html)
+      // FIXME: make it DRY
+      const coordinates = [problem.lon, problem.lat];
+      var name = problem.name
+      if(this.localeValue == 'en' && problem.nameEn) {
+        name = problem.nameEn
       }
+      const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
+
+      // will be displayed thanks to the 'moveend' event code above
+      this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+        .setLngLat(coordinates)
+        .setHTML(html)
+    }
+  }
+
+  async resolveProblemFromPid() {
+    const pid = new URLSearchParams(window.location.search).get('pid')
+    if(!pid || !this.hasMapDataSourceValue) return null
+    try {
+      const res = await fetch(this.mapDataSourceValue)
+      const geojson = await res.json()
+      const feature = geojson.features.find(f =>
+        f.geometry?.type === 'Point' && String(f.properties?.id) === pid
+      )
+      if(!feature) return null
+      return {
+        lon: feature.geometry.coordinates[0],
+        lat: feature.geometry.coordinates[1],
+        name: feature.properties.name,
+        grade: feature.properties.grade,
+        path: feature.properties.path
+      }
+    } catch(_) {
+      return null
     }
   }
 
