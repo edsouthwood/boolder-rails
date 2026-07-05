@@ -101,6 +101,9 @@ Rails.application.routes.draw do
     # The old "app" page advertised the upstream (Fontainebleau-only) mobile apps.
     get "app", to: redirect("/%{locale}/map")
     get "privacy", to: "pages#privacy", as: :privacy
+    # Debug page for the offline feature: shows service worker + cache state so
+    # field failures can be reported with a single screenshot.
+    get "offline-status", to: "pages#offline_status", as: :offline_status
     get "about", to: "pages#about", as: :about
     get "ethics", to: "pages#ethics", as: :ethics
     get "contribute", to: "pages#contribute", as: :contribute

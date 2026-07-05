@@ -802,17 +802,48 @@ with no connection — both the topo photos *and* the interactive map.
   MapLibre map library), so the map renders with no network.
 
 Sizes are small — a single area is on the order of a few MB. A timestamp and a "Remove"
-link appear once saved; **Remove** clears that area's tiles and photos again.
+link appear once saved; **Remove** clears that area's tiles and photos again. If any files
+fail to download, the saved message says how many — re-save on a better connection.
+
+### Checking what's saved: /en/offline-status
+
+The **offline status page** (`/en/offline-status`, linked as "Details" next to a saved
+area) is a diagnostic read-out: the service worker version, how many entries each cache
+holds, which base-map tile snapshot is pinned, and — per saved area — how many of its topo
+photos, problem pages and map files are actually present. Each area is marked
+**Complete** or **Incomplete** (incomplete = re-save it from the area page). If offline
+mode ever misbehaves in the field, a screenshot of this page is the bug report.
 
 ### How it works (for developers)
 
-- A **service worker** (`public/service-worker.js`) serves the cached assets when offline:
-  cache-first for map tiles, map libraries and fingerprinted `/assets/`; network-first
-  (with offline fallback) for the GeoJSON and HTML pages; cache-first for topo images.
+- A **service worker** (`public/service-worker.js`, versioned via `SW_VERSION`) serves the
+  cached assets when offline: cache-first for map tiles, map libraries and fingerprinted
+  `/assets/`; network-first (with offline fallback) for the GeoJSON and HTML pages;
+  cache-first for topo images. HTML matching covers both real navigations *and* Turbo
+  Drive visits (plain fetches with an `Accept: text/html` header) — matching only
+  `request.mode === 'navigate'` misses every in-page link click. Network-first races the
+  network against a **3.5 s timeout**: on a weak signal (one flickering bar, the usual
+  case on the moor) fetch can hang for tens of seconds, which would make cached pages look
+  broken.
 - The **download controller** (`app/javascript/controllers/offline_download_controller.js`)
   pre-fetches everything when the button is tapped. It reads the area's bounds and map URLs
   from `Areas::OfflineDataController` (`/dartmoor/:slug/offline-data`), enumerates the map
   tiles covering the bounds, and parses the map page for the JS/CSS assets to cache.
+  Failed URLs are counted and surfaced instead of being silently dropped.
+- **OpenFreeMap tile URLs contain a dated snapshot** (e.g. `/planet/20260621_080001_pt/…`)
+  that rotates and is eventually deleted server-side. The download therefore fetches the
+  style and TileJSON *fresh* (a `sw-bypass` query param makes the service worker step
+  aside) and re-pins them under their canonical URLs, so the pinned TileJSON and the
+  downloaded tiles always belong to the same live snapshot.
+- OpenFreeMap only serves **Noto Sans** glyphs; overlay layers must use `Noto Sans
+  Regular` / `Noto Sans Bold` for `text-font` (the MapLibre default, Open Sans, 404s and
+  the labels silently don't render — online or off).
+- **End-to-end check**: `script/offline_check.mjs` (Playwright) clicks Save on an area,
+  relaunches the browser behind a dead proxy (total offline, including service-worker
+  fetches), and asserts the map, tiles, glyphs, problem pages, topos and status page all
+  serve from cache. Run with a dev server up: `node script/offline_check.mjs <slug>`.
+  Note: stale precompiled assets in `public/assets/` shadow current JS in development —
+  test from a checkout without them (or clobber them) when iterating.
 - The base map style URL is defined in both `mapbox_controller.js` (the live map) and
   `offline_download_controller.js` (the offline pre-download) — keep the two in sync.
 - The map popups link straight to the canonical problem page (`problem.path` from the

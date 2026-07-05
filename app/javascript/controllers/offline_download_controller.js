@@ -14,11 +14,10 @@ const MAX_TILE_ZOOM = 14
 // Rare characters may be missing offline; labels degrade gracefully.
 const GLYPH_RANGES = ["0-255", "256-511"]
 // Fontstacks used by the overlay layers that mapbox_controller adds at runtime
-// (area names, circuit numbers). Included so they're cached offline whenever the
-// font server serves them; harmlessly skipped if it returns 404.
+// (area names, circuit numbers). Keep in sync with the text-font values there.
 const OVERLAY_FONTSTACKS = [
-  "Open Sans Bold,Arial Unicode MS Bold",
-  "Open Sans Regular,Arial Unicode MS Bold"
+  "Noto Sans Bold",
+  "Noto Sans Regular"
 ]
 
 export default class extends Controller {
@@ -30,8 +29,26 @@ export default class extends Controller {
       this.element.classList.add("hidden")
       return
     }
+    this.restoreSavedState()
+  }
+
+  // Trust the "Saved" flag in localStorage only if the caches still hold the
+  // essentials — the browser can evict Cache Storage under disk pressure, and a
+  // cache-version bump wipes it. Otherwise reset so the user can re-download.
+  async restoreSavedState() {
     const saved = this.savedState
-    if (saved) this.showSaved(saved)
+    if (!saved) return
+
+    const style = await caches.match(MAP_STYLE_URL)
+    const page = await caches.match(window.location.pathname)
+    if (style && page) {
+      this.showSaved(saved)
+    } else {
+      localStorage.removeItem(this.storageKey)
+      this.statusTarget.textContent =
+        "The offline copy of this area is missing or outdated — please save it again."
+      this.statusTarget.classList.remove("hidden")
+    }
   }
 
   async download() {
@@ -42,6 +59,7 @@ export default class extends Controller {
       const response = await fetch(this.urlValue)
       const data = await response.json()
 
+      this.failures = []
       const topoCount = await this.downloadTopos(data.topo_urls)
       await this.downloadProblems(data.problem_urls)
       const mapKeys = await this.downloadMap(data)
@@ -51,13 +69,18 @@ export default class extends Controller {
         topoCount,
         cachedUrls: data.topo_urls,
         problemUrls: data.problem_urls || [],
-        mapKeys
+        mapKeys,
+        failedCount: this.failures.length
       }
       localStorage.setItem(this.storageKey, JSON.stringify(state))
+      if (this.failures.length > 0) {
+        console.warn("Offline download: failed URLs", this.failures)
+      }
 
       this.progressTarget.classList.add("hidden")
       this.showSaved(state)
-    } catch (_) {
+    } catch (error) {
+      console.error("Offline download failed", error)
       this.progressTarget.classList.add("hidden")
       this.buttonTarget.disabled = false
       alert("Download failed. Check your connection and try again.")
@@ -72,7 +95,9 @@ export default class extends Controller {
       try {
         await cache.add(urls[i])
         count++
-      } catch (_) {}
+      } catch (_) {
+        this.failures.push(urls[i])
+      }
     }
     return count
   }
@@ -88,45 +113,49 @@ export default class extends Controller {
   // Pre-fetches everything the map needs offline: the area HTML page, the overlay
   // GeoJSON, and the base map (style, vector tiles for the area's bounds, glyphs,
   // sprites). Returns the list of map-cache keys so they can be cleared later.
+  // Failures of the essentials (pages, style, TileJSON) throw and abort the download;
+  // individual tile/glyph failures are only counted.
   async downloadMap(data) {
     const mapCache = await caches.open(MAP_CACHE)
     const appCache = await caches.open(APP_CACHE)
 
-    // Cache the area page and the map page HTML for offline navigation, and read the
-    // map page for the JS/CSS assets it needs (MapLibre, app bundle, stylesheets).
+    // Cache the area page, the map page and the offline-status page HTML for offline
+    // navigation, and read the map page for the JS/CSS assets it needs (MapLibre, app
+    // bundle, stylesheets).
     await this.cachePage(appCache, window.location.pathname)
+    await this.cachePage(appCache, this.offlineStatusPath)
     const shellUrls = await this.cacheMapPage(appCache, data.map_url)
 
-    // Base map style + its tiles/glyphs/sprites, and the overlay GeoJSON.
-    const style = await this.fetchAndCacheJson(mapCache, MAP_STYLE_URL)
-    const baseUrls = await this.collectMapAssetUrls(style, data.bounds)
+    // Base map style + its tiles/glyphs/sprites, and the overlay GeoJSON. The style
+    // and TileJSON are fetched FRESH (bypassing the service worker's cache-first) and
+    // re-pinned under their canonical URLs: OpenFreeMap tile URLs contain a dated
+    // snapshot that rotates, and downloading tiles for a stale cached snapshot yields
+    // 404s for every tile — an invisibly empty offline map.
+    const style = await this.fetchFreshJson(mapCache, MAP_STYLE_URL)
+    const { assetUrls, tilejsonUrls } = await this.collectMapAssetUrls(mapCache, style, data.bounds)
     const overlayUrls = [data.map_data_url, data.area_labels_url].filter(Boolean)
 
     // Tracked keys are the per-area entries removed on "Remove"; the shared app/library
     // shell assets are pre-fetched too but left cached for any other offline area.
-    const trackedKeys = [MAP_STYLE_URL, ...overlayUrls, ...baseUrls]
-    await this.cacheAll(mapCache, [...trackedKeys, ...shellUrls], "Downloading map")
+    const trackedKeys = [MAP_STYLE_URL, ...tilejsonUrls, ...overlayUrls, ...assetUrls]
+    await this.cacheAll(mapCache, [...overlayUrls, ...assetUrls, ...shellUrls], "Downloading map")
 
     return trackedKeys
   }
 
   async cachePage(cache, path) {
-    try {
-      const res = await fetch(path)
-      await cache.put(path, res)
-    } catch (_) {}
+    const res = await fetch(path)
+    if (!res.ok) throw new Error(`Failed to fetch ${path}: ${res.status}`)
+    await this.putClean(cache, path, res)
   }
 
   // Caches the map page HTML and returns the asset URLs it references so they can be
   // pre-fetched for offline use.
   async cacheMapPage(cache, mapUrl) {
-    try {
-      const res = await fetch(mapUrl)
-      await cache.put(mapUrl, res.clone())
-      return this.parsePageAssets(await res.text())
-    } catch (_) {
-      return []
-    }
+    const res = await fetch(mapUrl)
+    if (!res.ok) throw new Error(`Failed to fetch ${mapUrl}: ${res.status}`)
+    await this.putClean(cache, mapUrl, res.clone())
+    return this.parsePageAssets(await res.text())
   }
 
   // Extracts the JS/CSS asset URLs a page depends on: importmap module URLs plus any
@@ -143,7 +172,11 @@ export default class extends Controller {
       } catch (_) {}
     }
 
+    // Only real page assets — link tags like canonical/alternate/icon would add
+    // bogus (and sometimes cross-scheme) URLs to the download list.
+    const ASSET_LINK_RELS = ["stylesheet", "preload", "modulepreload"]
     doc.querySelectorAll("link[href], script[src]").forEach(el => {
+      if (el.tagName === "LINK" && !ASSET_LINK_RELS.includes(el.getAttribute("rel"))) return
       const u = el.getAttribute("href") || el.getAttribute("src")
       if (u) urls.add(u)
     })
@@ -154,41 +187,66 @@ export default class extends Controller {
   }
 
   // Fetches each URL and stores it in the given cache, updating the progress label.
+  // Failed URLs are recorded in this.failures instead of being silently dropped.
   async cacheAll(cache, urls, label) {
     let done = 0
     for (const url of urls) {
       this.countTarget.textContent = `${label}: ${done + 1} of ${urls.length}`
       try {
         const res = await fetch(url)
-        if (res.ok) await cache.put(url, res.clone())
-      } catch (_) {}
+        if (res.ok) {
+          await this.putClean(cache, url, res)
+        } else {
+          this.failures.push(`${url} (${res.status})`)
+        }
+      } catch (_) {
+        this.failures.push(url)
+      }
       done++
     }
   }
 
-  async fetchAndCacheJson(cache, url) {
-    const res = await fetch(url)
-    await cache.put(url, res.clone())
+  // Fetches a fresh copy from the network — the sw-bypass param makes the service
+  // worker step aside, and its unique value defeats the HTTP cache — then pins the
+  // result under the canonical URL so cache-first lookups (online and offline) get it.
+  async fetchFreshJson(cache, url) {
+    const busted = url + (url.includes("?") ? "&" : "?") + "sw-bypass=" + Date.now()
+    const res = await fetch(busted, { cache: "no-store" })
+    if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`)
+    await this.putClean(cache, url, res.clone())
     return res.json()
   }
 
-  // Builds the list of base-map asset URLs (tiles, glyphs, sprites) referenced by a style.
-  async collectMapAssetUrls(style, bounds) {
-    const urls = []
+  // cache.put, unwrapping redirected responses: a response with `redirected: true`
+  // served to a later navigation request is a network error in Chrome.
+  async putClean(cache, key, res) {
+    if (!res.redirected) return cache.put(key, res)
+    const body = await res.blob()
+    return cache.put(key, new Response(body, {
+      status: res.status, statusText: res.statusText, headers: res.headers
+    }))
+  }
+
+  // Builds the list of base-map asset URLs (tiles, glyphs, sprites) referenced by a
+  // style. Returns the TileJSON URLs separately: those are cached (fresh) as a side
+  // effect here, so they belong in the tracked keys but not in the re-fetch list.
+  async collectMapAssetUrls(cache, style, bounds) {
+    const assetUrls = []
+    const tilejsonUrls = []
 
     // Sprites: <base>.json / <base>.png plus @2x variants
     const sprites = Array.isArray(style.sprite)
       ? style.sprite.map(s => s.url)
       : (style.sprite ? [style.sprite] : [])
     for (const base of sprites) {
-      urls.push(`${base}.json`, `${base}.png`, `${base}@2x.json`, `${base}@2x.png`)
+      assetUrls.push(`${base}.json`, `${base}.png`, `${base}@2x.json`, `${base}@2x.png`)
     }
 
     // Glyphs: one request per (fontstack, range)
     if (style.glyphs) {
       for (const stack of this.fontstacks(style)) {
         for (const range of GLYPH_RANGES) {
-          urls.push(
+          assetUrls.push(
             style.glyphs
               .replace("{fontstack}", encodeURIComponent(stack))
               .replace("{range}", range)
@@ -199,12 +257,13 @@ export default class extends Controller {
 
     // Vector tiles for each source, covering the area bounds
     for (const source of Object.values(style.sources || {})) {
-      const tileset = await this.resolveTileset(source)
+      const tileset = await this.resolveTileset(cache, source)
       if (!tileset) continue
-      urls.push(...this.tileUrls(tileset, bounds))
+      if (tileset.tilejsonUrl) tilejsonUrls.push(tileset.tilejsonUrl)
+      assetUrls.push(...this.tileUrls(tileset, bounds))
     }
 
-    return urls
+    return { assetUrls, tilejsonUrls }
   }
 
   fontstacks(style) {
@@ -216,20 +275,19 @@ export default class extends Controller {
     return stacks
   }
 
-  // Returns { tiles: [template], maxzoom } for a vector/raster source, fetching its
-  // TileJSON when the source references one by URL.
-  async resolveTileset(source) {
+  // Returns { tiles: [template], maxzoom, tilejsonUrl? } for a vector/raster source.
+  // A TileJSON referenced by URL is fetched fresh and pinned under its canonical URL,
+  // so the tile snapshot we download always matches the TileJSON MapLibre will read.
+  async resolveTileset(cache, source) {
     if (source.type !== "vector" && source.type !== "raster") return null
     if (Array.isArray(source.tiles)) {
       return { tiles: source.tiles, maxzoom: source.maxzoom }
     }
     if (source.url && !source.url.endsWith(".pmtiles")) {
-      try {
-        const tilejson = await (await fetch(source.url)).json()
-        if (Array.isArray(tilejson.tiles)) {
-          return { tiles: tilejson.tiles, maxzoom: tilejson.maxzoom }
-        }
-      } catch (_) {}
+      const tilejson = await this.fetchFreshJson(cache, source.url)
+      if (Array.isArray(tilejson.tiles)) {
+        return { tiles: tilejson.tiles, maxzoom: tilejson.maxzoom, tilejsonUrl: source.url }
+      }
     }
     return null
   }
@@ -281,10 +339,20 @@ export default class extends Controller {
     const date = new Date(state.downloadedAt).toLocaleDateString()
     this.buttonTarget.disabled = true
     this.buttonTarget.textContent = "Saved"
+
+    const warning = state.failedCount > 0
+      ? ` <span class="text-amber-600">${state.failedCount} file${state.failedCount === 1 ? "" : "s"} failed to download — try saving again on a better connection.</span>`
+      : ""
     this.statusTarget.innerHTML =
-      `Map & ${state.topoCount} photos saved (${date}). ` +
-      `<a href="#" data-action="click->offline-download#clear" class="underline">Remove</a>`
+      `Map & ${state.topoCount} photos saved (${date}).${warning} ` +
+      `<a href="#" data-action="click->offline-download#clear" class="underline">Remove</a> · ` +
+      `<a href="${this.offlineStatusPath}" class="underline">Details</a>`
     this.statusTarget.classList.remove("hidden")
+  }
+
+  get offlineStatusPath() {
+    const locale = window.location.pathname.split("/")[1] || "en"
+    return `/${locale}/offline-status`
   }
 
   get storageKey() {

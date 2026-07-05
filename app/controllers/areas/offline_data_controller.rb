@@ -22,7 +22,9 @@ module Areas
         slug: area.slug,
         name: area.name,
         topo_count: topos.count,
-        topo_urls: topos.map { |topo| topo_proxy_url(topo, locale: nil) },
+        # Relative paths (not _url): absolute URLs bake in scheme/host, which breaks
+        # cache matching behind proxies or when the scheme differs (e.g. dev over http).
+        topo_urls: topos.map { |topo| topo_proxy_path(topo, locale: nil) },
         problem_urls: problem_urls,
         # Bounds and map URLs let the client pre-download the base map tiles and
         # overlay data covering this area for offline use (see offline_download_controller.js).

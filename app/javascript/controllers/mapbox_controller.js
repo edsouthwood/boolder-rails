@@ -210,6 +210,9 @@ export default class extends Controller {
       'layout': {
         'visibility': 'visible',
         'text-allow-overlap': true,
+        // OpenFreeMap only serves Noto Sans glyphs; the MapLibre default
+        // ("Open Sans Regular,Arial Unicode MS Regular") 404s and renders nothing.
+        'text-font': ['Noto Sans Regular'],
         'text-field': [
           "to-string",
           ["get", "circuitNumber"]
@@ -296,7 +299,7 @@ export default class extends Controller {
             10, 12,
             14, 16,
           ],
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-font': ['Noto Sans Bold'],
           'text-anchor': 'center',
         },
         'paint': {
@@ -377,6 +380,7 @@ export default class extends Controller {
       'layout': {
         'visibility': 'visible',
         'text-allow-overlap': true,
+        'text-font': ['Noto Sans Regular'],
         'text-field': [
           "to-string",
           ["get", "name"]

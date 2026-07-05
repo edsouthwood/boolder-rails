@@ -1,0 +1,35 @@
+<% set_meta_tags title: "Offline status" %>
+
+<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8" data-controller="offline-status">
+  <h1 class="text-2xl font-bold text-gray-900">Offline status</h1>
+  <p class="mt-2 text-sm text-gray-500">
+    Diagnostic view of what's stored for offline use. If offline mode misbehaves,
+    a screenshot of this page shows exactly what's cached.
+  </p>
+
+  <div class="mt-6 space-y-6 text-sm">
+    <section>
+      <h2 class="font-semibold text-gray-900">Service worker</h2>
+      <dl class="mt-2 space-y-1 text-gray-600">
+        <div><dt class="inline font-medium">Connection:</dt> <dd class="inline" data-offline-status-target="online">…</dd></div>
+        <div><dt class="inline font-medium">Worker:</dt> <dd class="inline" data-offline-status-target="worker">…</dd></div>
+        <div><dt class="inline font-medium">Storage used:</dt> <dd class="inline" data-offline-status-target="storage">…</dd></div>
+      </dl>
+    </section>
+
+    <section>
+      <h2 class="font-semibold text-gray-900">Caches</h2>
+      <div class="mt-2 text-gray-600" data-offline-status-target="caches">Reading caches…</div>
+    </section>
+
+    <section>
+      <h2 class="font-semibold text-gray-900">Base map</h2>
+      <div class="mt-2 text-gray-600" data-offline-status-target="basemap">…</div>
+    </section>
+
+    <section>
+      <h2 class="font-semibold text-gray-900">Saved areas</h2>
+      <div class="mt-2 text-gray-600" data-offline-status-target="areas">…</div>
+    </section>
+  </div>
+</div>

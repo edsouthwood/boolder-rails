@@ -10,4 +10,7 @@ class PagesController < ApplicationController
 
   def contribute
   end
+
+  def offline_status
+  end
 end
