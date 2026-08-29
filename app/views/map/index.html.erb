@@ -23,6 +23,7 @@ data-action="gotoproblem@window->mapbox#gotoproblem gotoarea@window->mapbox#goto
 class="h-screen w-full relative"
 data-mapbox-target="map"
 data-mapbox-locale-value="<%= I18n.locale %>"
+data-mapbox-grade-colors-value="<%= grade_colors_json %>"
 
 data-mapbox-contribute-source-value="<%= mapping_requests_path(format: :geojson) %>"
 data-mapbox-contribute-value="<%= params[:contribute] ? "true" : "false" %>"

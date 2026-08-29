@@ -1,8 +1,37 @@
 module ProblemsHelper
-  def problem_circle_view(problem)
-    circle_view(problem.circuit_number_simplified || "&nbsp;".html_safe,
-      background_color: uicolor(problem.circuit&.color),
-      text_color: text_color(problem.circuit&.color)
+  # Canonical grade -> colour mapping for the whole site. The problem lists, the
+  # topo circles, the search results and the map all colour by grade, and all of
+  # them read from here (the JS controllers get it via `grade_colors_json`), so
+  # there is one place to change a colour.
+  GRADE_COLORS = [
+    [ "#FF9500", %w[1 1+ 2 2+ 3 3+ 4 4+ 4a 4a+ 4b 4b+ 4c 4c+] ],
+    [ "#017AFF", %w[5 5+ 5a 5a+ 5b 5b+ 5c 5c+ 6a 6a+] ],
+    [ "#FF3B2F", %w[6b 6b+ 6c] ],
+    [ "#FFFFFF", %w[6c+ 7a 7a+ 7b] ],
+    [ "#000000", %w[7b+ 7c 7c+ 8a 8a+ 8b 8b+ 8c 8c+ 9a 9a+ 9b 9b+ 9c 9c+] ]
+  ].freeze
+
+  # Ungraded / unrecognised grades.
+  UNKNOWN_GRADE_COLOR = "#878A8D".freeze
+
+  # Pale swatches need an outline to stay visible on a white page.
+  GRADE_OUTLINE_COLOR = "#888".freeze
+
+  def problem_circle_view(problem, klass: "h-6 w-6 leading-6")
+    grade_circle_view(problem.grade,
+      content: problem.circuit_number_simplified || "&nbsp;".html_safe,
+      klass: klass
+    )
+  end
+
+  # A grade-coloured dot. Used for problem lists, topo markers and anywhere else a
+  # problem is represented by a circle.
+  def grade_circle_view(grade, content: "&nbsp;".html_safe, klass: "h-6 w-6 leading-6")
+    circle_view(content,
+      background_color: grade_color(grade),
+      text_color: grade_text_color(grade),
+      border_color: grade_outline_color(grade),
+      klass: klass
     )
   end
 
@@ -24,14 +53,25 @@ module ProblemsHelper
   end
 
   def grade_color(grade)
-    case grade.to_s
-    when /\A(1\+?|2\+?|3\+?|4[abc]?\+?)\z/i then "#FF9500"
-    when /\A(5[abc]?\+?|6a\+?)\z/i           then "#017AFF"
-    when /\A6[bc]\+?\z/i                      then "#FF3B2F"
-    when /\A(6c\+|7[ab])\z/i                  then "#FFFFFF"
-    when /\A(7b\+|7c\+?|8[abc]\+?|9[abc]\+?)\z/i then "#000000"
-    else "#878A8D"
-    end
+    key = grade.to_s.strip.downcase
+    match = GRADE_COLORS.find { |_color, grades| grades.include?(key) }
+    match ? match.first : UNKNOWN_GRADE_COLOR
+  end
+
+  # White dots would vanish against the page, so they get an outline — the same
+  # treatment the map gives them via circle-stroke-color.
+  def grade_outline_color(grade)
+    GRADE_OUTLINE_COLOR if grade_color(grade) == "#FFFFFF"
+  end
+
+  def grade_text_color(grade)
+    grade_color(grade) == "#FFFFFF" ? "#333" : "#FFF"
+  end
+
+  # The mapping in the form the Stimulus controllers want: an ordered list of
+  # [color, [grades]] pairs plus the fallback colour for anything unmatched.
+  def grade_colors_json
+    { colors: GRADE_COLORS, unknown: UNKNOWN_GRADE_COLOR, outline: GRADE_OUTLINE_COLOR }.to_json
   end
 
   def bleau_info_url(problem)
@@ -42,17 +82,20 @@ module ProblemsHelper
     area_problem_path(problem.area, problem)
   end
 
-  def circle_view(content, background_color: "", text_color: "", klass: "h-6 w-6 leading-6")
-    content_tag(:span, content,
-      style: "background-color: #{background_color}; color: #{text_color}",
+  def circle_view(content, background_color: "", text_color: "", border_color: nil, klass: "h-6 w-6 leading-6")
+    style = "background-color: #{background_color}; color: #{text_color}"
+    # inset shadow rather than a border: it outlines the dot without changing its size.
+    style += "; box-shadow: inset 0 0 0 1px #{border_color}" if border_color.present?
+
+    content_tag(:span, content, style: style,
       class: "rounded-full #{klass} inline-flex justify-center")
   end
 
   private
 
-  # FIXME: you also have to manually update colors in mapbox_controller.js
-  # and in search_controller.js
-  # https://github.com/nmondollot/boolder/blob/d42b1bc91802895e19219bb662c1ffc8fd831d76/app/javascript/controllers/search_controller.js
+  # Circuit colours (not grade colours — those live in GRADE_COLORS above and are
+  # shared with the JS controllers through `grade_colors_json`). search_controller.js
+  # still carries its own copy of this circuit mapping.
   def color_mapping
      {
       yellow:   "#FFCC02",

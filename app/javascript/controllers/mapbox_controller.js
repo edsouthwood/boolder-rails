@@ -23,6 +23,41 @@ export default class extends Controller {
     contributeSource: String,
     mapDataSource: String,
     areaLabelsSource: String,
+    // { colors: [[hex, [grades]], ...], unknown: hex, outline: hex } — rendered by
+    // ProblemsHelper#grade_colors_json so the map, the problem lists, the topo
+    // circles and the search results all share one grade palette.
+    gradeColors: Object,
+  }
+
+  // MapLibre ["match", ["get","grade"], grades, color, ..., fallback]
+  gradeColorExpression() {
+    const palette = this.gradeColorsValue || {}
+    const pairs = palette.colors || []
+    if (!pairs.length) return palette.unknown || "#878A8D"
+    return ["match", ["get", "grade"],
+      ...pairs.flatMap(([color, grades]) => [grades, color]),
+      palette.unknown || "#878A8D"]
+  }
+
+  // Circuit-number labels sit on the grade-coloured dot, so they take the same
+  // dark-on-pale treatment as ProblemsHelper#grade_text_color.
+  gradeTextColorExpression() {
+    const palette = this.gradeColorsValue || {}
+    const pale = (palette.colors || [])
+      .filter(([color]) => color.toUpperCase() === "#FFFFFF")
+      .flatMap(([, grades]) => grades)
+    if (!pale.length) return "#fff"
+    return ["match", ["get", "grade"], pale, "#333", "#fff"]
+  }
+
+  // Pale dots get an outline so they stay visible against the base map.
+  gradeStrokeExpression() {
+    const palette = this.gradeColorsValue || {}
+    const pale = (palette.colors || [])
+      .filter(([color]) => color.toUpperCase() === "#FFFFFF")
+      .flatMap(([, grades]) => grades)
+    if (!pale.length) return "rgba(0,0,0,0)"
+    return ["match", ["get", "grade"], pale, palette.outline || "#888", "rgba(0,0,0,0)"]
   }
 
   connect() {
@@ -177,33 +212,9 @@ export default class extends Controller {
             ]
           ]
         ,
-        'circle-color':
-          [
-            "match",
-            ["get", "grade"],
-            ["1","1+","2","2+","3","3+","4","4+","4a","4a+","4b","4b+","4c","4c+"],
-            "#FF9500",
-            ["5","5+","5a","5a+","5b","5b+","5c","5c+","6a","6a+"],
-            "#017AFF",
-            ["6b","6b+","6c"],
-            "#FF3B2F",
-            ["6c+","7a","7a+","7b"],
-            "#FFFFFF",
-            ["7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+"],
-            "#000000",
-            "#878A8D"
-          ]
-        ,
+        'circle-color': this.gradeColorExpression(),
         'circle-stroke-width': 1,
-        'circle-stroke-color':
-          [
-            "match",
-            ["get", "grade"],
-            ["6c+","7a","7a+","7b"],
-            "#888",
-            "rgba(0,0,0,0)"
-          ]
-        ,
+        'circle-stroke-color': this.gradeStrokeExpression(),
         'circle-opacity': 
         [
           "interpolate",
@@ -250,20 +261,7 @@ export default class extends Controller {
         ],
       },
       'paint': {
-        'text-color':
-          [
-            "case",
-            [
-              "match",
-              ["get", "circuitColor"],
-              ["", "white"],
-              true,
-              false
-            ],
-            "#333",
-            "#fff",
-          ]
-        ,
+        'text-color': this.gradeTextColorExpression(),
       },
       filter: [
         "match",

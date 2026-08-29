@@ -1,4 +1,5 @@
-<div data-controller="search" class="flex flex-1 items-center justify-center">
+<div data-controller="search" class="flex flex-1 items-center justify-center"
+     data-search-grade-colors-value="<%= grade_colors_json %>">
   <% if show_button %>
     <button type="button" data-action="click->search#openModal" class="px-1 pt-1 font-medium text-gray-500 hover:text-gray-900" aria-haspopup="dialog" aria-expanded="false" aria-controls="searchModal" aria-label="Open search modal">
       <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

@@ -56,7 +56,7 @@
 
         <ul role="list" class="pt-2">
           <% @circuit.problems.exclude_bis.sort_by(&:enumerable_circuit_number).each do |problem| %>
-            <% cache [problem, I18n.locale, "show_featured=true"] do %>
+            <% cache [problem, I18n.locale, "v3-grade-colors", "show_featured=true"] do %>
               <%= render problem, show_featured: true %>
             <% end %>
           <% end %>

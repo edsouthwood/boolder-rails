@@ -16,27 +16,6 @@ const debouncedFetch = debouncePromise((query, params = {}) => {
   return fetch(`/search?${searchParams.toString()}`).then(res => res.json());
 }, 400);
 
-const colorMapping = {
-  yellow: "#FFCC02",
-  purple: "#D783FF",
-  orange: "#FF9500",
-  green: "#77C344",
-  blue: "#017AFF",
-  skyblue: "#5AC7FA",
-  salmon: "#FDAF8A",
-  red: "#FF3B2F",
-  black: "#000000",
-  white: "#FFFFFF",
-};
-
-function bgColor(circuit_color) {
-  return colorMapping[circuit_color] || "rgb(80% 80% 80%)";
-}
-
-function textColor(circuit_color) {
-  return circuit_color === "white" ? "#333" : "#FFF";
-}
-
 export default class extends Controller {
   static targets = [
     "searchInput",
@@ -56,8 +35,26 @@ export default class extends Controller {
     clear: String,
     cancel: String,
     submit: String,
-    showUnpublished: { type: Boolean, default: false }
+    showUnpublished: { type: Boolean, default: false },
+    // { colors: [[hex, [grades]], ...], unknown: hex, outline: hex } — rendered by
+    // ProblemsHelper#grade_colors_json so the site has one grade palette.
+    gradeColors: Object
   };
+
+  // Grade colouring, matching the problem lists, the topo circles and the map.
+  gradeStyle(grade) {
+    const palette = this.gradeColorsValue || {}
+    const key = String(grade ?? "").trim().toLowerCase()
+    const hit = (palette.colors || []).find(([, grades]) => grades.includes(key))
+    const background = hit ? hit[0] : (palette.unknown || "rgb(80% 80% 80%)")
+    const isWhite = background.toUpperCase() === "#FFFFFF"
+    return {
+      background,
+      color: isWhite ? "#333" : "#FFF",
+      // outline a white dot so it stays visible on the white dropdown
+      shadow: isWhite ? `inset 0 0 0 1px ${palette.outline || "#888"}` : "none"
+    }
+  }
 
   connect() {
     this.searchInputTarget.value = "";
@@ -172,7 +169,7 @@ export default class extends Controller {
       return `
         <div class="flex justify-between items-center">
           <div class="flex items-center">
-            <span style="background: ${bgColor(item.circuit_color)}; color: ${textColor(item.circuit_color)}" class="rounded-full h-6 w-6 leading-6 inline-flex justify-center flex-shrink-0">
+            <span style="background: ${this.gradeStyle(item.grade).background}; color: ${this.gradeStyle(item.grade).color}; box-shadow: ${this.gradeStyle(item.grade).shadow}" class="rounded-full h-6 w-6 leading-6 inline-flex justify-center flex-shrink-0">
               ${item.circuit_number || "&nbsp;"}
             </span>
             <span class="ml-2">${item.name}</span>

@@ -147,7 +147,7 @@
             </div>
             <ul role="list">
               <% @popular_problems.each do |problem| %>
-                <% cache [problem, I18n.locale, "v2", "show_featured=false"] do %>
+                <% cache [problem, I18n.locale, "v3-grade-colors", "show_featured=false"] do %>
                   <%= render problem, show_featured: false %>
                 <% end %>
               <% end %>
