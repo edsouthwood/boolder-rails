@@ -172,6 +172,33 @@ RAILS_ENV=production bin/rails assets:precompile
 systemctl --user restart boolder-rails
 ```
 
+### If the site is down (502 from Caddy)
+
+A 502 means Caddy is up but the Rails app on `127.0.0.1:3000` is not answering.
+
+```bash
+systemctl --user status boolder-rails
+journalctl --user -u boolder-rails -n 100 --no-pager
+systemctl --user start boolder-rails
+```
+
+The usual cause is PostgreSQL going away underneath the app — most often
+`unattended-upgrades` restarting it to install a `postgresql-16` security update.
+When that happens the Solid Queue supervisor cannot reconnect and the Solid Queue
+Puma plugin shuts Puma down *cleanly*. The unit now uses `Restart=always` with
+`StartLimitIntervalSec=0` so it retries until the database is back; before that it
+used `Restart=on-failure`, which ignores a clean exit and left the site down
+silently for 8 days from 2026-08-21.
+
+**Testing from the machine itself:** requests to `https://bowda.edsouthwood.com`
+from this box hairpin out through the router and back, which stalls part-way
+through larger responses. That is a router NAT artefact, not a site fault. Bypass
+it by pointing curl straight at Caddy:
+
+```bash
+curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com/en
+```
+
 ---
 
 ## Backups

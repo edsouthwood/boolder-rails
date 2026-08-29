@@ -26,6 +26,17 @@ export default class extends Controller {
   }
 
   connect() {
+    // maplibre-gl is a plain <script> from a CDN, so it is not part of the importmap
+    // module graph and its execution order relative to this controller is not
+    // guaranteed (es-module-shims loads async, and a warm HTTP cache changes the
+    // interleaving). Wait for the loader's 'maplibre-ready' event instead of assuming
+    // the global is already there — same guard as the admin/mapping map controllers.
+    if (typeof maplibregl === 'undefined') {
+      window.addEventListener('maplibre-ready', () => this.connect(), { once: true })
+      return
+    }
+    if (this.map) return // guard against double-connect after maplibre-ready
+
     this.map = new maplibregl.Map({
       container: 'map',
       hash: true,

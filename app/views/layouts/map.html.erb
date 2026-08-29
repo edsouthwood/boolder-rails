@@ -19,10 +19,13 @@
 
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet"></noscript>
-    <%# defer keeps parsing unblocked; deferred scripts still run before the importmap
-        modules (same execution queue, document order), so maplibregl is defined by the
-        time the Stimulus map controller connects. %>
-    <script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js" data-turbo-track="reload"></script>
+    <%# defer keeps parsing unblocked. Do NOT rely on this running before the importmap
+        modules: es-module-shims loads async and a warm HTTP cache changes the
+        interleaving, so the Stimulus controller intermittently connected with
+        maplibregl still undefined (blank map). The onload event below is the contract —
+        mapbox_controller waits for it, as the admin/mapping map controllers already do. %>
+    <script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js" data-turbo-track="reload"
+            onload="window.dispatchEvent(new Event('maplibre-ready'))"></script>
     <style>
       #map { position: absolute; top: 0; bottom: 0; width: 100%; }
     </style>

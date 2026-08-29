@@ -1,6 +1,9 @@
 [Unit]
 Description=Boolder Rails Server (production)
 After=network.target postgresql.service
+# Never stop retrying: an OS package upgrade can restart PostgreSQL for longer
+# than the default start-limit window, and giving up leaves the site down.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -13,7 +16,10 @@ Environment="SOLID_QUEUE_IN_PUMA=true"
 EnvironmentFile=/home/ed/projects/boolder-rails/.env
 # Bind to localhost only: all external traffic must come through Caddy (TLS).
 ExecStart=/home/ed/.rbenv/shims/bundle exec rails server -b 127.0.0.1 -p 3000
-Restart=on-failure
+# Restart=always, not on-failure: when PostgreSQL goes away (e.g. unattended-upgrades
+# restarting it), the Solid Queue Puma plugin shuts Puma down *cleanly* (exit 0), which
+# on-failure ignores. That took the site down silently for 8 days on 2026-08-21.
+Restart=always
 RestartSec=5
 
 [Install]
