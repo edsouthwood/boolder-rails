@@ -19,6 +19,11 @@ Rails.application.configure do
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
+  # ...except the handful of public/ files served under a stable name, which must
+  # stay revalidatable (see lib/static_cache_control.rb).
+  require Rails.root.join("lib/static_cache_control")
+  config.middleware.insert_before ActionDispatch::Static, StaticCacheControl
+
   # Serve assets and Active Storage proxy URLs (see the cdn_image direct route)
   # from our own host. Upstream pointed this at their CDN (assets.boolder.com).
   config.asset_host = "bowda.edsouthwood.com"

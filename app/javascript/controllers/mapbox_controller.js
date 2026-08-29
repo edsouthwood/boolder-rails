@@ -45,6 +45,17 @@ export default class extends Controller {
       padding: 5,
     });
 
+    // The OpenFreeMap "liberty" style names its POI icons from the vector tile's
+    // `class` field, but its sprite ships no icon for some of those names —
+    // `gate` and `stile` are all over Dartmoor's OSM data. MapLibre then logs a
+    // warning for every missing name on every map load. Register a transparent
+    // 1x1 placeholder so the POI's label still draws (as it does today) and the
+    // console stays readable.
+    this.map.on('styleimagemissing', (e) => {
+      if (this.map.hasImage(e.id)) return
+      this.map.addImage(e.id, { width: 1, height: 1, data: new Uint8Array(4) })
+    })
+
     this.addControls()
 
     this.map.on('load', () => {

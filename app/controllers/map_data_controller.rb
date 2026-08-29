@@ -13,14 +13,24 @@ class MapDataController < ApplicationController
     end
 
     problem_features = problems.map do |problem|
+      # Circuit fields are dropped when the problem has no circuit rather than sent
+      # as null. MapLibre's ["has", ...] is true for a key that *exists* with a null
+      # value, so emitting nulls put every problem down the circuit branches of the
+      # `problems` layer: max-zoom dot radius 16 instead of 10, circuit sort order,
+      # and an empty text label drawn per problem from zoom 19. Dartmoor runs without
+      # circuits, but these still populate if circuits are ever added back.
+      circuit = {
+        circuitColor: problem.circuit&.color,
+        circuitNumber: problem.circuit_number_simplified,
+        circuitId: problem.circuit_id_simplified
+      }.compact
+
       hash = {
         id: problem.id,
         name: problem.name_with_fallback,
         grade: problem.grade,
         steepness: problem.steepness,
-        circuitColor: problem.circuit&.color,
-        circuitNumber: problem.circuit_number_simplified,
-        circuitId: problem.circuit_id_simplified,
+        **circuit,
         # Canonical problem page URL — lets the map link directly (no redirect hop) so the
         # page works offline from the pre-downloaded cache.
         path: helpers.problem_friendly_path(problem)
