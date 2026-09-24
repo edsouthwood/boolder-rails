@@ -93,6 +93,8 @@ class Admin::BulkUploadsController < Admin::BaseController
           next
         end
 
+        # Link the topo to its problem (line to be drawn later), or it shows up nowhere.
+        Line.create!(problem: problem, topo: topo)
         created_topos += 1
       end
 

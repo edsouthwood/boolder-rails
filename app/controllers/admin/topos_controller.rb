@@ -68,10 +68,12 @@ class Admin::ToposController < Admin::BaseController
 
   def destroy
     set_topo
+    # Read before destroying: the lines (and so the problems) go with the topo.
+    area = @topo.problems.first&.area
 
     if @topo.destroy
       flash[:notice] = "Topo destroyed"
-      if area = @topo.problems.first&.area
+      if area
         redirect_to admin_area_problems_path(area_slug: area.slug, circuit_id: "first")
       else
         redirect_to admin_areas_path
@@ -91,7 +93,8 @@ class Admin::ToposController < Admin::BaseController
 
   def require_topo_area_access
     slug = Topo.find(params[:id]).problems.first&.area&.slug
-    require_area_access(slug) if slug
+    # A topo with no lines belongs to no area, so only super admins may touch it.
+    slug ? require_area_access(slug) : require_super_admin
   end
 
   def topo_params

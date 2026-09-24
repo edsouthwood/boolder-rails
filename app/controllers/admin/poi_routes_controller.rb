@@ -1,4 +1,7 @@
 class Admin::PoiRoutesController < Admin::BaseController
+  before_action :require_super_admin, only: [ :index ]
+  before_action :require_poi_route_area_access, except: [ :index ]
+
   def index
     @poi_routes = PoiRoute.order(:id)
   end
@@ -31,6 +34,19 @@ class Admin::PoiRoutesController < Admin::BaseController
   end
 
   private
+
+  # Checks the route's current area and, on create/update, the area it's being moved to.
+  def require_poi_route_area_access
+    area_ids = [
+      (PoiRoute.find(params[:id]).area_id if params[:id]),
+      params[:area_id],
+      params.dig(:poi_route, :area_id)
+    ].compact_blank
+
+    forbidden = Area.where(id: area_ids).find { |area| !current_admin_user.can_access_area?(area.slug) }
+    require_area_access(forbidden.slug) if forbidden
+  end
+
   def poi_route_params
     params.require(:poi_route).
       permit(:distance, :transport, :area_id, :poi_id)

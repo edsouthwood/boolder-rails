@@ -1,6 +1,7 @@
 class Admin::BouldersController < Admin::BaseController
   before_action :set_area_from_slug, only: [:editor, :create]
   before_action :set_boulder,        only: [:update, :destroy]
+  before_action -> { require_area_access((@area || @boulder.area).slug) }
 
   def editor
     @boulder_count = @area.boulders.count

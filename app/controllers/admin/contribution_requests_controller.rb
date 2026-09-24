@@ -1,4 +1,6 @@
 class Admin::ContributionRequestsController < Admin::BaseController
+  before_action :require_request_area_access
+
   def show
     contribution_request = ContributionRequest.find(params[:id])
     redirect_to edit_admin_contribution_request_path(contribution_request)
@@ -44,6 +46,20 @@ class Admin::ContributionRequestsController < Admin::BaseController
   end
 
   private
+
+  # Checks the request's current problem and, on create/update, the problem it's being pointed at.
+  def require_request_area_access
+    problem_ids = [
+      (ContributionRequest.find(params[:id]).problem_id if params[:id]),
+      params[:problem_id],
+      params.dig(:contribution_request, :problem_id)
+    ].compact_blank
+
+    forbidden = Area.joins(:problems).where(problems: { id: problem_ids }).
+      find { |area| !current_admin_user.can_access_area?(area.slug) }
+    require_area_access(forbidden.slug) if forbidden
+  end
+
   def contribution_request_params
     params.require(:contribution_request).
       permit(:problem_id, :location_estimated_lat, :location_estimated_lon, :state, :comment)

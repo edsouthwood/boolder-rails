@@ -1,4 +1,8 @@
 class Admin::ContributionsController < Admin::BaseController
+  before_action :require_super_admin, only: [ :bulk_close ]
+  before_action :require_contribution_area_access, only: [ :edit, :update, :create_problem ]
+  before_action :require_new_problem_area_access, only: [ :create_problem ]
+
   def index
     # Default to the pending queue on first visit; an explicit blank state means "all".
     @state = params.key?(:state) ? params[:state] : "pending"
@@ -103,6 +107,17 @@ class Admin::ContributionsController < Admin::BaseController
   end
 
   private
+
+  # Unlisted-problem contributions have no area yet, so only super admins may review them.
+  def require_contribution_area_access
+    area = Contribution.find(params[:id]).problem&.area
+    area ? require_area_access(area.slug) : require_super_admin
+  end
+
+  def require_new_problem_area_access
+    area = Area.find_by(id: params.dig(:problem, :area_id))
+    require_area_access(area.slug) if area
+  end
 
   def new_problem_params
     params.require(:problem).permit(:area_id, :name, :grade, :steepness)

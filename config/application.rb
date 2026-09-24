@@ -26,5 +26,10 @@ module Boolder
 
     config.time_zone = "London"
     config.session_store :cache_store, key: "_boolder_session"
+
+    # Protect the /jobs dashboard with the admin login (super admins only) instead of
+    # Mission Control's own HTTP basic auth. Must be set here, before the engine's initializers.
+    config.mission_control.jobs.base_controller_class = "Admin::JobsBaseController"
+    config.mission_control.jobs.http_basic_auth_enabled = false
   end
 end
