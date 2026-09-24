@@ -51,6 +51,45 @@ const OFFLINE_ARGS = [
 ]
 
 const failures = []
+// Round-trips the map viewport: map -> problem page -> "Back to the map" -> map.
+// Driven through the ?pid= deep link because that is the only deterministic way to get
+// a popup without pixel-hunting a dot; showProblem() always flies to exactly zoom 20,
+// so the expected hash is predictable.
+async function checkViewportRoundTrip(page, label, pid, problemPath) {
+  await page.goto(`${MAP_URL}?pid=${pid}`, { waitUntil: "load", timeout: 30000 })
+  const link = page.locator(`.maplibregl-popup a[href^="${problemPath}#map="]`)
+  await link.waitFor({ timeout: 25000 })
+
+  const href = await link.getAttribute("href")
+  check(await link.getAttribute("target") === null, `${label}: popup link opens in the same tab`)
+
+  const body = (href.split("#map=")[1] || "")
+  check(/^20\/-?\d+\.\d+\/-?\d+\.\d+(\/-?\d+(\.\d+)?){0,2}$/.test(body),
+        `${label}: popup link carries the viewport (#map=${body})`)
+
+  await link.click()
+  // Turbo Drive handles this visit, so there is no document "load" event to wait on —
+  // wait for the problem page's own control to be attached instead.
+  const back = page.locator('[data-map-return-target="back"]')
+  await back.waitFor({ state: "visible", timeout: 20000 })
+    .then(() => check(true, `${label}: "Back to the map" control is shown`))
+    .catch(() => check(false, `${label}: "Back to the map" control is shown`))
+  check(page.url().endsWith(`#map=${body}`),
+        `${label}: fragment survives to the problem page (${page.url().split("/").pop()})`)
+  check((await back.getAttribute("href")).endsWith(`/${LOCALE}/map#${body}`),
+        `${label}: back control targets the bare map with the bare hash`)
+  check((await page.textContent('[data-map-return-target="seeOnMapLabel"]')).trim() === "Back to the map",
+        `${label}: "See on the map" is relabelled`)
+
+  await back.click()
+  await page.waitForSelector(".maplibregl-canvas", { timeout: 20000 })
+  check(!(await page.content()).includes("You're offline"), `${label}: returned map is not the offline fallback`)
+  // MapLibre rewrites the canonical hash on the moveend its own jumpTo(hash) fires, so a
+  // surviving zoom-20 hash proves the view was restored, not merely that a URL was typed.
+  check(page.url().startsWith(`${BASE_URL}/${LOCALE}/map#20/`),
+        `${label}: map restored the saved viewport (#${page.url().split("#")[1]})`)
+}
+
 function check(ok, label) {
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`)
   if (!ok) failures.push(label)
@@ -91,6 +130,10 @@ try {
 
   const problemUrl = BASE_URL + state.problemUrls[0]
   const topoUrl = state.cachedUrls[0]
+  const pid = (state.problemUrls[0].match(/\/(\d+)[^/]*$/) || [])[1]
+
+  await checkViewportRoundTrip(page, "online", pid, state.problemUrls[0])
+
   await context.close()
 
   // ---------- Phase B: everything must work with zero network ----------
@@ -129,11 +172,10 @@ try {
 
   // "See on the map" from a problem page: /en/map/<slug>?pid=<id>. The bare map
   // page is served from cache (ignoreSearch) and the pid resolved client-side.
-  const pid = (state.problemUrls[0].match(/\/(\d+)[^/]*$/) || [])[1]
   const pidResponse = await page.goto(`${MAP_URL}?pid=${pid}`, { waitUntil: "load", timeout: 30000 })
   check(pidResponse.ok(), `"See on the map" page served offline (status ${pidResponse.status()})`)
   check(!(await page.content()).includes("You're offline"), '"See on the map" is not the offline fallback')
-  await page.waitForSelector(`.maplibregl-popup a[href="${state.problemUrls[0]}"]`, { timeout: 25000 })
+  await page.waitForSelector(`.maplibregl-popup a[href^="${state.problemUrls[0]}#map="]`, { timeout: 25000 })
     .then(() => check(true, "problem popup opens offline from ?pid link"))
     .catch(() => check(false, "problem popup opens offline from ?pid link"))
 
@@ -141,6 +183,8 @@ try {
   const bareMapResponse = await page.goto(`${BASE_URL}/${LOCALE}/map`, { waitUntil: "load", timeout: 30000 })
   check(bareMapResponse.ok(), `bare map page served offline (status ${bareMapResponse.status()})`)
   check(!(await page.content()).includes("You're offline"), "bare map page is not the offline fallback")
+
+  await checkViewportRoundTrip(page, "offline", pid, state.problemUrls[0])
 
   const problemResponse = await page.goto(problemUrl, { waitUntil: "load", timeout: 30000 })
   check(problemResponse.ok(), `problem page served offline (status ${problemResponse.status()})`)

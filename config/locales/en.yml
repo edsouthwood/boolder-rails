@@ -37,6 +37,7 @@ en:
     level_x: Level %{level} 
     see_on_bleau_info: See on bleau.info
     see_on_map: See on the map
+    back_to_map: Back to the map
     steepness:
       wall: Wall
       slab: Slab

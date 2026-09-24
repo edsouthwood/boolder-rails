@@ -28,14 +28,30 @@
 
 <div class="max-w-7xl mx-auto pt-6 pb-6 sm:px-6 lg:px-8">
   <div class="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8">
-    <div class="col-span-2">
+    <div class="col-span-2"
+         data-controller="map-return"
+         data-map-return-map-path-value="<%= map_path %>"
+         data-map-return-back-label-value="<%= t("problem.back_to_map") %>">
       <div class="px-4 sm:px-0">
-        <div class="flex items-center space-x-1 text-sm font-medium text-gray-500">
-          <div><%= link_to "Dartmoor", areas_path, class: "hover:text-gray-700" %></div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-          <div><%= link_to @problem.area.name, area_path(@problem.area), class: "hover:text-gray-700" %></div>
+        <div class="flex items-center justify-between text-sm font-medium text-gray-500">
+          <div class="flex items-center space-x-1">
+            <div><%= link_to "Dartmoor", areas_path, class: "hover:text-gray-700" %></div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <div><%= link_to @problem.area.name, area_path(@problem.area), class: "hover:text-gray-700" %></div>
+          </div>
+          <%# Href and visibility are set by map_return_controller: hidden unless this page
+              was opened from the map (or from a chain that started there). "flex hidden" is
+              deliberate — Tailwind emits .hidden after .flex, so it starts hidden and
+              removing .hidden reveals it as a flex row. %>
+          <%= link_to map_path, rel: "nofollow", data: { turbo: false, map_return_target: "back" },
+                      class: "flex hidden items-center space-x-1 text-emerald-600 hover:text-emerald-700" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span><%= t("problem.back_to_map") %></span>
+          <% end %>
         </div>
         <div class="flex justify-between items-center">
           <div class="flex justify-between items-center w-full mt-2">
@@ -76,13 +92,14 @@
 
       <div class="px-4 sm:px-0 py-2">
         <% if @problem.location.present? %>
-          <%= link_to map_path(@problem.area, pid: @problem.id), rel: "nofollow" do %>
+          <%= link_to map_path(@problem.area, pid: @problem.id), rel: "nofollow",
+                      data: { map_return_target: "seeOnMap" } do %>
             <div class="flex items-center space-x-2 text-emerald-600 mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <div><%= t("problem.see_on_map") %></div>
+              <div data-map-return-target="seeOnMapLabel"><%= t("problem.see_on_map") %></div>
             </div>
           <% end %>
         <% end %>

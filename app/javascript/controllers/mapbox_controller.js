@@ -100,9 +100,15 @@ export default class extends Controller {
     });
 
     this.popup = null
+    this.pendingPopup = null
     this.map.on('moveend', () => {
       if(this.popup != null) {
+        if(this.pendingPopup) {
+          this.popup.setHTML(this.problemPopupHtml(this.pendingPopup.problem, this.pendingPopup.name))
+          this.pendingPopup = null
+        }
         this.popup.addTo(this.map)
+        this.stampReturnView(this.popup)
         this.popup = null
       }
     });
@@ -452,6 +458,48 @@ export default class extends Controller {
     }
   }
 
+  // MapLibre's own hash format (Hash#getHashString): coordinate precision is tied to
+  // zoom so the string round-trips to the same pixel, and bearing/pitch are appended
+  // only when non-zero — exactly what Hash#_onHashChange parses back. Computed from
+  // the live map rather than scraped from location.hash, which is empty until the
+  // first moveend.
+  viewportHash() {
+    const center = this.map.getCenter()
+    const zoom = Math.round(this.map.getZoom() * 100) / 100
+    const precision = Math.ceil((zoom * Math.LN2 + Math.log(512 / 360 / 0.5)) / Math.LN10)
+    const m = Math.pow(10, precision)
+    const lat = Math.round(center.lat * m) / m
+    const lng = Math.round(center.lng * m) / m
+    const bearing = this.map.getBearing()
+    const pitch = this.map.getPitch()
+    let hash = `${zoom}/${lat}/${lng}`
+    if (bearing || pitch) hash += `/${Math.round(bearing * 10) / 10}`
+    if (pitch) hash += `/${Math.round(pitch)}`
+    return hash
+  }
+
+  // Link straight to the canonical problem page (no redirect hop) so it works offline,
+  // carrying the viewport so the problem page can offer "Back to the map". The map
+  // itself is built with `hash: true`, which only parses a BARE #zoom/lat/lng — hence
+  // the `map=` prefix here, which map_return_controller strips when it builds the
+  // return URL. Same tab: the browser Back button should work too.
+  problemPopupHtml(problem, name) {
+    return `<a href="${problem.path}#map=${this.viewportHash()}" data-problem-path="${problem.path}">${name || ""}</a>` +
+           `<span class="text-gray-400 ml-1">${problem.grade}</span>`
+  }
+
+  // Refresh the viewport on the popup link at click time: the user may have panned
+  // since the popup opened, and they should return to what they are looking at now.
+  // No preventDefault — the browser reads href when it runs the default action, so
+  // middle- and ctrl-click keep working.
+  stampReturnView(popup) {
+    const link = popup.getElement()?.querySelector('a[data-problem-path]')
+    if (!link) return
+    link.addEventListener('click', () => {
+      link.href = `${link.dataset.problemPath}#map=${this.viewportHash()}`
+    })
+  }
+
   showProblem(problem) {
     this.map.flyTo({
       center: [problem.lon, problem.lat],
@@ -467,12 +515,13 @@ export default class extends Controller {
       if(this.localeValue == 'en' && problem.nameEn) {
         name = problem.nameEn
       }
-      const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
+      // HTML is built by the 'moveend' handler above, not here: the flyTo hasn't run
+      // yet, so viewportHash() would capture the pre-flight view.
+      this.pendingPopup = { problem, name }
 
       // will be displayed thanks to the 'moveend' event code above
       this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
         .setLngLat(coordinates)
-        .setHTML(html)
     }
   }
 
@@ -534,13 +583,12 @@ export default class extends Controller {
       if(this.localeValue == 'en' && problem.nameEn) {
         name = problem.nameEn
       }
-      // Link directly to the canonical problem page (no redirect hop) so it works offline
-      const html = `<a href="${problem.path}" target="_blank">${name || ""}</a><span class="text-gray-400 ml-1">${problem.grade}</span>`;
-
-      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
+      const popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
       .setLngLat(coordinates)
-      .setHTML(html)
+      .setHTML(this.problemPopupHtml(problem, name))
       .addTo(this.map);
+
+      this.stampReturnView(popup);
     });
 
     this.map.on('mouseenter', ['contribute-problems','contribute-problems-texts'], () => {

@@ -841,7 +841,20 @@ photos, problem pages and map files are actually present. Each area is marked
 **Complete** or **Incomplete** (incomplete = re-save it from the area page). If offline
 mode ever misbehaves in the field, a screenshot of this page is the bug report.
 
+### Returning to the map
+
+Tapping a problem on the map opens its page **in the same tab**, and the page then offers
+**"Back to the map"** — in the breadcrumb row at the top, and in place of the usual
+"See on the map" link under the photo. Both return you to the *exact* zoom and centre you
+left, so you can carry on looking at the boulders around you. The browser's Back button
+does the same thing. This works offline as well as on.
+
+Arriving at a problem any other way (a search result, an area list, a shared link) is
+unchanged: there is no back control and the link under the photo still reads
+"See on the map" and centres on that problem.
+
 ### How it works (for developers)
+
 
 - A **service worker** (`public/service-worker.js`, versioned via `SW_VERSION`) serves the
   cached assets when offline: cache-first for map tiles, map libraries and fingerprinted
@@ -852,6 +865,13 @@ mode ever misbehaves in the field, a screenshot of this page is the bug report.
   network against a **3.5 s timeout**: on a weak signal (one flickering bar, the usual
   case on the moor) fetch can hang for tens of seconds, which would make cached pages look
   broken.
+- **`/admin` is never intercepted.** The worker's `fetch` handler returns early for any
+  path under `/admin` or `/:locale/admin`, so those navigations go straight to the browser.
+  Admin is online-only and behind HTTP basic auth: routing it through network-first meant a
+  slow-but-working connection tripped the 3.5 s timeout and served the synthetic "You're
+  offline" page, and a 401 challenge mediated by `respondWith` doesn't reliably raise the
+  browser's credential dialog. If you *were* offline you'd want a real error there anyway,
+  not a cached page.
 - The **download controller** (`app/javascript/controllers/offline_download_controller.js`)
   pre-fetches everything when the button is tapped. It reads the area's bounds and map URLs
   from `Areas::OfflineDataController` (`/dartmoor/:slug/offline-data`), enumerates the map
@@ -873,6 +893,16 @@ mode ever misbehaves in the field, a screenshot of this page is the bug report.
   test from a checkout without them (or clobber them) when iterating.
 - The base map style URL is defined in both `mapbox_controller.js` (the live map) and
   `offline_download_controller.js` (the offline pre-download) — keep the two in sync.
+- **"Back to the map" carries the viewport in the URL fragment.** The map stamps its live
+  view onto the popup link as `#map=<zoom>/<lat>/<lng>[/<bearing>[/<pitch>]]`
+  (`mapbox_controller#viewportHash`, MapLibre's own hash format), and
+  `map_return_controller.js` turns that back into a bare `/<locale>/map#<zoom>/<lat>/<lng>`,
+  which MapLibre's `hash: true` restores on load. A fragment is deliberate: it is **never
+  part of an HTTP request**, so it is invisible to the Cache API and the whole feature needs
+  no service-worker or pre-cache change. A query parameter would miss the cache.
+  The return target must be the **bare** map — with a `:slug` or `?pid=`, `centerMap()`
+  flies over the hash. A `sessionStorage` copy keeps the control working after a hop to a
+  variant problem page, which carries no fragment of its own.
 - The map popups link straight to the canonical problem page (`problem.path` from the
   map-data GeoJSON), not the `/redirects/new` 302, so the cached page resolves offline.
 - "See on the map" links carry `?pid=<problem>`, but only the bare map page is cached

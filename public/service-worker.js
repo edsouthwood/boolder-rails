@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '3'
+const SW_VERSION = '4'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -136,6 +136,14 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
+
+  // Admin is online-only and auth-sensitive: never intercept it. Going through
+  // networkFirst here means a slow-but-working connection trips the 3.5s timeout
+  // and shows the synthetic "You're offline" page, and an HTTP basic-auth
+  // challenge (401) mediated by respondWith doesn't reliably surface the browser
+  // credential dialog. Returning without respondWith lets the browser handle
+  // these navigations natively.
+  if (url.pathname.startsWith('/admin') || /^\/[a-z]{2}\/admin(\/|$)/.test(url.pathname)) return
 
   // Escape hatch for the download controller: fetch a genuinely fresh copy,
   // bypassing both this worker's caches and (via the unique param value) the
