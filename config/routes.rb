@@ -15,7 +15,7 @@ Rails.application.routes.draw do
         post "boulders",       to: "boulders#create",       as: :boulders
       end
       resources :problems, except: :index
-      resources :boulders, only: [:update, :destroy]
+      resources :boulders, only: [ :update, :destroy ]
       resources :circuits
       resources :imports do
         get "apply", on: :member
@@ -41,7 +41,7 @@ Rails.application.routes.draw do
       end
       resources :audits
       resources :redirects, only: :new
-      resources :bulk_uploads, only: [:new, :create]
+      resources :bulk_uploads, only: [ :new, :create ]
 
       get "mapping", to: "mapping#dashboard"
       get "docs", to: "docs#index"
