@@ -1,5 +1,5 @@
 class Admin::ImportsController < Admin::BaseController
-  before_action :require_import_area_access, only: [:apply]
+  before_action :require_import_area_access, only: [ :apply ]
 
   def index
     @imports = Import.all.order(id: :desc)

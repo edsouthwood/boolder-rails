@@ -85,7 +85,7 @@ class Problem < ApplicationRecord
   scope :level, ->(i) {
     tap { raise unless i.in?(1..8) }
     if i <= 5
-      where("(grade >= ? AND grade < ?) OR grade IN (?)", "#{i}a", "#{i + 1}a", ["#{i}", "#{i}+"])
+      where("(grade >= ? AND grade < ?) OR grade IN (?)", "#{i}a", "#{i + 1}a", [ "#{i}", "#{i}+" ])
     else
       where("grade >= ? AND grade < ?", "#{i}a", "#{i + 1}a")
     end

@@ -1,6 +1,6 @@
 class Admin::LinesController < Admin::BaseController
-  before_action :require_line_area_access,     only: [:show, :edit, :update, :destroy]
-  before_action :require_new_line_area_access, only: [:new, :create]
+  before_action :require_line_area_access,     only: [ :show, :edit, :update, :destroy ]
+  before_action :require_new_line_area_access, only: [ :new, :create ]
 
   def edit
     set_line

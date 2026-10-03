@@ -1,7 +1,7 @@
 class Admin::AreasController < Admin::BaseController
-  before_action :require_super_admin, only: [:new, :create, :destroy]
-  before_action :set_area,            only: [:show, :edit, :update, :destroy]
-  before_action -> { require_area_access(@area.slug) }, only: [:edit, :update]
+  before_action :require_super_admin, only: [ :new, :create, :destroy ]
+  before_action :set_area,            only: [ :show, :edit, :update, :destroy ]
+  before_action -> { require_area_access(@area.slug) }, only: [ :edit, :update ]
 
   def index
     sort = params[:sort] == "id" ? :id : :name

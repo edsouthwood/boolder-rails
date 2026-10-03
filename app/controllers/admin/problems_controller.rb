@@ -1,6 +1,6 @@
 class Admin::ProblemsController < Admin::BaseController
-  before_action :require_index_area_access,   only: [:index, :map_editor]
-  before_action :require_problem_area_access, only: [:new, :create, :show, :edit, :update, :destroy]
+  before_action :require_index_area_access,   only: [ :index, :map_editor ]
+  before_action :require_problem_area_access, only: [ :new, :create, :show, :edit, :update, :destroy ]
 
   def index
     @area = Area.find_by(slug: params[:area_slug])

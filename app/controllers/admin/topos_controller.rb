@@ -1,7 +1,7 @@
 class Admin::ToposController < Admin::BaseController
-  before_action :require_super_admin,      only: [:new, :create]
-  before_action :require_topo_area_access, only: [:show, :edit, :update, :destroy]
-  before_action :set_area_and_check_access, only: [:index]
+  before_action :require_super_admin,      only: [ :new, :create ]
+  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_area_and_check_access, only: [ :index ]
 
   def index
     topo_ids = Topo.joins(:problems).where(problems: { area_id: @area.id }).select(:id)

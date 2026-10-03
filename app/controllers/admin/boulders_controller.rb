@@ -1,13 +1,13 @@
 class Admin::BouldersController < Admin::BaseController
-  before_action :set_area_from_slug, only: [:editor, :create]
-  before_action :set_boulder,        only: [:update, :destroy]
+  before_action :set_area_from_slug, only: [ :editor, :create ]
+  before_action :set_boulder,        only: [ :update, :destroy ]
   before_action -> { require_area_access((@area || @boulder.area).slug) }
 
   def editor
     @boulder_count = @area.boulders.count
     @maptiler_key = Rails.application.credentials.dig(:maptiler, :api_key)
     @azure_maps_key = Rails.application.credentials.dig(:azure_maps, :subscription_key)
-    @mapbox_key = ENV['MAPBOX_DEV_ACCESS_KEY']
+    @mapbox_key = ENV["MAPBOX_DEV_ACCESS_KEY"]
   end
 
   def create
