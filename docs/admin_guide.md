@@ -180,8 +180,9 @@ so you can roll back with `git checkout <commit>` followed by the same four comm
 **Rails version:** 8.1 (upgraded October 2026 from 8.0, which reached end of life on
 2026-11-07). PostGIS support comes from the official `activerecord-postgis-adapter`
 gem (11.x); the old `boolder-org` `rails-8` fork is no longer used.
-`config.load_defaults` is still `8.0`. The 8.1 behaviour changes are listed, commented
-out, in `config/initializers/new_framework_defaults_8_1.rb`.
+`config.load_defaults` is `8.1`. The new defaults were reviewed before switching; the
+notable one is that `redirect_to` raises on relative URLs without a leading slash, so
+always redirect to path helpers or `/`-prefixed paths.
 
 ### If the site is down (502 from Caddy)
 
