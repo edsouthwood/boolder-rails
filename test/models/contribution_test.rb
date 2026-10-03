@@ -20,6 +20,36 @@ class ContributionTest < ActiveSupport::TestCase
     assert_includes contribution.errors.attribute_names, :contributor_email
   end
 
+  test "accepts image uploads" do
+    contribution = Contribution.new(state: "pending")
+    contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "boulder.jpg", content_type: "image/jpeg")
+    assert contribution.valid?
+  end
+
+  test "rejects non-image uploads" do
+    contribution = Contribution.new(state: "pending")
+    contribution.photos.attach(io: StringIO.new("%PDF-1.4 not a photo"), filename: "doc.pdf", content_type: "application/pdf")
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:photos].join, "must be images"
+  end
+
+  test "rejects oversized uploads" do
+    contribution = Contribution.new(state: "pending")
+    contribution.line_drawings.attach(io: StringIO.new("fake-bytes"), filename: "line.png", content_type: "image/png")
+    contribution.line_drawings.first.blob.byte_size = Contribution::MAX_ATTACHMENT_SIZE + 1
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:line_drawings].join, "under"
+  end
+
+  test "rejects too many uploads" do
+    contribution = Contribution.new(state: "pending")
+    (Contribution::MAX_ATTACHMENTS_PER_KIND + 1).times do |i|
+      contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "p#{i}.jpg", content_type: "image/jpeg")
+    end
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:photos].join, "more than"
+  end
+
   test "accepts a blank contributor email" do
     assert Contribution.new(state: "pending", comment: "hi", contributor_email: "").valid?
   end

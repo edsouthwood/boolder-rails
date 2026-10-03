@@ -1,7 +1,8 @@
 class SearchController < ApplicationController
   def search
     query = params[:query]
-    show_unpublished = params[:show_unpublished].present?
+    # Only admins (flagged by Admin::BaseController#set_cookie) may see unpublished problems.
+    show_unpublished = params[:show_unpublished].present? && session[:admin].present?
 
     area_results = perform_area_search(query)
 

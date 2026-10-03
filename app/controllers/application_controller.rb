@@ -8,7 +8,8 @@ class ApplicationController < ActionController::Base
   end
 
   def switch_locale(&action)
-    locale = params[:locale] || I18n.default_locale
+    # Unscoped routes (e.g. /search) take ?locale= unconstrained; ignore unknown values.
+    locale = params[:locale].presence_in(I18n.available_locales.map(&:to_s)) || I18n.default_locale
     I18n.with_locale(locale, &action)
   end
 

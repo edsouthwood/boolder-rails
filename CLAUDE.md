@@ -22,7 +22,7 @@ bin/rails test test/models/area_test.rb # Single test file
 bin/rails test test/models/area_test.rb:42 # Single test
 ```
 
-CI runs rubocop, brakeman, and importmap audit on push. The test job is currently commented out in `.github/workflows/ci.yml`.
+CI (`.github/workflows/ci.yml`) runs rubocop, brakeman, importmap audit and the test suite (against a PostGIS service) on push.
 
 ## Architecture
 
@@ -52,7 +52,7 @@ CI runs rubocop, brakeman, and importmap audit on push. The test job is currentl
 - `/admin` — HTTP-basic-auth protected admin namespace (ActiveAdmin-style but custom controllers)
 - `/api/v1` — deprecated JSON API (topos endpoint only)
 
-**Admin section** lives in `app/controllers/admin/` and `app/views/admin/`. Access controlled via `ADMIN_USERNAME` / `ADMIN_PASSWORD` env vars or Rails credentials.
+**Admin section** lives in `app/controllers/admin/` and `app/views/admin/`. Access controlled via `ADMIN_USERNAME` / `ADMIN_PASSWORD` env vars or Rails credentials (`admin_accounts`). Accounts are `super_admin` or `area_admin` (limited to listed area slugs); admin controllers must guard writes with `require_area_access` / `require_super_admin` from `Admin::BaseController`. The Mission Control jobs dashboard at `/jobs` reuses the admin login (super admins only) via `Admin::JobsBaseController`.
 
 **JavaScript:** Stimulus controllers in `app/javascript/controllers/`. No build step — importmap handles JS dependencies. CDN imports include Chart.js and Exifr (EXIF reading from uploaded photos).
 
