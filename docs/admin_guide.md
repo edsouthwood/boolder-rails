@@ -172,6 +172,17 @@ RAILS_ENV=production bin/rails assets:precompile
 systemctl --user restart boolder-rails
 ```
 
+Production runs from this same checkout (`/home/ed/projects/boolder-rails`), so do
+risky work, such as framework upgrades, in a separate `git worktree` and only pull it
+into the main checkout when deploying. Note the current commit first (`git rev-parse HEAD`)
+so you can roll back with `git checkout <commit>` followed by the same four commands.
+
+**Rails version:** 8.1 (upgraded October 2026 from 8.0, which reached end of life on
+2026-11-07). PostGIS support comes from the official `activerecord-postgis-adapter`
+gem (11.x); the old `boolder-org` `rails-8` fork is no longer used.
+`config.load_defaults` is still `8.0`. The 8.1 behaviour changes are listed, commented
+out, in `config/initializers/new_framework_defaults_8_1.rb`.
+
 ### If the site is down (502 from Caddy)
 
 A 502 means Caddy is up but the Rails app on `127.0.0.1:3000` is not answering.
