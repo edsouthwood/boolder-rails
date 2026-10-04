@@ -394,6 +394,26 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Click <strong>Delete boulder</strong> and confirm</li>
         </ol>
 
+        <p class="font-medium text-gray-800">LiDAR hillshade overlay</p>
+        <p>Under <strong>LiDAR hillshade</strong> in the sidebar, click <strong>LiDAR off</strong> to switch it on. Environment Agency 1&nbsp;m LiDAR is laid over the satellite image as shaded relief, so boulders show as crisp bumps with no shadows or lichen. Use the slider to blend it with the satellite image. Your choice is remembered in this browser.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>1&nbsp;m resolution: use it to find boulders and judge edges, and trace with the satellite visible underneath</li>
+          <li>Satellite imagery can be a few metres out of place; where they disagree, trust the LiDAR</li>
+          <li>Trees and gorse also show as bumps, but look softer and lumpier than rock</li>
+          <li>Served live by the Environment Agency (England only). If it doesn't load, their service is down</li>
+        </ul>
+
+        <p class="font-medium text-gray-800">LiDAR boulder suggestions</p>
+        <p>Click <strong>Suggest boulders in this view</strong>. The editor analyses the Environment Agency's LiDAR heights for the current view and outlines anything that looks like rock: <strong>amber</strong> where nothing is mapped, <strong>green</strong> where it overlaps a mapped boulder (the LiDAR is often the more accurate outline).</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Click a suggestion for its size and height, then <strong>Add as new boulder</strong> (saved and selected for tidying) or <strong>Replace outline of #N</strong> (not saved until you click <strong>Save changes</strong>)</li>
+          <li>A selected boulder with an overlapping suggestion shows a <strong>Use LiDAR outline</strong> button</li>
+          <li>Rock = over 1&nbsp;m above ground where the first and last laser returns agree, so gorse and trees are ignored; shapes under 3&nbsp;m² are left out</li>
+          <li>Touching boulders often merge — you'll be warned when a suggestion covers several boulders; trim it before saving</li>
+          <li>Outlines are good to about ±0.5&nbsp;m; boulders under 1&nbsp;m high are missed; walls and parked cars can appear</li>
+          <li>Works on views under about 750&nbsp;m across. Click <strong>Suggest again</strong> after panning or editing</li>
+        </ul>
+
         <div class="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800">
           <strong>Tip:</strong> Zoom in to level 19 or higher before tracing — satellite detail is much clearer at high zoom. Click a boulder ID in the sidebar to fly the map to it.
         </div>

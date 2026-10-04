@@ -523,13 +523,47 @@ The boulder editor lets you trace boulder outlines directly in the browser over 
 2. Its vertices appear as small draggable blue dots
 3. Drag any vertex to reshape the outline
 4. Click **Save changes** to save
-5. Click elsewhere on the map (or the selected boulder again) to deselect without saving
+5. Click the selected boulder again (or another boulder) to deselect without saving — any unsaved changes are undone
 
 ### Deleting a boulder
 
 1. Click the polygon to select it
 2. Click **Delete boulder** — confirm the prompt
 3. The polygon is removed from the map and the database
+
+### LiDAR hillshade overlay
+
+Under **LiDAR hillshade** in the sidebar, click **LiDAR off** to switch it on. This lays Environment Agency 1 m LiDAR over the satellite image as shaded relief. Boulders show as crisp bumps with no shadows, lichen or grass to confuse things, so outlines are much easier to judge. Use the slider to blend it with the satellite image (around 50–70% works well). Your on/off choice and opacity are remembered in this browser.
+
+- The data is 1 m resolution, so very small boulders look blocky. Use it to find each boulder and judge its edges, then trace with the satellite image visible underneath.
+- Satellite imagery can be a few metres out of place; the LiDAR is surveyed to about ±0.4 m. Where the two disagree, trust the LiDAR.
+- Trees and gorse also show as bumps; they usually look softer and lumpier than rock.
+- The layer is served live by the Environment Agency (England only, Open Government Licence). If it fails to load, their service is down; the rest of the editor still works.
+
+### LiDAR boulder suggestions
+
+Click **Suggest boulders in this view** (under LiDAR in the sidebar). The editor downloads the Environment Agency's LiDAR heights for the current view (under a second for a crag-sized view) and outlines anything that looks like rock:
+
+- **Amber dashed** shapes don't overlap any mapped boulder — possibly unmapped rock.
+- **Green dashed** shapes overlap a mapped boulder — compare them with your outline; the LiDAR is often the more accurate of the two.
+
+Click a suggestion (where it isn't covered by a boulder) for its size and height, then:
+
+- **Add as new boulder** saves it straight away and selects it so you can tidy the corners; click **Save changes** when done (or **Delete boulder** if it wasn't rock).
+- **Replace outline of #N** puts the LiDAR outline on that boulder. Nothing is saved until you click **Save changes**; click the boulder again to undo.
+
+When a selected boulder has an overlapping suggestion, a **Use LiDAR outline** button also appears above Save changes.
+
+How it decides: rock is anything more than 1 m above the ground model whose first and last laser returns agree. In gorse and trees the first return comes off the leaves and the last from deeper in, so vegetation is ignored. Shapes under 3 m² are left out.
+
+Limitations:
+
+- Touching boulders often merge into one shape. When a suggestion covers several mapped boulders, the popup and status line warn you — trim it to one rock before saving, or keep it if your separate outlines were really one boulder.
+- Outlines are only good to about ±0.5 m (1 m data), and boulders under 1 m high are missed.
+- Walls, banks and parked cars (on the survey day) can show up as rock.
+- The view must be under about 750 m across; zoom in if asked. Click **Suggest again for this view** after panning, or after editing boulders so the green/amber colouring is up to date.
+
+Background: a spike at Bonehill (Oct 2026) found LiDAR rock for all 32 mapped boulders, and that mapped outlines sat a median of ~1.9 m south of the rock — probably from tracing the sunlit side and leaving out the shadowed north side.
 
 ### Tips
 
