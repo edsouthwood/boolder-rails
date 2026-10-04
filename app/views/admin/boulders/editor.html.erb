@@ -19,10 +19,11 @@
   data-admin-boulder-editor-azure-key-value="<%= @azure_maps_key %>"
   data-admin-boulder-editor-mapbox-key-value="<%= @mapbox_key %>"
 >
-  <div class="flex border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
+  <%# Side by side from md up; on phones the sidebar sits above the map so the map gets the full width %>
+  <div class="flex flex-col md:flex-row border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
 
     <%# Sidebar %>
-    <div class="w-64 flex-shrink-0 flex flex-col border-r overflow-hidden bg-gray-50">
+    <div class="w-full md:w-64 max-h-[45%] md:max-h-none flex-shrink-0 flex flex-col border-b md:border-b-0 md:border-r overflow-y-auto md:overflow-hidden bg-gray-50">
 
       <div class="px-3 py-2 bg-gray-800 text-white text-sm font-semibold flex-shrink-0">
         <%= @area.name %> — Boulder Editor
@@ -167,7 +168,7 @@
 
     <%# Map %>
     <div
-      class="flex-1 relative"
+      class="flex-1 min-h-0 relative"
       id="boulder-editor-canvas"
       data-admin-boulder-editor-target="mapContainer"
     >
