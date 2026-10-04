@@ -1,7 +1,7 @@
-<%# Bugsnag browser error and performance monitoring (production only).
+<%# Bugsnag browser error monitoring (production only).
     Browser API keys are public by design: they're visible in every page. The Rails
     side uses a separate key from credentials (config/initializers/bugsnag.rb).
-    Offline (see public/service-worker.js) these scripts don't load, hence the guards. %>
+    Offline (see public/service-worker.js) the script doesn't load, hence the guard. %>
 <% if Rails.env.production? %>
   <script src="https://d2wy8f7a9ursnm.cloudfront.net/v8/bugsnag.min.js"></script>
   <script>
@@ -9,20 +9,12 @@
       Bugsnag.start({
         apiKey: '518e6ecba7b973f09d53ab057d201a43',
         appVersion: <%= raw Rails.application.config.x.git_revision.to_s.to_json %>,
-        // No visitor IPs or stored device IDs: see the privacy policy
+        // Only contact Bugsnag when an error happens; no visitor IPs or stored
+        // device IDs (see the privacy policy)
+        autoTrackSessions: false,
         collectUserIp: false,
         generateAnonymousId: false,
       })
     }
-  </script>
-  <script type="module">
-    try {
-      const { default: BugsnagPerformance } = await import('https://d2wy8f7a9ursnm.cloudfront.net/v1/bugsnag-performance.min.js')
-      BugsnagPerformance.start({
-        apiKey: '518e6ecba7b973f09d53ab057d201a43',
-        appVersion: <%= raw Rails.application.config.x.git_revision.to_s.to_json %>,
-        generateAnonymousId: false,
-      })
-    } catch {} // offline or blocked: monitoring is optional
   </script>
 <% end %>

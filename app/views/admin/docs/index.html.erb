@@ -150,7 +150,7 @@ systemctl --user status boolder-backup.timer</pre>
       <div class="prose-content text-sm text-gray-700 space-y-4">
         <p>Production errors are reported to <a href="https://app.bugsnag.com" class="text-emerald-700 underline">Bugsnag</a>, tagged with the deployed git commit.</p>
         <ul class="list-disc list-inside space-y-1">
-          <li><strong>Browser</strong> (JavaScript errors and page-load performance): <code class="bg-gray-100 px-1 rounded">app/views/layouts/_bugsnag.html.erb</code>, in every layout. Its API key is public by design. Offline pages skip it.</li>
+          <li><strong>Browser</strong> (JavaScript errors only; nothing is sent unless an error happens): <code class="bg-gray-100 px-1 rounded">app/views/layouts/_bugsnag.html.erb</code>, in every layout. Its API key is public by design. Offline pages skip it.</li>
           <li><strong>Server</strong> (Rails exceptions and background jobs): <code class="bg-gray-100 px-1 rounded">config/initializers/bugsnag.rb</code>, using <code class="bg-gray-100 px-1 rounded">bugsnag: api_key</code> from the production credentials. Without it, startup logs "No valid API key has been set".</li>
           <li>Visitor IP addresses are kept out of both, and nothing is stored on visitors' devices. The privacy policy describes this — update it if the setup changes.</li>
         </ul>

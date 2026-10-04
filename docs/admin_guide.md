@@ -216,8 +216,8 @@ curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com
 Errors are reported to [Bugsnag](https://app.bugsnag.com), production only, tagged
 with the deployed git commit so you can see which release introduced a problem.
 
-- **Browser** (JavaScript errors and page-load performance): `app/views/layouts/_bugsnag.html.erb`,
-  rendered in every layout. Its API key is in the partial — browser keys are public by design.
+- **Browser** (JavaScript errors only — no performance monitoring or session tracking, so
+  nothing is sent unless an error happens): `app/views/layouts/_bugsnag.html.erb`, rendered in every layout. Its API key is in the partial — browser keys are public by design.
   Offline pages simply skip it.
 - **Server** (Rails exceptions, including background jobs): `config/initializers/bugsnag.rb`
   reads `bugsnag: api_key` from the production credentials. Until it's set, the app logs
