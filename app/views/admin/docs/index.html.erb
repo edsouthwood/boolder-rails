@@ -10,6 +10,7 @@
       <li><a href="#project-structure" class="hover:underline">Project Structure</a></li>
       <li><a href="#development-server" class="hover:underline">Development Server</a></li>
       <li><a href="#backups" class="hover:underline">Backups</a></li>
+      <li><a href="#error-monitoring" class="hover:underline">Error Monitoring (Bugsnag)</a></li>
       <li><a href="#admin-accounts" class="hover:underline">Admin Accounts</a></li>
       <li><a href="#permission-levels" class="hover:underline">Permission Levels</a></li>
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
@@ -140,6 +141,19 @@ systemctl --user status boolder-backup.timer</pre>
           <li>Restore the database: <code class="bg-gray-100 px-1 rounded">gunzip -c dartmoor-dev-YYYYMMDD.sql.gz | psql dartmoor-dev</code></li>
           <li>Restore storage files: <code class="bg-gray-100 px-1 rounded">rsync -az u79222@edsouthwood.com:bowda-backup/storage/ storage/</code></li>
         </ol>
+      </div>
+    </section>
+
+    <%# Error Monitoring %>
+    <section id="error-monitoring">
+      <%= render "admin/docs/section_header", title: "Error Monitoring (Bugsnag)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Production errors are reported to <a href="https://app.bugsnag.com" class="text-emerald-700 underline">Bugsnag</a>, tagged with the deployed git commit.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Browser</strong> (JavaScript errors only; nothing is sent unless an error happens): <code class="bg-gray-100 px-1 rounded">app/views/layouts/_bugsnag.html.erb</code>, in every layout. Its API key is public by design. Offline pages skip it.</li>
+          <li><strong>Server</strong> (Rails exceptions and background jobs): <code class="bg-gray-100 px-1 rounded">config/initializers/bugsnag.rb</code>, using <code class="bg-gray-100 px-1 rounded">bugsnag: api_key</code> from the production credentials. Without it, startup logs "No valid API key has been set".</li>
+          <li>Visitor IP addresses are kept out of both, and nothing is stored on visitors' devices. The privacy policy describes this — update it if the setup changes.</li>
+        </ul>
       </div>
     </section>
 
