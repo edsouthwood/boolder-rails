@@ -585,6 +585,7 @@ Background: a spike at Bonehill (Oct 2026) found LiDAR rock for all 32 mapped bo
 
 - Zoom in to at least zoom level 19 before tracing — satellite detail is much better at high zoom
 - Click a boulder ID in the left sidebar to fly the map to that boulder
+- On a phone the sidebar sits above the map; scroll the sidebar to reach Basemap and LiDAR
 - The count in the sidebar updates as you add or delete boulders
 
 ---

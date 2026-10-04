@@ -8,7 +8,9 @@
     if (window.Bugsnag && !window.Bugsnag.isStarted()) {
       Bugsnag.start({
         apiKey: '518e6ecba7b973f09d53ab057d201a43',
-        appVersion: <%= raw Rails.application.config.x.git_revision.to_s.to_json %>,
+        <% if Rails.application.config.x.git_revision.present? %>
+        appVersion: <%= raw Rails.application.config.x.git_revision.to_json %>,
+        <% end %>
         // Only contact Bugsnag when an error happens; no visitor IPs or stored
         // device IDs (see the privacy policy)
         autoTrackSessions: false,

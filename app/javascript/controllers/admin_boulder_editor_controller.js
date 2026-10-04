@@ -56,7 +56,7 @@ export default class extends Controller {
         layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }]
       },
       bounds: [[sw.lng, sw.lat], [ne.lng, ne.lat]],
-      fitBoundsOptions: { padding: 60 },
+      fitBoundsOptions: { padding: this.fitPadding(60) },
     })
 
     this.map.addControl(new maplibregl.NavigationControl())
@@ -525,7 +525,7 @@ export default class extends Controller {
       const lats = coords.map(c => c[1])
       this.map.fitBounds(
         [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { padding: 80, maxZoom: 20 }
+        { padding: this.fitPadding(80), maxZoom: 20 }
       )
     }
   }
@@ -558,6 +558,13 @@ export default class extends Controller {
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  // Padding for fitting bounds, shrunk on small maps: if the padding doesn't fit,
+  // MapLibre gives up and leaves the map at its world view.
+  fitPadding(max) {
+    const { width, height } = this.mapContainerTarget.getBoundingClientRect()
+    return Math.max(0, Math.min(max, Math.floor(Math.min(width, height) / 5)))
+  }
 
   clearVertexMarkers() {
     this.vertexMarkers.forEach(m => m.remove())
