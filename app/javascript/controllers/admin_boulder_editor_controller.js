@@ -6,7 +6,8 @@ export default class extends Controller {
   static targets = [
     'mapContainer', 'drawBtn', 'drawingActions', 'selectedActions',
     'status', 'count', 'countSuffix', 'boulderList', 'basemapBtn', 'attribution',
-    'toggleProblemsBtn',
+    'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
+    'suggestBtn', 'suggestStatus', 'useLidarBtn',
   ]
   static values = {
     geojsonUrl: String,
@@ -33,6 +34,8 @@ export default class extends Controller {
     this.bouldersGeoJSON = { type: 'FeatureCollection', features: [] }
     this.problemFeatures = []
     this.problemsVisible = false
+    this.suggestions = []
+    this.originalRing = null
 
     const bounds = this.boundsValue
     const sw = bounds.south_west
@@ -60,6 +63,8 @@ export default class extends Controller {
     this.map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }))
 
     this.map.on('load', () => {
+      // Added before loadData so it sits between the satellite and the boulder layers
+      this.addLidarLayer()
       this.loadData()
       const saved = localStorage.getItem('boulder-editor-basemap')
       if (saved && this.basemapSources[saved]) {
@@ -78,6 +83,25 @@ export default class extends Controller {
   // ─── Data loading ───────────────────────────────────────────────────────────
 
   loadData() {
+    // LiDAR suggestions (filled by suggestBoulders), drawn beneath the boulders
+    this.map.addSource('suggestions', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+    const suggestionColor = ['case', ['get', 'overlaps'], '#16a34a', '#f59e0b'] // green overlaps, amber new
+    this.map.addLayer({
+      id: 'suggestions-fill',
+      type: 'fill',
+      source: 'suggestions',
+      paint: { 'fill-color': suggestionColor, 'fill-opacity': 0.25 },
+    })
+    this.map.addLayer({
+      id: 'suggestions-line',
+      type: 'line',
+      source: 'suggestions',
+      paint: { 'line-color': suggestionColor, 'line-width': 2, 'line-dasharray': [2, 1.5] },
+    })
+
     // Boulder polygons source (mutable — we update it in-place)
     this.map.addSource('boulders', {
       type: 'geojson',
@@ -179,6 +203,19 @@ export default class extends Controller {
       if (features.length === 0) this.deselect()
     })
 
+    // Click on a suggestion (outside any boulder) to offer adding or replacing
+    this.map.on('click', 'suggestions-fill', (e) => {
+      if (this.state === 'drawing') return
+      if (this.map.queryRenderedFeatures(e.point, { layers: ['boulders-fill'] }).length) return
+      this.showSuggestionPopup(e.features[0].properties.index, e.lngLat)
+    })
+    this.map.on('mouseenter', 'suggestions-fill', () => {
+      if (this.state !== 'drawing') this.map.getCanvas().style.cursor = 'pointer'
+    })
+    this.map.on('mouseleave', 'suggestions-fill', () => {
+      if (this.state !== 'drawing') this.map.getCanvas().style.cursor = ''
+    })
+
     // Change cursor over boulders
     this.map.on('mouseenter', 'boulders-fill', () => {
       if (this.state === 'idle') this.map.getCanvas().style.cursor = 'pointer'
@@ -251,10 +288,14 @@ export default class extends Controller {
       return
     }
     this.exitDrawingMode()
+    this.createBoulder(coordinates)
+  }
 
+  // Saves a new boulder outline; resolves to its id, or null if it wasn't saved
+  createBoulder(coordinates) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
 
-    fetch(this.createUrlValue, {
+    return fetch(this.createUrlValue, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -265,7 +306,7 @@ export default class extends Controller {
     })
       .then(r => r.json())
       .then(data => {
-        if (data.error) { this.showToast(data.error, true); return }
+        if (data.error) { this.showToast(data.error, true); return null }
 
         // Add new feature to local GeoJSON
         const closed = [...coordinates, coordinates[0]]
@@ -282,8 +323,9 @@ export default class extends Controller {
         this.updateCount(newCount)
         this.renderBoulderList()
         this.showToast(`Boulder #${data.id} saved`)
+        return data.id
       })
-      .catch(() => this.showToast('Network error — not saved', true))
+      .catch(() => { this.showToast('Network error — not saved', true); return null })
   }
 
   cancelDrawing() {
@@ -317,12 +359,8 @@ export default class extends Controller {
   // ─── Selection & editing ─────────────────────────────────────────────────────
 
   selectBoulder(boulderId) {
-    this.clearVertexMarkers()
-
-    // Deselect previous
-    if (this.selectedBoulderId != null) {
-      this.map.setFeatureState({ source: 'boulders', id: this.selectedBoulderId }, { selected: false })
-    }
+    // Deselect previous, undoing any unsaved changes to it
+    if (this.selectedBoulderId != null) this.deselect()
 
     this.selectedBoulderId = boulderId
     this.state = 'selected'
@@ -338,12 +376,20 @@ export default class extends Controller {
     if (!feature) return
 
     const ring = feature.geometry.coordinates[0]
+    // Kept so deselecting without saving puts the outline back
+    this.originalRing = ring.map(c => [...c])
     // Skip last coord if it closes the ring (equals first)
     const coords = ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
       ? ring.slice(0, -1)
       : ring
 
-    coords.forEach(([lng, lat], i) => {
+    this.placeVertexMarkers(coords)
+    this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(boulderId))
+  }
+
+  placeVertexMarkers(coords) {
+    this.clearVertexMarkers()
+    coords.forEach(([lng, lat]) => {
       const el = document.createElement('div')
       el.className = 'w-3 h-3 rounded-full bg-blue-500 border-2 border-white cursor-move shadow'
 
@@ -375,9 +421,17 @@ export default class extends Controller {
 
   deselect() {
     if (this.selectedBoulderId != null) {
+      // Undo unsaved vertex moves (or a LiDAR outline that wasn't saved)
+      const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == this.selectedBoulderId)
+      if (feature && this.originalRing) {
+        feature.geometry.coordinates = [this.originalRing]
+        this.map.getSource('boulders').setData(this.bouldersGeoJSON)
+      }
       this.map.setFeatureState({ source: 'boulders', id: this.selectedBoulderId }, { selected: false })
       this.selectedBoulderId = null
     }
+    this.originalRing = null
+    this.suggestionPopup?.remove()
     this.state = 'idle'
     this.clearVertexMarkers()
     this.selectedActionsTarget.classList.add('hidden')
@@ -407,6 +461,7 @@ export default class extends Controller {
       .then(r => r.json())
       .then(data => {
         if (data.error) { this.showToast(data.error, true); return }
+        this.originalRing = [...coordinates, coordinates[0]]
         this.showToast(`Boulder #${this.selectedBoulderId} saved`)
       })
       .catch(() => this.showToast('Network error — not saved', true))
@@ -576,6 +631,180 @@ export default class extends Controller {
       btn.classList.toggle('text-gray-700', !active)
       btn.classList.toggle('border-gray-300', !active)
     })
+  }
+
+  // ─── LiDAR boulder suggestions ────────────────────────────────────────────────
+  // Analyses EA LiDAR for the current view (see lidar_suggestions.js) and shows
+  // likely boulders: amber where nothing is mapped, green where they overlap an
+  // existing boulder whose outline may need correcting.
+
+  async suggestBoulders() {
+    this.suggestBtnTarget.disabled = true
+    this.suggestStatusTarget.textContent = 'Fetching LiDAR…'
+    try {
+      // Loaded on demand so a CDN problem can't break the rest of the editor
+      const { suggestBoulders } = await import('lidar_suggestions')
+      const b = this.map.getBounds()
+      const boulders = this.bouldersGeoJSON.features.map(f => ({
+        id: f.properties.boulderId, ring: f.geometry.coordinates[0],
+      }))
+      this.suggestions = await suggestBoulders(
+        { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() }, boulders
+      )
+      this.renderSuggestions()
+      const overlapping = this.suggestions.filter(s => s.overlaps.length).length
+      this.suggestStatusTarget.textContent = this.suggestions.length
+        ? `${this.suggestions.length - overlapping} new, ${overlapping} overlapping. Click one to use it.`
+        : 'No likely boulders found in this view.'
+      if (this.selectedBoulderId != null) {
+        this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(this.selectedBoulderId))
+      }
+    } catch (error) {
+      this.suggestStatusTarget.textContent = ''
+      this.showToast(error.message || 'Could not fetch LiDAR', true)
+    } finally {
+      this.suggestBtnTarget.disabled = false
+      this.suggestBtnTarget.textContent = 'Suggest again for this view'
+    }
+  }
+
+  renderSuggestions() {
+    this.map.getSource('suggestions').setData({
+      type: 'FeatureCollection',
+      features: this.suggestions.map((s, index) => s && ({
+        type: 'Feature',
+        properties: { index, overlaps: s.overlaps.length > 0 },
+        geometry: { type: 'Polygon', coordinates: [[...s.coordinates, s.coordinates[0]]] },
+      })).filter(Boolean),
+    })
+  }
+
+  // The suggestion that overlaps this boulder most (suggestions list overlaps biggest first)
+  suggestionFor(boulderId) {
+    return this.suggestions.find(s => s && s.overlaps[0] == boulderId) ||
+      this.suggestions.find(s => s && s.overlaps.includes(Number(boulderId)))
+  }
+
+  showSuggestionPopup(index, lngLat) {
+    const s = this.suggestions[index]
+    if (!s) return
+    const el = document.createElement('div')
+    el.className = 'text-xs flex flex-col gap-1.5'
+    const info = document.createElement('p')
+    info.className = 'text-gray-600'
+    info.textContent = `LiDAR suggestion · ${s.area} m² · up to ${s.height} m high`
+    el.appendChild(info)
+    if (s.overlaps.length > 1) {
+      const warning = document.createElement('p')
+      warning.className = 'text-amber-700'
+      warning.textContent = `Covers ${s.overlaps.map(id => `#${id}`).join(', ')}: may be several rocks merged into one shape.`
+      el.appendChild(warning)
+    }
+    const button = (label, primary, onClick) => {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.textContent = label
+      b.className = primary
+        ? 'px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700'
+        : 'px-2 py-1 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
+      b.addEventListener('click', () => { this.suggestionPopup.remove(); onClick() })
+      el.appendChild(b)
+    }
+    s.overlaps.slice(0, 3).forEach(id =>
+      button(`Replace outline of #${id}`, true, () => this.replaceWithSuggestion(id, s))
+    )
+    button('Add as new boulder', s.overlaps.length === 0, () => this.addSuggestion(index))
+
+    this.suggestionPopup?.remove()
+    this.suggestionPopup = new maplibregl.Popup({ offset: 8, maxWidth: '220px' })
+      .setLngLat(lngLat).setDOMContent(el).addTo(this.map)
+  }
+
+  async addSuggestion(index) {
+    const s = this.suggestions[index]
+    const id = await this.createBoulder(s.coordinates)
+    if (id == null) return
+    this.suggestions[index] = null
+    this.renderSuggestions()
+    this.selectBoulder(id)
+    this.setStatus(`Boulder #${id} added from LiDAR. Tidy the corners, then Save changes.`)
+  }
+
+  replaceWithSuggestion(boulderId, suggestion) {
+    if (this.selectedBoulderId != boulderId) this.selectBoulder(boulderId)
+    this.placeVertexMarkers(suggestion.coordinates)
+    this.refreshSelectedPolygon()
+    const others = suggestion.overlaps.filter(id => id != boulderId)
+    const merged = others.length
+      ? ` It also covers ${others.map(id => `#${id}`).join(', ')}, so it may be several rocks: trim it before saving.`
+      : ''
+    this.setStatus(`LiDAR outline for #${boulderId}.${merged} Save changes to keep it, or click the boulder again to undo.`)
+  }
+
+  useLidarOutline() {
+    const s = this.suggestionFor(this.selectedBoulderId)
+    if (s) this.replaceWithSuggestion(this.selectedBoulderId, s)
+  }
+
+  // ─── LiDAR hillshade overlay ──────────────────────────────────────────────────
+  // Environment Agency 1 m LiDAR surface model (first return), rendered as hillshade
+  // by the EA's WMS. Boulders show as crisp relief with no shadows or lichen to
+  // confuse things. England only; served direct from the EA, no key needed.
+
+  addLidarLayer() {
+    this.map.addSource('lidar', {
+      type: 'raster',
+      tiles: [
+        'https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-first-return-dsm-1m/wms' +
+        '?service=WMS&version=1.3.0&request=GetMap&layers=Lidar_Composite_Hillshade_FZ_DSM_1m&styles=' +
+        '&crs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&format=image/png'
+      ],
+      tileSize: 256,
+      // z17 tiles are ~0.75 m/px, close to the 1 m data. Deeper zooms come back from
+      // the WMS as blocky 1 m squares; over-zooming z17 lets MapLibre smooth them.
+      // Larger bboxes (512px tiles, lower zooms) get a coarser, re-stretched render
+      // from the WMS with visible seams, so stay at 256px.
+      maxzoom: 17,
+      attribution: 'LiDAR © Environment Agency (OGL v3)',
+    })
+
+    const opacity = parseFloat(localStorage.getItem('boulder-editor-lidar-opacity') ?? '0.6')
+    const visible = localStorage.getItem('boulder-editor-lidar') === 'on'
+    this.map.addLayer({
+      id: 'lidar',
+      type: 'raster',
+      source: 'lidar',
+      layout: { visibility: visible ? 'visible' : 'none' },
+      paint: { 'raster-opacity': opacity },
+    })
+    if (this.hasLidarOpacityTarget) this.lidarOpacityTarget.value = Math.round(opacity * 100)
+    this.highlightLidarBtn(visible)
+  }
+
+  toggleLidar() {
+    const visible = this.map.getLayoutProperty('lidar', 'visibility') !== 'visible'
+    this.map.setLayoutProperty('lidar', 'visibility', visible ? 'visible' : 'none')
+    localStorage.setItem('boulder-editor-lidar', visible ? 'on' : 'off')
+    this.highlightLidarBtn(visible)
+  }
+
+  setLidarOpacity() {
+    const opacity = this.lidarOpacityTarget.value / 100
+    this.map.setPaintProperty('lidar', 'raster-opacity', opacity)
+    localStorage.setItem('boulder-editor-lidar-opacity', opacity)
+  }
+
+  highlightLidarBtn(active) {
+    if (!this.hasLidarBtnTarget) return
+    const btn = this.lidarBtnTarget
+    btn.textContent = active ? 'LiDAR on' : 'LiDAR off'
+    btn.classList.toggle('bg-gray-800', active)
+    btn.classList.toggle('text-white', active)
+    btn.classList.toggle('border-gray-800', active)
+    btn.classList.toggle('bg-white', !active)
+    btn.classList.toggle('text-gray-700', !active)
+    btn.classList.toggle('border-gray-300', !active)
+    this.lidarOpacityTarget.disabled = !active
   }
 
   disconnect() {

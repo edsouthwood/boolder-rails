@@ -48,6 +48,13 @@
 
         <div data-admin-boulder-editor-target="selectedActions" class="hidden flex flex-col gap-2">
           <button
+            data-action="click->admin-boulder-editor#useLidarOutline"
+            data-admin-boulder-editor-target="useLidarBtn"
+            class="hidden w-full px-3 py-2 text-sm font-medium rounded border border-green-600 bg-white text-green-700 hover:bg-green-50 transition-colors"
+          >
+            Use LiDAR outline
+          </button>
+          <button
             data-action="click->admin-boulder-editor#saveSelected"
             class="w-full px-3 py-2 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
@@ -125,6 +132,30 @@
             </button>
           <% end %>
         </div>
+      </div>
+
+      <%# LiDAR overlay %>
+      <div class="px-3 py-2 border-b flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1.5">LiDAR</p>
+        <div class="flex items-center gap-2">
+          <button data-action="click->admin-boulder-editor#toggleLidar"
+                  data-admin-boulder-editor-target="lidarBtn"
+                  class="px-2 py-1 text-xs rounded border transition-colors">
+            LiDAR off
+          </button>
+          <input type="range" min="0" max="100" value="60"
+                 aria-label="LiDAR opacity"
+                 data-action="input->admin-boulder-editor#setLidarOpacity"
+                 data-admin-boulder-editor-target="lidarOpacity"
+                 class="flex-1 min-w-0 accent-gray-800 disabled:opacity-40">
+        </div>
+        <p class="mt-1 text-xs text-gray-400">Shows rock as relief, without shadows. Slide to blend with the satellite image.</p>
+        <button data-action="click->admin-boulder-editor#suggestBoulders"
+                data-admin-boulder-editor-target="suggestBtn"
+                class="mt-2 w-full px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors">
+          Suggest boulders in this view
+        </button>
+        <p data-admin-boulder-editor-target="suggestStatus" class="mt-1 text-xs text-gray-500" aria-live="polite"></p>
       </div>
 
       <div class="flex-1 overflow-y-auto">

@@ -10,3 +10,5 @@ pin "exifr/full", to: "https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.esm.js
 pin "stimulus-chartjs", to: "https://ga.jspm.io/npm:stimulus-chartjs@5.0.0/dist/stimulus-chartjs.mjs"
 pin "@kurkle/color", to: "https://ga.jspm.io/npm:@kurkle/color@0.3.2/dist/color.esm.js"
 pin "chart.js/auto", to: "https://ga.jspm.io/npm:chart.js@4.3.0/auto/auto.js"
+pin "lidar_suggestions"
+pin "d3-contour", to: "https://cdn.jsdelivr.net/npm/d3-contour@4.0.2/+esm"
