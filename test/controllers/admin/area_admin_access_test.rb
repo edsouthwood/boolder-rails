@@ -63,6 +63,43 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # --- problems ---
+
+  test "area admin cannot move their problem into another area" do
+    problem = @mine.problems.create!(steepness: "slab")
+
+    patch admin_problem_url(problem, locale: :en), params: { problem: { area_id: @theirs.id } }
+    assert_redirected_to admin_root_path
+    assert_equal @mine, problem.reload.area
+  end
+
+  test "area admin can update their own problem" do
+    problem = @mine.problems.create!(steepness: "slab")
+
+    patch admin_problem_url(problem, locale: :en), params: { problem: { name: "Renamed", area_id: @mine.id } }
+    assert_response :redirect
+    assert_not_equal admin_root_url, response.location
+    assert_equal "Renamed", problem.reload.name
+  end
+
+  # --- audits ---
+
+  test "area admin cannot see the audit log" do
+    get admin_audits_url(locale: :en)
+    assert_redirected_to admin_root_path
+  end
+
+  test "audit log escapes the values it diffs" do
+    sign_in_as SUPER_ADMIN
+    problem = @mine.problems.create!(steepness: "slab", name: "<script>alert(1)</script>")
+    problem.update!(name: "Safe")
+
+    get admin_audits_url(locale: :en)
+    assert_response :success
+    assert_no_match "<script>alert(1)", response.body
+    assert_match "&lt;script&gt;", response.body
+  end
+
   # --- contributions ---
 
   test "area admin cannot review a contribution for another area's problem" do

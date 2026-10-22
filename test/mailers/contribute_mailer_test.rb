@@ -28,6 +28,16 @@ class ContributeMailerTest < ActionMailer::TestCase
     end
   end
 
+  # The acknowledgement goes out before review to any typed-in address, so it must not
+  # carry text the submitter chose.
+  test "acknowledgement email does not echo the submitter's free text" do
+    contribution = Contribution.create!(state: "pending", comment: "x", contributor_name: "Visit evil.example",
+                                        contributor_email: "victim@example.com", problem_name: "Claim your prize")
+    body = ContributeMailer.with(contribution: contribution).acknowledgement_email.body.encoded
+    assert_no_match "evil.example", body
+    assert_no_match "Claim your prize", body
+  end
+
   test "declined email includes the moderator note" do
     contribution = Contribution.create!(state: "closed", comment: "x", contributor_email: "ed@example.com",
                                         problem_name: "Slab", moderator_note: "Duplicate of an existing problem")

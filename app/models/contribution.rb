@@ -13,6 +13,8 @@ class Contribution < ApplicationRecord
   STATES = %w[pending accepted closed]
   MAX_ATTACHMENT_SIZE = 15.megabytes
   MAX_ATTACHMENTS_PER_KIND = 10
+  # Across all kinds: caps how much disk a single anonymous submission can take.
+  MAX_TOTAL_ATTACHMENT_SIZE = 60.megabytes
   scope :pending, -> { where(state: "pending") }
   scope :accepted, -> { where(state: "accepted") }
   scope :closed, -> { where(state: "closed") }
@@ -69,6 +71,9 @@ class Contribution < ApplicationRecord
       errors.add(name, "must be images") unless files.all? { |file| file.content_type.to_s.start_with?("image/") }
       errors.add(name, "must each be under #{MAX_ATTACHMENT_SIZE / 1.megabyte} MB") if files.any? { |file| file.byte_size > MAX_ATTACHMENT_SIZE }
     end
+
+    total = [ photos, line_drawings, location_drawings ].sum { |files| files.sum(&:byte_size) }
+    errors.add(:base, "Uploads must total under #{MAX_TOTAL_ATTACHMENT_SIZE / 1.megabyte} MB") if total > MAX_TOTAL_ATTACHMENT_SIZE
   end
 
   def existing_topo_in_problem_area

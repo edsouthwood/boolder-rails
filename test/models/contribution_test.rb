@@ -41,6 +41,17 @@ class ContributionTest < ActiveSupport::TestCase
     assert_includes contribution.errors[:line_drawings].join, "under"
   end
 
+  test "rejects uploads that are too big in total" do
+    contribution = Contribution.new(state: "pending")
+    count = Contribution::MAX_TOTAL_ATTACHMENT_SIZE / Contribution::MAX_ATTACHMENT_SIZE + 1
+    count.times do |i|
+      contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "p#{i}.jpg", content_type: "image/jpeg")
+      contribution.photos.last.blob.byte_size = Contribution::MAX_ATTACHMENT_SIZE
+    end
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:base].join, "total"
+  end
+
   test "rejects too many uploads" do
     contribution = Contribution.new(state: "pending")
     (Contribution::MAX_ATTACHMENTS_PER_KIND + 1).times do |i|

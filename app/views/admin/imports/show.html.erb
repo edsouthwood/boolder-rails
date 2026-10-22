@@ -36,7 +36,7 @@
                         <% changes.each do |field, diff| %>
                           <tr style="background-color: transparent;">
                             <td><strong><%= field %></strong></td>
-                            <td><%= Differ.diff_by_word(diff.second.to_s, diff.first.to_s).format_as(:html).html_safe %></td>
+                            <td><%= word_diff_html(diff.second.to_s, diff.first.to_s) %></td>
                           </tr>
                         <% end %>
                       </tbody>
