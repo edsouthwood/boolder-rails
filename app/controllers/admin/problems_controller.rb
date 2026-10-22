@@ -108,14 +108,17 @@ class Admin::ProblemsController < Admin::BaseController
     require_area_access(area.slug) if area
   end
 
+  # Checks the problem's current area and, on create/update, the area it's being put in
+  # (otherwise an area admin could move one of their problems into any area).
   def require_problem_area_access
-    if params[:id]
-      require_area_access(Problem.find(params[:id]).area.slug)
-    elsif params.dig(:problem, :area_id).present?
-      require_area_access(Area.find(params[:problem][:area_id]).slug)
-    elsif params[:area_id].present?
-      require_area_access(Area.find(params[:area_id]).slug)
-    end
+    areas = [
+      (Problem.find(params[:id]).area if params[:id]),
+      (Area.find(params[:problem][:area_id]) if params.dig(:problem, :area_id).present?),
+      (Area.find(params[:area_id]) if params[:area_id].present?)
+    ].compact
+
+    forbidden = areas.find { |area| !current_admin_user.can_access_area?(area.slug) }
+    require_area_access(forbidden.slug) if forbidden
   end
 
   def problem_params

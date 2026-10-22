@@ -5,21 +5,39 @@ class Admin::BaseController < ApplicationController
   before_action :set_cookie
   helper_method :current_admin_user
 
+  # Wrong passwords allowed per IP before logins are refused for the rest of the window.
+  MAX_LOGIN_FAILURES = 10
+  LOGIN_FAILURE_WINDOW = 15.minutes
+
   private
 
   def authenticate
     return true if session[:admin_user_name].present? && accounts[session[:admin_user_name]].present?
+    return head(:too_many_requests) if login_failures >= MAX_LOGIN_FAILURES
 
     authenticate_or_request_with_http_basic("admin") do |id, password|
       account = accounts[id.to_s]
-      if account
-        expected = account.is_a?(String) ? account : account.with_indifferent_access[:password]
-        if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password, expected)
-          session[:admin_user_name] = id
-          true
-        end
+      expected = account.is_a?(String) ? account : account&.with_indifferent_access&.dig(:password)
+      if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password, expected)
+        session[:admin_user_name] = id
+        true
+      else
+        record_login_failure
+        false
       end
     end
+  end
+
+  def login_failure_key
+    "admin_login_failures/#{request.remote_ip}"
+  end
+
+  def login_failures
+    Rails.cache.read(login_failure_key, raw: true).to_i
+  end
+
+  def record_login_failure
+    Rails.cache.increment(login_failure_key, 1, expires_in: LOGIN_FAILURE_WINDOW)
   end
 
   def accounts

@@ -1,6 +1,9 @@
-<% problem_name = @contribution.problem&.name_with_fallback || @contribution.problem_name %>
+<%# Sent to whatever address was typed in, before any review, so it must not echo the
+    submitter's free text (name, unlisted problem name): that would let anyone send
+    their own message to a stranger from our address. %>
+<% problem_name = @contribution.problem&.name_with_fallback || t("contribute_mailer.acknowledgement_email.unlisted_problem") %>
 
-<p><%= t("contribute_mailer.greeting", name: @contribution.contributor_name.presence || t("contribute_mailer.fallback_name")) %></p>
+<p><%= t("contribute_mailer.greeting", name: t("contribute_mailer.fallback_name")) %></p>
 
 <p><%= t("contribute_mailer.acknowledgement_email.body", problem: problem_name) %></p>
 

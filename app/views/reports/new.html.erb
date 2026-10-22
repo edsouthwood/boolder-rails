@@ -22,6 +22,7 @@
 
   <div class="mt-8">
     <%= form_with model: @contribution, url: reports_path do |form| %>
+      <%= invisible_captcha %>
       <%# = form.hidden_field :problem_id %>
       <%= render "form", form: form %>
     <% end %>

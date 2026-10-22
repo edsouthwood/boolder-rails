@@ -321,6 +321,15 @@ admin_accounts:
 
 Any existing plain string format continues to work and is treated as `super_admin`.
 
+### Login lockout
+After 10 wrong passwords from one IP address, admin login (including `/jobs`) is refused
+with "429 Too Many Requests" for 15 minutes from the first failure. To unlock early, run
+this in `RAILS_ENV=production bin/rails console` on the server:
+
+```ruby
+Rails.cache.delete("admin_login_failures/<ip address>")
+```
+
 ---
 
 ## Permission Levels
@@ -333,7 +342,9 @@ Any existing plain string format continues to work and is treated as `super_admi
 ### Area admin restrictions
 - Area creation and deletion: super admin only
 - Circuits: super admin only
-- Bulk uploads, GeoJSON imports (apply step), POIs: super admin only
+- Bulk uploads, POIs, audit log: super admin only
+- GeoJSON import apply step: scoped to assigned areas (every area the file touches is checked)
+- Problems can only be moved between areas the admin has access to
 - GeoJSON download: accessible per assigned area
 
 ---

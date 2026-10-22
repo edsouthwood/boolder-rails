@@ -184,6 +184,10 @@ systemctl --user status boolder-backup.timer</pre>
       - haytor</pre>
 
         <p class="text-gray-500 text-xs">Plain string credentials continue to work unchanged and are treated as super_admin.</p>
+
+        <p class="font-medium text-gray-800">Login lockout</p>
+        <p>After 10 wrong passwords from one IP address, admin login (including <code>/jobs</code>) is refused with "429 Too Many Requests" for 15 minutes from the first failure. To unlock early, in a Rails console on the server:</p>
+        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">Rails.cache.delete("admin_login_failures/&lt;ip address&gt;")</pre>
       </div>
     </section>
 
@@ -214,6 +218,7 @@ systemctl --user status boolder-backup.timer</pre>
           <li>Circuits — super admin only</li>
           <li>Bulk uploads, POIs, audit log — super admin only</li>
           <li>GeoJSON import apply step — scoped to your assigned areas</li>
+          <li>Problems can only be moved between areas you have access to</li>
         </ul>
       </div>
     </section>

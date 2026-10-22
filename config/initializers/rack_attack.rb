@@ -5,6 +5,11 @@ class Rack::Attack
     req.ip if req.post? && req.path.match?(%r{/mapping/contributions\z})
   end
 
+  # Same for the general "report a problem" form, which also emails staff.
+  throttle("reports/ip", limit: 5, period: 10.minutes) do |req|
+    req.ip if req.post? && req.path.match?(%r{/reports\z})
+  end
+
   self.throttled_responder = lambda do |_request|
     [ 429, { "Content-Type" => "text/plain" }, [ "Too many submissions. Please try again in a few minutes.\n" ] ]
   end

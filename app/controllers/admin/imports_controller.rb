@@ -54,11 +54,14 @@ class Admin::ImportsController < Admin::BaseController
 
   private
 
+  # Checks every area the import touches, not just the first object's.
   def require_import_area_access
     import = Import.find(params[:id])
-    area_id = import.objects_to_update.map(&:area_id).compact.first
-    area = Area.find(area_id)
-    require_area_access(area.slug)
+    area_ids = import.objects_to_update.map(&:area_id).compact.uniq
+    return require_super_admin if area_ids.empty?
+
+    forbidden = Area.where(id: area_ids).find { |area| !current_admin_user.can_access_area?(area.slug) }
+    require_area_access(forbidden.slug) if forbidden
   end
 
   def import_params

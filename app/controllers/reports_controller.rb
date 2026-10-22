@@ -1,4 +1,6 @@
 class ReportsController < ApplicationController
+  invisible_captcha only: [ :create ], on_spam: :handle_spam
+
   def new
     @contribution = Contribution.new(
       # TODO: make DRY
@@ -24,6 +26,13 @@ class ReportsController < ApplicationController
       # flash[:error] = "Error"
       render "new", status: :unprocessable_entity
     end
+  end
+
+  private
+
+  # invisible_captcha honeypot tripped — silently drop and send the bot home.
+  def handle_spam
+    redirect_to contribute_path
   end
 
   def contribution_params
