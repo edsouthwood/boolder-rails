@@ -7,6 +7,10 @@ const TOPO_CACHE = "topos-v1"
 const APP_CACHE = "app-v1"
 const MAP_CACHE = "map-v1"
 const IMAGE_CACHE = "images-v1"
+// Cross-origin hosts the service worker serves offline. Keep in sync with
+// MAP_ASSET_HOSTS in public/service-worker.js: anything else (e.g. the Bugsnag
+// script, whose CDN refuses CORS fetches) would never be served from cache anyway.
+const OFFLINE_ASSET_HOSTS = ["tiles.openfreemap.org", "cdn.jsdelivr.net", "ga.jspm.io"]
 
 // Base map tiles are only fetched up to this zoom; MapLibre over-zooms the deepest
 // tile for the closer (z15+) problem/boulder views, so we never need deeper tiles.
@@ -196,8 +200,9 @@ export default class extends Controller {
     })
 
     return [...urls]
-      .map(u => { try { return new URL(u, location.origin).href } catch (_) { return null } })
-      .filter(u => u && u.startsWith("http"))
+      .map(u => { try { return new URL(u, location.origin) } catch (_) { return null } })
+      .filter(u => u && (u.origin === location.origin || OFFLINE_ASSET_HOSTS.includes(u.hostname)))
+      .map(u => u.href)
   }
 
   // Same-origin Active Storage photos a page shows: <img src> and inline
