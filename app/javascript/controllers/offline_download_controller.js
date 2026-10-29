@@ -6,6 +6,7 @@ const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 const TOPO_CACHE = "topos-v1"
 const APP_CACHE = "app-v1"
 const MAP_CACHE = "map-v1"
+const IMAGE_CACHE = "images-v1"
 
 // Base map tiles are only fetched up to this zoom; MapLibre over-zooms the deepest
 // tile for the closer (z15+) problem/boulder views, so we never need deeper tiles.
@@ -65,6 +66,8 @@ export default class extends Controller {
       const mapKeys = await this.downloadMap(data)
 
       const state = {
+        name: data.name,
+        path: window.location.pathname,
         downloadedAt: new Date().toISOString(),
         topoCount,
         cachedUrls: data.topo_urls,
@@ -73,6 +76,9 @@ export default class extends Controller {
         failedCount: this.failures.length
       }
       localStorage.setItem(this.storageKey, JSON.stringify(state))
+      // Ask the browser not to evict saved areas under storage pressure. Chrome
+      // grants it silently for installed or frequently used sites; Firefox asks.
+      navigator.storage?.persist?.().catch(() => {})
       if (this.failures.length > 0) {
         console.warn("Offline download: failed URLs", this.failures)
       }
@@ -119,10 +125,14 @@ export default class extends Controller {
     const mapCache = await caches.open(MAP_CACHE)
     const appCache = await caches.open(APP_CACHE)
 
-    // Cache the area page, the map page and the offline-status page HTML for offline
-    // navigation, and read the map page for the JS/CSS assets it needs (MapLibre, app
-    // bundle, stylesheets).
-    await this.cachePage(appCache, window.location.pathname)
+    // Cache the area page, the home page (the installed app's start screen, which
+    // lists saved areas), the map page and the offline-status page HTML for offline
+    // navigation, plus the photos the area and home pages show; and read the map page
+    // for the JS/CSS assets it needs (MapLibre, app bundle, stylesheets).
+    const pageImageUrls = [
+      ...this.parsePageImages(await this.cachePage(appCache, window.location.pathname)),
+      ...this.parsePageImages(await this.cachePage(appCache, this.homePath))
+    ]
     await this.cachePage(appCache, this.offlineStatusPath)
     if (data.map_index_url) await this.cachePage(appCache, data.map_index_url)
     const shellUrls = await this.cacheMapPage(appCache, data.map_url)
@@ -140,14 +150,17 @@ export default class extends Controller {
     // shell assets are pre-fetched too but left cached for any other offline area.
     const trackedKeys = [MAP_STYLE_URL, ...tilejsonUrls, ...overlayUrls, ...assetUrls]
     await this.cacheAll(mapCache, [...overlayUrls, ...assetUrls, ...shellUrls], "Downloading map")
+    await this.cacheAll(await caches.open(IMAGE_CACHE), [...new Set(pageImageUrls)], "Downloading photos")
 
     return trackedKeys
   }
 
+  // Caches a page's HTML and returns it, so callers can read the assets it uses.
   async cachePage(cache, path) {
     const res = await fetch(path)
     if (!res.ok) throw new Error(`Failed to fetch ${path}: ${res.status}`)
-    await this.putClean(cache, path, res)
+    await this.putClean(cache, path, res.clone())
+    return res.text()
   }
 
   // Caches the map page HTML and returns the asset URLs it references so they can be
@@ -185,6 +198,21 @@ export default class extends Controller {
     return [...urls]
       .map(u => { try { return new URL(u, location.origin).href } catch (_) { return null } })
       .filter(u => u && u.startsWith("http"))
+  }
+
+  // Same-origin Active Storage photos a page shows: <img src> and inline
+  // background-image: url(...) (area cards). Served cache-first by the service worker.
+  parsePageImages(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html")
+    const urls = [...doc.querySelectorAll("img[src]")].map(img => img.getAttribute("src"))
+    doc.querySelectorAll("[style*='url(']").forEach(el => {
+      const match = el.getAttribute("style").match(/url\(['"]?([^'")]+)['"]?\)/)
+      if (match) urls.push(match[1])
+    })
+    return urls
+      .map(u => { try { return new URL(u, location.origin) } catch (_) { return null } })
+      .filter(u => u && u.origin === location.origin && u.pathname.startsWith("/rails/active_storage/"))
+      .map(u => u.href)
   }
 
   // Fetches each URL and stores it in the given cache, updating the progress label.
@@ -351,9 +379,16 @@ export default class extends Controller {
     this.statusTarget.classList.remove("hidden")
   }
 
+  get locale() {
+    return window.location.pathname.split("/")[1] || "en"
+  }
+
+  get homePath() {
+    return `/${this.locale}`
+  }
+
   get offlineStatusPath() {
-    const locale = window.location.pathname.split("/")[1] || "en"
-    return `/${locale}/offline-status`
+    return `/${this.locale}/offline-status`
   }
 
   get storageKey() {

@@ -1,9 +1,11 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '4'
+const SW_VERSION = '5'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
 const MAP_CACHE = 'map-v1'
+const IMAGE_CACHE = 'images-v1'
+const CACHES = [APP_CACHE, TOPO_CACHE, MAP_CACHE, IMAGE_CACHE]
 
 // How long to wait for the network before falling back to cache. On a poor signal
 // (the normal case on the moor) fetch can hang for tens of seconds before failing;
@@ -27,7 +29,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(key => key !== APP_CACHE && key !== TOPO_CACHE && key !== MAP_CACHE)
+          .filter(key => !CACHES.includes(key))
           .map(key => caches.delete(key))
       )
     ).then(() => clients.claim())
@@ -75,7 +77,9 @@ function cacheFirst(event, cacheName) {
   )
 }
 
-// A guaranteed-non-null offline page for uncached navigations.
+// A guaranteed-non-null offline page for uncached navigations. Its script lists the
+// areas saved for offline (same localStorage entries as saved_areas_controller.js), so
+// opening the installed app with no signal still leads somewhere useful.
 function offlinePage() {
   return new Response(
     '<!doctype html><html><head><meta charset="utf-8">' +
@@ -84,9 +88,37 @@ function offlinePage() {
     '<body style="font-family:sans-serif;text-align:center;padding:3rem 1.5rem;color:#374151">' +
     "<h1 style=\"font-size:1.25rem\">You're offline</h1>" +
     '<p style="color:#6b7280">This page hasn\'t been saved for offline use. ' +
-    'Reconnect, or save the area for offline from its page.</p></body></html>',
+    'Reconnect, or save the area for offline from its page.</p>' +
+    '<div id="saved" hidden><h2 style="font-size:1rem;margin-top:2rem">Saved for offline</h2>' +
+    '<ul id="saved-list" style="list-style:none;padding:0;line-height:2"></ul>' +
+    '<p><a id="map-link" href="/en/map" style="color:#059669">Open the map</a></p></div>' +
+    '<script>' + listSavedAreas.toString() + 'listSavedAreas()</script>' +
+    '</body></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
   )
+}
+
+// Runs inside the offline page (serialised with toString), not in the worker.
+function listSavedAreas() {
+  var locale = location.pathname.split('/')[1] || 'en'
+  if (!/^[a-z]{2}$/.test(locale)) locale = 'en'
+  var list = document.getElementById('saved-list')
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i)
+    if (!key || key.indexOf('offline_area_') !== 0) continue
+    var slug = key.slice('offline_area_'.length)
+    var state = {}
+    try { state = JSON.parse(localStorage.getItem(key)) || {} } catch (e) {}
+    var link = document.createElement('a')
+    link.href = state.path || '/' + locale + '/dartmoor/' + slug
+    link.textContent = state.name || slug
+    link.style.color = '#059669'
+    var item = document.createElement('li')
+    item.appendChild(link)
+    list.appendChild(item)
+  }
+  document.getElementById('map-link').href = '/' + locale + '/map'
+  if (list.children.length) document.getElementById('saved').hidden = false
 }
 
 // A guaranteed-non-null empty GeoJSON response for uncached overlay data.
@@ -175,6 +207,13 @@ self.addEventListener('fetch', event => {
   // Topo images — once cached, never re-fetch until cleared
   if (url.pathname.startsWith('/proxy/topos/')) {
     cacheFirst(event, TOPO_CACHE)
+    return
+  }
+
+  // Other photos (area covers etc.). Proxy URLs are keyed by blob + variant and never
+  // expire, so a URL always means the same bytes: cache-first is safe.
+  if (/^\/rails\/active_storage\/(blobs|representations)\/proxy\//.test(url.pathname)) {
+    cacheFirst(event, IMAGE_CACHE)
     return
   }
 

@@ -124,6 +124,7 @@
                 <span data-offline-download-target="count"></span>
               </div>
               <div data-offline-download-target="status" class="hidden text-sm text-gray-400 mt-1"></div>
+              <%= render "shared/install_prompt", class: "mt-3" %>
             </div>
 
             <%= link_to map_path(@area) do %>

@@ -1,0 +1,19 @@
+<%# Shown only when the browser can install the app (see install_prompt_controller.js). %>
+<div data-controller="install-prompt" class="hidden <%= local_assigns[:class] %>">
+  <button type="button" data-install-prompt-target="button" data-action="install-prompt#install"
+          class="hidden flex items-center space-x-2 text-emerald-600 text-sm font-medium hover:text-emerald-700">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+    </svg>
+    <span>Install the app — keeps saved areas on your phone</span>
+  </button>
+  <p data-install-prompt-target="iosHint" class="hidden text-sm text-gray-500">
+    <span class="font-medium text-gray-700">Install the app:</span>
+    tap <span class="whitespace-nowrap">Share
+      <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="(the square with an arrow)">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0-12l-4 4m4-4l4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+      </svg></span>
+    then <span class="font-medium">Add to Home Screen</span>. Saved areas then stay on your phone
+    (Safari clears them after a week without a visit otherwise).
+  </p>
+</div>

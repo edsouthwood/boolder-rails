@@ -4,8 +4,7 @@
   <head>
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-    <link rel="manifest" href="/manifest">
+    <%= render "layouts/pwa_head" %>
 
     <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
     <%= csrf_meta_tags %>
@@ -43,11 +42,6 @@
       <%= render "layouts/flash" %>
       <%= yield %>
       <%= render "layouts/footer" unless @hide_nav %>
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-      }
-    </script>
     </body>
   </div>
 </html>

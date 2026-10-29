@@ -901,10 +901,37 @@ with no connection — both the topo photos *and* the interactive map.
 - **The overlay data**: the problem/boulder and area-label GeoJSON.
 - **The app itself**: the area page, the map page, and the JS/CSS they need (including the
   MapLibre map library), so the map renders with no network.
+- **The home page** and the area/home page photos (area covers), so the app's start screen
+  opens offline and lists the saved areas.
 
 Sizes are small — a single area is on the order of a few MB. A timestamp and a "Remove"
 link appear once saved; **Remove** clears that area's tiles and photos again. If any files
 fail to download, the saved message says how many — re-save on a better connection.
+
+### Installing the app
+
+The site is an installable app (a PWA). Installing it is what keeps saved areas safe:
+Safari deletes a website's saved data after about 7 days without a visit, but not a
+home-screen app's; and saving an area also asks the browser to keep the data permanently
+(the offline status page shows whether it agreed).
+
+- **Android / desktop Chrome**: an **"Install the app"** button appears on the home page and
+  under the save button on area pages (only when the browser offers installation).
+- **iPhone / iPad**: there's no install button on iOS, so the same spots show
+  "tap Share, then Add to Home Screen".
+- Neither shows once you're using the installed app.
+
+The installed app opens on the **home page**, which has a **"Saved for offline"** list of
+the areas saved on that phone. With no signal, any page that wasn't saved shows a
+"You're offline" page that also lists the saved areas and links to the map.
+
+For developers: the manifest is `app/views/pwa/manifests/show.json.erb` (icons
+`public/icon-192.png`, `public/icon.png`, `public/icon-maskable-512.png`, screenshots in
+`public/screenshots/`); the shared head tags, service-worker registration and
+`beforeinstallprompt` capture are in `app/views/layouts/_pwa_head.html.erb` (used by both
+layouts); the prompt is `install_prompt_controller.js` + `shared/_install_prompt`; the list
+is `saved_areas_controller.js`. iOS uses `public/apple-touch-icon.png` (opaque — iOS turns
+transparency black).
 
 ### Checking what's saved: /en/offline-status
 

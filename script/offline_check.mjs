@@ -127,6 +127,9 @@ try {
   check(state.topoCount > 0, `topo photos cached (${state?.topoCount})`)
   check(state.problemUrls?.length > 0, `problem pages listed (${state?.problemUrls?.length})`)
   check(state.mapKeys?.length > 10, `map files tracked (${state?.mapKeys?.length})`)
+  check(!!state.name && state.path === new URL(AREA_URL).pathname, `area name and page stored (${state?.name})`)
+  const imageCount = await page.evaluate(async () => (await (await caches.open("images-v1")).keys()).length)
+  check(imageCount > 0, `area/home page photos cached (${imageCount})`)
 
   const problemUrl = BASE_URL + state.problemUrls[0]
   const topoUrl = state.cachedUrls[0]
@@ -196,6 +199,32 @@ try {
   )
   check(topoOk, "topo photo served offline")
   await page.screenshot({ path: join(ARTIFACT_DIR, "offline-problem.png"), fullPage: true })
+
+  // The installed app's start screen (manifest start_url) opens offline and lists
+  // the saved area, with its cover photos served from cache.
+  const homeImages = []
+  const onHomeImage = res => {
+    if (res.url().includes("/rails/active_storage/")) homeImages.push(res.ok())
+  }
+  page.on("response", onHomeImage)
+  const homeResponse = await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load", timeout: 30000 })
+  check(homeResponse.ok(), `home page (app start screen) served offline (status ${homeResponse.status()})`)
+  check(!(await page.content()).includes("You're offline"), "home page is not the offline fallback")
+  await page.waitForSelector(`[data-saved-areas-target="list"] a[href="${state.path}"]`, { timeout: 10000 })
+    .then(() => check(true, `home page lists the saved area (${state.name})`))
+    .catch(() => check(false, `home page lists the saved area (${state.name})`))
+  await page.waitForTimeout(1000)
+  check(homeImages.length > 0 && homeImages.every(Boolean),
+    `home page photos served from cache (${homeImages.filter(Boolean).length}/${homeImages.length})`)
+  page.off("response", onHomeImage)
+  await page.screenshot({ path: join(ARTIFACT_DIR, "offline-home.png"), fullPage: true })
+
+  // A page that was never saved gets the offline fallback, which links saved areas.
+  await page.goto(`${BASE_URL}/${LOCALE}/never-saved-page`, { waitUntil: "load", timeout: 30000 })
+  check((await page.content()).includes("You're offline"), "unsaved page shows the offline fallback")
+  await page.waitForSelector(`#saved-list a[href="${state.path}"]`, { timeout: 5000 })
+    .then(() => check(true, "offline fallback links the saved area"))
+    .catch(() => check(false, "offline fallback links the saved area"))
 
   const statusResponse = await page.goto(STATUS_URL, { waitUntil: "load", timeout: 30000 })
   check(statusResponse.ok(), `offline-status page served offline (status ${statusResponse.status()})`)
