@@ -35,6 +35,12 @@
             </div>
           </div>
 
+          <div data-controller="saved-areas" class="hidden mt-6 text-left">
+            <h2 class="text-sm font-semibold text-gray-900">Saved for offline</h2>
+            <ul data-saved-areas-target="list" class="mt-1 space-y-1"></ul>
+          </div>
+
+          <%= render "shared/install_prompt", class: "mt-6 text-left" %>
         </div>
       </main>
     </div>

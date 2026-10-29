@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // and — for each saved area — how many of its tracked URLs are actually present in
 // Cache Storage. Read-only; nothing here mutates the caches.
 
-const CACHE_NAMES = ["app-v1", "topos-v1", "map-v1"]
+const CACHE_NAMES = ["app-v1", "topos-v1", "map-v1", "images-v1"]
 const TILEJSON_URL = "https://tiles.openfreemap.org/planet"
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 
@@ -59,7 +59,11 @@ export default class extends Controller {
       return
     }
     const { usage, quota } = await navigator.storage.estimate()
-    this.storageTarget.textContent = `${formatBytes(usage)} of ${formatBytes(quota)} available`
+    const persisted = await navigator.storage.persisted?.()
+    const kept = persisted === undefined ? "" : persisted
+      ? " — kept permanently"
+      : " — may be cleared by the browser (install the app to keep it)"
+    this.storageTarget.textContent = `${formatBytes(usage)} of ${formatBytes(quota)} available${kept}`
   }
 
   async reportCaches() {

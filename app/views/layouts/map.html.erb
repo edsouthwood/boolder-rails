@@ -5,7 +5,7 @@
   <head>
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <%= render "layouts/pwa_head" %>
 
     <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
     <%= csrf_meta_tags %>

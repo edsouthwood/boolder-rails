@@ -1,0 +1,21 @@
+<%# Installable-app (PWA) tags, shared by application.html.erb and map.html.erb. %>
+<link rel="manifest" href="/manifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dartmoor">
+<script>
+  // Register on every page (a shared map link may be someone's first visit), so
+  // the offline cache and install support are ready wherever they land.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+  }
+  // Chrome fires beforeinstallprompt once, often before Stimulus has connected, so
+  // stash it for install_prompt_controller.js and tell any connected controller.
+  window.addEventListener('beforeinstallprompt', function(event) {
+    event.preventDefault()
+    window.deferredInstallPrompt = event
+    window.dispatchEvent(new Event('installprompt-available'))
+  })
+</script>
