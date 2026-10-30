@@ -933,6 +933,24 @@ problems/boulders/lines/topos (timestamps and counts), topo photo and cover blob
 for many areas in a handful of queries. Saves from before versions existed show as needing
 an update.
 
+### Searching offline
+
+With no connection (or a signal that doesn't answer within 5 seconds), the search box
+searches the map data saved on the phone instead of the server. It finds areas and problems
+by name, only offers those whose pages are saved (anything else would just open the
+"You're offline" page), and says **"Offline — showing results from your saved areas"**.
+Matching is simpler than the server's: every word typed must appear in the name, ignoring
+case, accents and apostrophes ("tims slab" finds "Tim's Triangular Slab").
+
+Search results now link straight to the problem/area page (online too), instead of going
+through `/redirects/new`, which needs the server.
+
+For developers: `searchOffline` in `app/javascript/offline_areas.js` reads the cached
+`/en/map-data.geojson` (problems now include `areaName`) and `/en/area-labels.geojson` (areas
+now include `path`). `Area::OFFLINE_FORMAT` is part of the offline version hash: bump it
+whenever what a saved area contains changes shape, so every saved copy shows
+"Update available" and picks up the new data (it was bumped to 2 for this).
+
 ### Installing the app
 
 The site is an installable app (a PWA). Installing it is what keeps saved areas safe:

@@ -462,3 +462,85 @@ function lat2tile(lat, z) {
     ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * Math.pow(2, z)
   )
 }
+
+// --- Offline search ---
+
+// Searches the map data saved with offline areas (all published problems + area labels)
+// when the server can't be reached. Returns results shaped like /search's JSON, plus
+// `path`, limited to pages actually saved on this device (an unsaved one would only
+// open the "You're offline" page).
+export async function searchOffline(query, localeCode = locale()) {
+  const terms = normalize(query).split(" ").filter(Boolean)
+  if (terms.length === 0) return []
+
+  const [problems, areas] = await Promise.all([
+    cachedFeatures(`/${localeCode}/map-data.geojson`),
+    cachedFeatures(`/${localeCode}/area-labels.geojson`)
+  ])
+
+  const areaResults = rank(areas.filter(f => f.properties.path), terms).slice(0, 10)
+    .map(f => ({
+      type: "Area",
+      id: f.id,
+      name: f.properties.name,
+      path: f.properties.path,
+      bounds: {
+        south_west: { lat: f.properties.southWestLat, lng: f.properties.southWestLon },
+        north_east: { lat: f.properties.northEastLat, lng: f.properties.northEastLon }
+      }
+    }))
+  const problemResults = rank(problems.filter(f => f.properties.path), terms).slice(0, 30)
+    .map(f => ({
+      type: "Problem",
+      id: f.properties.id,
+      name: f.properties.name,
+      grade: f.properties.grade,
+      area_name: f.properties.areaName || "",
+      circuit_number: f.properties.circuitNumber,
+      path: f.properties.path,
+      geolocation: { lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] }
+    }))
+
+  const saved = async result => !!(await caches.match(result.path))
+  const keep = await Promise.all([...areaResults, ...problemResults].map(saved))
+  const results = [...areaResults, ...problemResults].filter((_, i) => keep[i])
+  return [...results.filter(r => r.type === "Area"), ...results.filter(r => r.type === "Problem").slice(0, 10)]
+}
+
+async function cachedFeatures(url) {
+  try {
+    const cached = await caches.match(url, { ignoreVary: true })
+    return cached ? ((await cached.json()).features || []).filter(f => f.properties?.name) : []
+  } catch (_) {
+    return []
+  }
+}
+
+// Every term must appear in the name; whole-name and word-start matches rank first.
+function rank(features, terms) {
+  const query = terms.join(" ")
+  return features
+    .map(feature => {
+      const name = normalize(feature.properties.name)
+      if (!terms.every(term => name.includes(term))) return null
+      const words = name.split(" ")
+      const score = name === query ? 0
+        : name.startsWith(query) ? 1
+        : terms.every(term => words.some(word => word.startsWith(term))) ? 2
+        : 3
+      return { feature, score, length: name.length }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.score - b.score || a.length - b.length)
+    .map(match => match.feature)
+}
+
+// Lowercase, accents stripped, punctuation as spaces: "Tim's Slab" ~ "tims slab".
+function normalize(text) {
+  return String(text || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9+]+/g, " ")
+    .trim()
+}

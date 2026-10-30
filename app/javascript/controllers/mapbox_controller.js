@@ -847,7 +847,16 @@ export default class extends Controller {
 
     // FIXME: make it DRY
     const coordinates = [event.detail.lon, event.detail.lat];
-    const html = `<a href="/${this.localeValue}/redirects/new?problem_id=${event.detail.id}" target="_blank">${event.detail.name || ""}</a><span class="text-gray-400 ml-1">${event.detail.grade}</span>`;
+    // The result's own path (when present) opens offline too; the redirect needs the server.
+    const href = event.detail.path || `/${this.localeValue}/redirects/new?problem_id=${event.detail.id}`;
+    const link = document.createElement("a");
+    link.href = href;
+    link.target = "_blank";
+    link.textContent = event.detail.name || "";
+    const grade = document.createElement("span");
+    grade.className = "text-gray-400 ml-1";
+    grade.textContent = event.detail.grade || "";
+    const html = link.outerHTML + grade.outerHTML;
      
     new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
     .setLngLat(coordinates)
