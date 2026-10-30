@@ -92,6 +92,31 @@ class ContributionTest < ActiveSupport::TestCase
     assert_includes cross_area.errors.attribute_names, :existing_topo_id
   end
 
+  # --- start holds ---
+
+  test "parses start holds posted as JSON from the form" do
+    contribution = Contribution.new(state: "pending", comment: "hi", start_holds: '[{"x":0.2,"y":0.8}]')
+    assert contribution.valid?
+    assert_equal [ { "x" => 0.2, "y" => 0.8 } ], contribution.start_holds
+  end
+
+  test "blank start holds are stored as nil" do
+    contribution = Contribution.create!(state: "pending", comment: "hi", start_holds: "")
+    assert_nil contribution.reload.start_holds
+  end
+
+  test "rejects malformed, out-of-range or too many start holds" do
+    [ "[{x:", '[{"x":2,"y":0.5}]', Array.new(StartHoldsValidator::MAX_HOLDS + 1) { { "x" => 0.5, "y" => 0.5 } }.to_json ].each do |holds|
+      contribution = Contribution.new(state: "pending", comment: "hi", start_holds: holds)
+      assert_not contribution.valid?, "expected #{holds} to be invalid"
+      assert_includes contribution.errors.attribute_names, :start_holds
+    end
+  end
+
+  test "start holds alone count as content" do
+    assert Contribution.new(state: "pending", start_holds: '[{"x":0.2,"y":0.8}]').valid?
+  end
+
   # --- top_contributors ---
 
   test "top_contributors counts only accepted contributions" do

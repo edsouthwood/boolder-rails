@@ -183,6 +183,17 @@
             <%= t("views.mapping.contributions.new.line_draw_instruction") %>
             <span class="text-gray-400"><%= t("views.mapping.contributions.new.line_optional") %></span>
           </p>
+          <div class="mb-3 inline-flex rounded-md shadow-sm" role="group">
+            <% mode_button = "px-3 py-1.5 text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 aria-pressed:bg-emerald-600 aria-pressed:text-white aria-pressed:border-emerald-600" %>
+            <button type="button" aria-pressed="true" data-mode="line" data-contribution-photo-target="modeButton"
+                    data-action="click->contribution-photo#setMode" class="<%= mode_button %> rounded-l-md">
+              <%= t("views.mapping.contributions.new.line_mode_line") %>
+            </button>
+            <button type="button" aria-pressed="false" data-mode="holds" data-contribution-photo-target="modeButton"
+                    data-action="click->contribution-photo#setMode" class="<%= mode_button %> -ml-px rounded-r-md">
+              <%= t("views.mapping.contributions.new.line_mode_holds") %>
+            </button>
+          </div>
           <div class="relative inline-block w-full">
             <img data-contribution-photo-target="previewImage"
                  class="block w-full max-h-96 object-contain rounded-lg bg-gray-100" />
@@ -191,7 +202,7 @@
                     class="absolute top-0 left-0 rounded-lg"
                     style="cursor:crosshair"></canvas>
           </div>
-          <p class="mt-3 text-xs text-gray-500">A line requires a minimum of 3 points. The more points you add, the more accurately the line will be displayed.</p>
+          <p class="mt-3 text-xs text-gray-500" data-contribution-photo-target="modeHint" data-line-hint="<%= t("views.mapping.contributions.new.line_hint") %>" data-holds-hint="<%= t("views.mapping.contributions.new.line_holds_hint", count: StartHoldsValidator::MAX_HOLDS) %>"><%= t("views.mapping.contributions.new.line_hint") %></p>
           <div class="mt-3 flex space-x-2">
             <button type="button" data-action="click->contribution-photo#undo"
                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
@@ -205,6 +216,7 @@
         </div>
 
         <%= form.hidden_field :line_coordinates, data: { "contribution-photo-target": "coordsField" } %>
+        <%= form.hidden_field :start_holds, value: @contribution.start_holds&.to_json, data: { "contribution-photo-target": "holdsField" } %>
 
       </div>
     </div>

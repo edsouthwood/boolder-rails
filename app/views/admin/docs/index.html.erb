@@ -518,7 +518,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Click each starting hand hold (up to 4). Green rings mark them</li>
           <li>Save. They show as rings in the grade colour on the public problem page</li>
         </ol>
-        <p class="text-xs text-gray-500">To remove them, click <strong>Clear start holds</strong> and save. Holds are tied to that line's photo.</p>
+        <p class="text-xs text-gray-500">To remove them, click <strong>Clear start holds</strong> and save. Holds are tied to that line's photo. Contributors can also mark them on the contribution form; they're copied over on accept.</p>
 
         <p class="font-medium text-gray-800">Deleting a topo</p>
         <ol class="list-decimal list-inside space-y-1">
@@ -564,11 +564,12 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li><strong>Boulder photo</strong> — GPS coordinates auto-extracted from photo EXIF where available</li>
           <li><strong>Route line</strong> — drawn on the uploaded photo using an in-browser canvas tool. Contributors can also select an existing topo from the area and draw on that instead of uploading a new photo.</li>
+          <li><strong>Start holds</strong> — optional; the contributor switches the drawing tool to <strong>Start holds</strong> and clicks up to 4 starting hand holds (green rings)</li>
           <li><strong>UKC link</strong> — optional link to the problem on UK Climbing</li>
           <li><strong>GPS location</strong> — auto-populated from photo, or entered manually</li>
         </ul>
         <p>The location is set by dragging a pin on a map (it stays in sync with the lat/lon fields and the photo's EXIF GPS). The public form is rate-limited and honeypot-protected against spam, and rejects empty submissions.</p>
-        <p>Go to <strong>Admin → Contributions</strong> to review submissions. The list opens on the <strong>pending</strong> queue, with photo thumbnails, dates and comment previews for quick triage, a pending-count badge, and pagination. The review page shows the boulder photo with any drawn route line overlaid, the UKC link, GPS coordinates, and contributor comments.</p>
+        <p>Go to <strong>Admin → Contributions</strong> to review submissions. The list opens on the <strong>pending</strong> queue, with photo thumbnails, dates and comment previews for quick triage, a pending-count badge, and pagination. The review page shows the boulder photo with any drawn route line and start holds overlaid, the UKC link, GPS coordinates, and contributor comments.</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li><strong>pending</strong> — awaiting review</li>
           <li><strong>accepted</strong> — accepted and applied to the data</li>
@@ -581,6 +582,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li><strong>Line on Topo #N</strong> — the contributor drew on an existing topo; accepting only adds the line, no new photo is created</li>
           <li><strong>Photo &amp; line (new topo)</strong> — the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay</li>
           <li><strong>Photo (new topo, no line drawn)</strong> — photo uploaded without a line</li>
+          <li>Start holds go with the photo/line option (the label shows e.g. "+ 2 start holds") and are copied onto the new line. Holds marked on an existing topo without a line are imported as a line with just the holds</li>
           <li><strong>GPS coordinates</strong> — copies the contributor's location to the problem (only if the problem has no existing location; a hint shows if it's already located)</li>
         </ul>
         <p class="text-gray-500 text-xs">Checkboxes are checked by default; if the contribution has no photo/line or no GPS, a "nothing to import" note shows instead. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa. Accepting always closes any open contribution request for that problem.</p>

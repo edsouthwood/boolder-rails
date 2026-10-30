@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -174,6 +174,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.datetime "accepted_at"
     t.datetime "closed_at"
     t.string "reviewed_by"
+    t.json "start_holds"
     t.index ["problem_id"], name: "index_contributions_on_problem_id"
     t.index ["state"], name: "index_contributions_on_state"
   end

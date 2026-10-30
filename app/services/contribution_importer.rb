@@ -1,5 +1,5 @@
 # Applies an accepted contribution to the real data: sets the problem's GPS, draws the
-# contributed line on a new or existing topo, and closes any open contribution requests.
+# contributed line (and any start holds) on a new or existing topo, and closes any open contribution requests.
 #
 # Callers are expected to wrap #import! in a transaction (the admin controller does) so the
 # whole import is atomic — a partial failure must not leave GPS applied without its line.
@@ -45,9 +45,9 @@ class ContributionImporter
 
   def draw_on_existing_topo(problem)
     existing_topo = Topo.find_by(id: contribution.existing_topo_id)
-    return unless existing_topo && contribution.line_coordinates.present?
+    return unless existing_topo && (contribution.line_coordinates.present? || contribution.start_holds.present?)
 
-    @created_line = Line.create!(problem: problem, topo: existing_topo, coordinates: line_coordinates)
+    @created_line = Line.create!(problem: problem, topo: existing_topo, coordinates: line_coordinates, start_holds: contribution.start_holds)
   end
 
   def create_topo_with_line(problem)
@@ -59,7 +59,7 @@ class ContributionImporter
       content_type: photo.content_type
     )
     topo.save!
-    @created_line = Line.create!(problem: problem, topo: topo, coordinates: line_coordinates)
+    @created_line = Line.create!(problem: problem, topo: topo, coordinates: line_coordinates, start_holds: contribution.start_holds)
     @created_topo = topo
   end
 

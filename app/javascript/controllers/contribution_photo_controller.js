@@ -4,11 +4,41 @@ import exifr from 'exifr/full'
 export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
-    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField'
+    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField',
+    'holdsField', 'modeButton', 'modeHint'
   ]
+
+  static MAX_HOLDS = 4
+  static HOLD_COLOR = '#10b981'
 
   connect() {
     this.points = []
+    this.holds = []
+    this.mode = 'line'
+  }
+
+  setMode(event) {
+    this.mode = event.currentTarget.dataset.mode
+    this.modeButtonTargets.forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.dataset.mode === this.mode ? 'true' : 'false')
+    })
+    if (this.hasModeHintTarget) {
+      this.modeHintTarget.textContent = this.mode === 'holds' ? this.modeHintTarget.dataset.holdsHint : this.modeHintTarget.dataset.lineHint
+    }
+  }
+
+  // The array the current mode adds points to
+  activePoints() {
+    return this.mode === 'holds' ? this.holds : this.points
+  }
+
+  syncFields() {
+    if (this.hasCoordsFieldTarget) {
+      this.coordsFieldTarget.value = this.points.length > 0 ? JSON.stringify(this.points) : ''
+    }
+    if (this.hasHoldsFieldTarget) {
+      this.holdsFieldTarget.value = this.holds.length > 0 ? JSON.stringify(this.holds) : ''
+    }
   }
 
   async handlePhotoChange(event) {
@@ -58,7 +88,8 @@ export default class extends Controller {
       this.lineEditorTarget.classList.add('hidden')
       this.linePromptTarget.classList.remove('hidden')
       this.points = []
-      if (this.hasCoordsFieldTarget) this.coordsFieldTarget.value = ''
+      this.holds = []
+      this.syncFields()
       return
     }
 
@@ -94,9 +125,8 @@ export default class extends Controller {
     canvas.style.height = h + 'px'
 
     this.points = []
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = ''
-    }
+    this.holds = []
+    this.syncFields()
     this.redraw()
   }
 
@@ -106,26 +136,22 @@ export default class extends Controller {
     const x = parseFloat(((event.clientX - rect.left) / rect.width).toFixed(4))
     const y = parseFloat(((event.clientY - rect.top) / rect.height).toFixed(4))
 
-    this.points.push({ x, y })
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = JSON.stringify(this.points)
-    }
+    if (this.mode === 'holds' && this.holds.length >= this.constructor.MAX_HOLDS) return
+
+    this.activePoints().push({ x, y })
+    this.syncFields()
     this.redraw()
   }
 
   undo() {
-    this.points.pop()
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = this.points.length > 0 ? JSON.stringify(this.points) : ''
-    }
+    this.activePoints().pop()
+    this.syncFields()
     this.redraw()
   }
 
   clear() {
-    this.points = []
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = ''
-    }
+    this.activePoints().length = 0
+    this.syncFields()
     this.redraw()
   }
 
@@ -134,10 +160,18 @@ export default class extends Controller {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    if (this.points.length === 0) return
-
     const w = canvas.width
     const h = canvas.height
+
+    ctx.strokeStyle = this.constructor.HOLD_COLOR
+    ctx.lineWidth = 3
+    this.holds.forEach(p => {
+      ctx.beginPath()
+      ctx.arc(p.x * w, p.y * h, 10, 0, Math.PI * 2)
+      ctx.stroke()
+    })
+
+    if (this.points.length === 0) return
 
     ctx.strokeStyle = '#ff2626'
     ctx.lineWidth = 3

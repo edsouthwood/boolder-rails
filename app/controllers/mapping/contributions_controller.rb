@@ -54,7 +54,7 @@ class Mapping::ContributionsController < ApplicationController
   def contribution_params
     params.require(:contribution).permit(
       :location_lat, :location_lon, :comment, :problem_id, :contributor_name, :contributor_email,
-      :problem_name, :problem_url, :ukc_url, :line_coordinates, :existing_topo_id,
+      :problem_name, :problem_url, :ukc_url, :line_coordinates, :start_holds, :existing_topo_id,
       photos: [], line_drawings: []
     )
   end

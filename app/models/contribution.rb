@@ -24,6 +24,10 @@ class Contribution < ApplicationRecord
   validate :must_have_some_content
   validate :existing_topo_in_problem_area
   validate :attachments_are_reasonable_images
+  validates :start_holds, start_holds: true
+
+  # The contribution form posts start holds as a JSON string from a hidden field.
+  before_validation :parse_start_holds
 
   def accepted?
     state == "accepted"
@@ -48,6 +52,14 @@ class Contribution < ApplicationRecord
 
   private
 
+  def parse_start_holds
+    self.start_holds = JSON.parse(start_holds) if start_holds.is_a?(String) && start_holds.present?
+    self.start_holds = nil if start_holds.blank?
+  rescue JSON::ParserError
+    errors.add(:start_holds, "must be valid JSON")
+    throw :abort
+  end
+
   # Reject empty/spam submissions: a contribution must carry at least one piece of
   # useful information. `location` is set from lat/lon by Geolocatable's before_validation.
   def must_have_some_content
@@ -56,6 +68,7 @@ class Contribution < ApplicationRecord
       location.present? ||
       comment.present? ||
       line_coordinates.present? ||
+      start_holds.present? ||
       problem_name.present?
 
     errors.add(:base, "A contribution must include a photo, location, line, comment or problem name") unless has_content
