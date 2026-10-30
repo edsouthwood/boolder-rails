@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '5'
+const SW_VERSION = '6'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -91,7 +91,8 @@ function offlinePage() {
     'Reconnect, or save the area for offline from its page.</p>' +
     '<div id="saved" hidden><h2 style="font-size:1rem;margin-top:2rem">Saved for offline</h2>' +
     '<ul id="saved-list" style="list-style:none;padding:0;line-height:2"></ul>' +
-    '<p><a id="map-link" href="/en/map" style="color:#059669">Open the map</a></p></div>' +
+    '<p><a id="map-link" href="/en/map" style="color:#059669">Open the map</a> · ' +
+    '<a id="downloads-link" href="/en/downloads" style="color:#059669">My downloads</a></p></div>' +
     '<script>' + listSavedAreas.toString() + 'listSavedAreas()</script>' +
     '</body></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
@@ -118,6 +119,7 @@ function listSavedAreas() {
     list.appendChild(item)
   }
   document.getElementById('map-link').href = '/' + locale + '/map'
+  document.getElementById('downloads-link').href = '/' + locale + '/downloads'
   if (list.children.length) document.getElementById('saved').hidden = false
 }
 

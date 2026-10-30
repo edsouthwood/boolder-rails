@@ -104,6 +104,8 @@ Rails.application.routes.draw do
     # Debug page for the offline feature: shows service worker + cache state so
     # field failures can be reported with a single screenshot.
     get "offline-status", to: "pages#offline_status", as: :offline_status
+    # "My downloads": save, update and remove areas for offline use.
+    get "downloads", to: "pages#downloads", as: :downloads
     get "about", to: "pages#about", as: :about
     get "ethics", to: "pages#ethics", as: :ethics
     get "contribute", to: "pages#contribute", as: :contribute

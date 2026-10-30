@@ -1,0 +1,35 @@
+<% set_meta_tags title: "My downloads" %>
+
+<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8"
+     data-controller="offline-downloads"
+     data-offline-downloads-areas-value="<%= @offline_areas.to_json %>">
+  <h1 class="text-2xl font-bold text-gray-900">My downloads</h1>
+  <p class="mt-2 text-sm text-gray-500">
+    Areas saved on this device work with no signal: the map, problem pages and topo photos.
+  </p>
+
+  <p data-offline-downloads-target="unsupported" class="hidden mt-6 text-sm text-amber-600">
+    This browser can't save areas for offline use.
+  </p>
+
+  <div data-offline-downloads-target="main" class="hidden">
+    <p data-offline-downloads-target="offlineNote" class="hidden mt-4 text-sm text-amber-600">
+      You're offline — showing the areas saved on this device. Saving and updating need a connection.
+    </p>
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <button type="button" data-offline-downloads-target="allButton" data-action="offline-downloads#downloadAll"
+              class="hidden rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"></button>
+      <span data-offline-downloads-target="storage" class="text-sm text-gray-500"></span>
+    </div>
+    <p data-offline-downloads-target="progress" class="hidden mt-2 text-sm text-gray-500"></p>
+
+    <ul data-offline-downloads-target="list" class="mt-6 divide-y divide-gray-200 border-y border-gray-200"></ul>
+
+    <%= render "shared/install_prompt", class: "mt-6" %>
+
+    <p class="mt-6 text-sm text-gray-400">
+      Something not working offline? <a href="<%= offline_status_path %>" class="underline">Offline status</a> shows exactly what's stored.
+    </p>
+  </div>
+</div>

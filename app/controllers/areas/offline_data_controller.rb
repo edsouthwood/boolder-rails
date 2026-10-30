@@ -21,6 +21,9 @@ module Areas
       render json: {
         slug: area.slug,
         name: area.name,
+        # Compared with the saved copy's version to offer "Update" (see Area.offline_versions).
+        version: area.offline_version,
+        area_url: area_path(area),
         topo_count: topos.count,
         # Relative paths (not _url): absolute URLs bake in scheme/host, which breaks
         # cache matching behind proxies or when the scheme differs (e.g. dev over http).
