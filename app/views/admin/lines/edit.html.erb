@@ -28,11 +28,20 @@
     <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#clearHolds">Clear start holds</a>
     <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#newExcludedArea">New not-in area</a>
     <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#clearExcludedAreas">Clear not-in areas</a>
+    <span class="flex items-center space-x-2">
+      <span class="font-semibold">Zoom:</span>
+      <a href="#" class="text-emerald-600 font-semibold px-1" data-action="topo-editor#zoomOut" aria-label="Zoom out">&minus;</a>
+      <span class="tabular-nums" data-topo-editor-target="zoomLabel">1&times;</span>
+      <a href="#" class="text-emerald-600 font-semibold px-1" data-action="topo-editor#zoomIn" aria-label="Zoom in">+</a>
+    </span>
   </div>
 
-  <div style="position:relative" data-topo-editor-target="container">
-    <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
-    <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
+  <%# Zooming enlarges the photo and canvas; this viewport scrolls to pan %>
+  <div style="overflow:auto; max-width:100%; max-height:80vh" data-topo-editor-target="viewport">
+    <div style="position:relative" data-topo-editor-target="container">
+      <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
+      <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
+    </div>
   </div>
 
   <div class="my-3">

@@ -683,6 +683,8 @@ Many Dartmoor problems rule out a feature (an arête, a crack, the neighbouring 
 
 Like start holds, not-in areas belong to the line's photo, and contributors can mark them on the contribution form too.
 
+**Zoom:** to place holds or area corners precisely, use the **Zoom − / +** controls (1×, 2×, 3×) in the line editor's toolbar, then scroll to pan. The contribution form has the same − / + buttons next to Undo and Clear. Zoom only changes the view. Points are saved the same way at any zoom level.
+
 ### Deleting a topo
 Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 
