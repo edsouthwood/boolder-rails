@@ -197,6 +197,9 @@ class AreaDownloader {
   constructor(onProgress) {
     this.onProgress = onProgress
     this.failures = []
+    // Cross-origin assets the page loads with plain <script>/<link> tags (see
+    // parsePageAssets): fetched no-cors, like the page does — see fetchInto.
+    this.noCorsUrls = new Set()
   }
 
   async downloadTopos(urls) {
@@ -291,7 +294,12 @@ class AreaDownloader {
     doc.querySelectorAll("link[href], script[src]").forEach(el => {
       if (el.tagName === "LINK" && !ASSET_LINK_RELS.includes(el.getAttribute("rel"))) return
       const u = el.getAttribute("href") || el.getAttribute("src")
-      if (u) urls.add(u)
+      if (!u) return
+      urls.add(u)
+      const isModule = el.getAttribute("type") === "module" || el.getAttribute("rel") === "modulepreload"
+      if (!el.hasAttribute("crossorigin") && !isModule) {
+        try { this.noCorsUrls.add(new URL(u, location.origin).href) } catch (_) {}
+      }
     })
 
     return [...urls]
@@ -341,10 +349,16 @@ class AreaDownloader {
   }
 
   // Fetches one URL into the cache. Returns null on success, else why it failed.
+  // Classic <script>/<link> assets from other hosts are requested no-cors, exactly as
+  // the page requests them: the service worker may already hold the page's opaque
+  // copy, and handing an opaque response to a cors fetch is a network error ("Response
+  // served by service worker is opaque" — every save after visiting the map failed
+  // MapLibre and es-module-shims). Opaque is what the page needs offline anyway.
   async fetchInto(cache, url) {
     try {
-      const res = await fetch(url)
-      if (!res.ok) return `HTTP ${res.status}`
+      const noCors = this.noCorsUrls.has(url)
+      const res = await fetch(url, noCors ? { mode: "no-cors" } : undefined)
+      if (!res.ok && !(noCors && res.type === "opaque")) return `HTTP ${res.status}`
       await this.putClean(cache, url, res)
       return null
     } catch (error) {

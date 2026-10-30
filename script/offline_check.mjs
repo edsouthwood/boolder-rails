@@ -222,6 +222,13 @@ try {
   await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 })
   console.log("  service worker is controlling the page")
 
+  // Browse the map first, as a real visitor would: the service worker then caches the
+  // page's no-cors (opaque) copies of MapLibre and es-module-shims, which a save must
+  // cope with.
+  await page.goto(MAP_URL, { waitUntil: "load" })
+  await page.waitForSelector(".maplibregl-canvas", { timeout: 20000 }).catch(() => {})
+  await page.goto(AREA_URL, { waitUntil: "load" })
+
   const button = page.locator('[data-offline-download-target="button"]')
   await button.click()
   await page.waitForFunction(
@@ -232,7 +239,7 @@ try {
 
   const state = await page.evaluate(slug => JSON.parse(localStorage.getItem(`offline_area_${slug}`)), SLUG)
   check(!!state, "download completed and saved its state")
-  check(state.failedCount === 0, `no failed downloads (failedCount=${state?.failedCount})`)
+  check(state.failedCount === 0, `no failed downloads (failedCount=${state?.failedCount})${state?.failedUrls?.length ? " " + state.failedUrls.join(", ") : ""}`)
   check(state.topoCount > 0, `topo photos cached (${state?.topoCount})`)
   check(state.problemUrls?.length > 0, `problem pages listed (${state?.problemUrls?.length})`)
   check(state.mapKeys?.length > 10, `map files tracked (${state?.mapKeys?.length})`)
