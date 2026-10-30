@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static targets = ['image', 'canvas']
-  static values = { coordinates: Array, holds: Array }
+  static values = { coordinates: Array, holds: Array, excludedAreas: Array }
 
   connect() {
     if (this.hasImageTarget) {
@@ -25,6 +25,17 @@ export default class extends Controller {
     canvas.height = h
 
     const ctx = canvas.getContext('2d')
+
+    ctx.strokeStyle = '#dc2626'
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.3)'
+    ctx.lineWidth = 2
+    this.excludedAreasValue.forEach(area => {
+      ctx.beginPath()
+      area.forEach((p, i) => i === 0 ? ctx.moveTo(p.x * w, p.y * h) : ctx.lineTo(p.x * w, p.y * h))
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+    })
 
     ctx.strokeStyle = '#10b981'
     ctx.lineWidth = 3

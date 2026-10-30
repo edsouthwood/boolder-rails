@@ -14,6 +14,23 @@
   %>
 
 
+  <% if line.excluded_areas.present? %>
+    <%# "Not in" areas sit underneath everything else (lines, circles, holds) %>
+    <div class="absolute top-0 left-0 w-full pointer-events-none hidden" data-topo-line-target="circle">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" aria-label="<%= t("problem.not_in") %>">
+        <defs>
+          <pattern id="not-in-hatch-<%= line.id %>" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#dc2626" stroke-width="3" stroke-opacity="0.7" />
+          </pattern>
+        </defs>
+        <% line.excluded_areas.each do |area| %>
+          <polygon points="<%= area.map { |p| "#{(p['x'] * 400).round(1)},#{(p['y'] * 300).round(1)}" }.join(" ") %>"
+                   fill="url(#not-in-hatch-<%= line.id %>)" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" />
+        <% end %>
+      </svg>
+    </div>
+  <% end %>
+
   <% if line.coordinates %>
     <div class="absolute" style="left:<%= line.coordinates.first['x']*100 %>%; top:<%= line.coordinates.first['y']*100 %>%">
       <div class="absolute hidden" style="top:-12px; left:-12px;" data-topo-line-target="circle">

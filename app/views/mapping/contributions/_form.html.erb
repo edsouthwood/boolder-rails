@@ -190,8 +190,12 @@
               <%= t("views.mapping.contributions.new.line_mode_line") %>
             </button>
             <button type="button" aria-pressed="false" data-mode="holds" data-contribution-photo-target="modeButton"
-                    data-action="click->contribution-photo#setMode" class="<%= mode_button %> -ml-px rounded-r-md">
+                    data-action="click->contribution-photo#setMode" class="<%= mode_button %> -ml-px">
               <%= t("views.mapping.contributions.new.line_mode_holds") %>
+            </button>
+            <button type="button" aria-pressed="false" data-mode="excluded" data-contribution-photo-target="modeButton"
+                    data-action="click->contribution-photo#setMode" class="<%= mode_button %> -ml-px rounded-r-md">
+              <%= t("views.mapping.contributions.new.line_mode_excluded") %>
             </button>
           </div>
           <div class="relative inline-block w-full">
@@ -202,7 +206,7 @@
                     class="absolute top-0 left-0 rounded-lg"
                     style="cursor:crosshair"></canvas>
           </div>
-          <p class="mt-3 text-xs text-gray-500" data-contribution-photo-target="modeHint" data-line-hint="<%= t("views.mapping.contributions.new.line_hint") %>" data-holds-hint="<%= t("views.mapping.contributions.new.line_holds_hint", count: StartHoldsValidator::MAX_HOLDS) %>"><%= t("views.mapping.contributions.new.line_hint") %></p>
+          <p class="mt-3 text-xs text-gray-500" data-contribution-photo-target="modeHint" data-line-hint="<%= t("views.mapping.contributions.new.line_hint") %>" data-holds-hint="<%= t("views.mapping.contributions.new.line_holds_hint", count: StartHoldsValidator::MAX_HOLDS) %>" data-excluded-hint="<%= t("views.mapping.contributions.new.line_excluded_hint", count: ExcludedAreasValidator::MAX_AREAS) %>"><%= t("views.mapping.contributions.new.line_hint") %></p>
           <div class="mt-3 flex space-x-2">
             <button type="button" data-action="click->contribution-photo#undo"
                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
@@ -212,11 +216,16 @@
                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
               <%= t("views.mapping.contributions.new.line_clear") %>
             </button>
+            <button type="button" data-action="click->contribution-photo#newArea" data-contribution-photo-target="newAreaButton"
+                    class="hidden inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+              <%= t("views.mapping.contributions.new.line_new_area") %>
+            </button>
           </div>
         </div>
 
         <%= form.hidden_field :line_coordinates, data: { "contribution-photo-target": "coordsField" } %>
         <%= form.hidden_field :start_holds, value: @contribution.start_holds&.to_json, data: { "contribution-photo-target": "holdsField" } %>
+        <%= form.hidden_field :excluded_areas, value: @contribution.excluded_areas&.to_json, data: { "contribution-photo-target": "excludedField" } %>
 
       </div>
     </div>

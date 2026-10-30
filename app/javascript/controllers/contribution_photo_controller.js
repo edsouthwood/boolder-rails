@@ -5,15 +5,20 @@ export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
     'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField',
-    'holdsField', 'modeButton', 'modeHint'
+    'holdsField', 'excludedField', 'modeButton', 'modeHint', 'newAreaButton'
   ]
 
   static MAX_HOLDS = 4
   static HOLD_COLOR = '#10b981'
+  static MAX_AREAS = 4
+  static EXCLUDED_COLOR = '#dc2626'
 
   connect() {
     this.points = []
     this.holds = []
+    // "Not in" polygons; clicks extend the last one until "New area" is pressed
+    this.excludedAreas = []
+    this.startNewArea = true
     this.mode = 'line'
   }
 
@@ -23,13 +28,22 @@ export default class extends Controller {
       btn.setAttribute('aria-pressed', btn.dataset.mode === this.mode ? 'true' : 'false')
     })
     if (this.hasModeHintTarget) {
-      this.modeHintTarget.textContent = this.mode === 'holds' ? this.modeHintTarget.dataset.holdsHint : this.modeHintTarget.dataset.lineHint
+      this.modeHintTarget.textContent = this.modeHintTarget.dataset[`${this.mode}Hint`]
+    }
+    if (this.hasNewAreaButtonTarget) {
+      this.newAreaButtonTarget.classList.toggle('hidden', this.mode !== 'excluded')
     }
   }
 
-  // The array the current mode adds points to
+  newArea() {
+    this.startNewArea = true
+  }
+
+  // The array the current mode adds points to (or undoes/clears)
   activePoints() {
-    return this.mode === 'holds' ? this.holds : this.points
+    if (this.mode === 'holds') return this.holds
+    if (this.mode === 'excluded') return this.excludedAreas[this.excludedAreas.length - 1] || []
+    return this.points
   }
 
   syncFields() {
@@ -38,6 +52,11 @@ export default class extends Controller {
     }
     if (this.hasHoldsFieldTarget) {
       this.holdsFieldTarget.value = this.holds.length > 0 ? JSON.stringify(this.holds) : ''
+    }
+    if (this.hasExcludedFieldTarget) {
+      // Only complete shapes (3+ points) are submitted
+      const areas = this.excludedAreas.filter(area => area.length >= 3)
+      this.excludedFieldTarget.value = areas.length > 0 ? JSON.stringify(areas) : ''
     }
   }
 
@@ -89,6 +108,8 @@ export default class extends Controller {
       this.linePromptTarget.classList.remove('hidden')
       this.points = []
       this.holds = []
+      this.excludedAreas = []
+      this.startNewArea = true
       this.syncFields()
       return
     }
@@ -126,6 +147,8 @@ export default class extends Controller {
 
     this.points = []
     this.holds = []
+    this.excludedAreas = []
+    this.startNewArea = true
     this.syncFields()
     this.redraw()
   }
@@ -137,6 +160,11 @@ export default class extends Controller {
     const y = parseFloat(((event.clientY - rect.top) / rect.height).toFixed(4))
 
     if (this.mode === 'holds' && this.holds.length >= this.constructor.MAX_HOLDS) return
+    if (this.mode === 'excluded' && this.startNewArea) {
+      if (this.excludedAreas.length >= this.constructor.MAX_AREAS) return
+      this.excludedAreas.push([])
+      this.startNewArea = false
+    }
 
     this.activePoints().push({ x, y })
     this.syncFields()
@@ -145,12 +173,21 @@ export default class extends Controller {
 
   undo() {
     this.activePoints().pop()
+    if (this.mode === 'excluded' && this.excludedAreas.length > 0 && this.activePoints().length === 0) {
+      this.excludedAreas.pop()
+      this.startNewArea = true
+    }
     this.syncFields()
     this.redraw()
   }
 
   clear() {
-    this.activePoints().length = 0
+    if (this.mode === 'excluded') {
+      this.excludedAreas = []
+      this.startNewArea = true
+    } else {
+      this.activePoints().length = 0
+    }
     this.syncFields()
     this.redraw()
   }
@@ -162,6 +199,17 @@ export default class extends Controller {
 
     const w = canvas.width
     const h = canvas.height
+
+    ctx.strokeStyle = this.constructor.EXCLUDED_COLOR
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.3)'
+    ctx.lineWidth = 2
+    this.excludedAreas.forEach(area => {
+      ctx.beginPath()
+      area.forEach((p, i) => i === 0 ? ctx.moveTo(p.x * w, p.y * h) : ctx.lineTo(p.x * w, p.y * h))
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+    })
 
     ctx.strokeStyle = this.constructor.HOLD_COLOR
     ctx.lineWidth = 3

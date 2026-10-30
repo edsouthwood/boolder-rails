@@ -29,6 +29,8 @@ class Mapping::ContributionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "button[data-mode=holds]"
     assert_select "input[type=hidden][name='contribution[start_holds]']"
+    assert_select "button[data-mode=excluded]"
+    assert_select "input[type=hidden][name='contribution[excluded_areas]']"
   end
 
   test "saves start holds submitted with a contribution" do

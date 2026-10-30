@@ -173,4 +173,18 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil a.closed_at
     assert_equal "pending", keep.reload.state
   end
+
+  test "edit page previews and labels start holds and not-in areas drawn on an existing topo" do
+    topo = Topo.new(published: true)
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    contribution = Contribution.create!(state: "pending", problem: @problem, existing_topo_id: topo.id,
+      start_holds: '[{"x":0.2,"y":0.8}]', excluded_areas: '[[{"x":0.1,"y":0.1},{"x":0.3,"y":0.1},{"x":0.2,"y":0.4}]]')
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+
+    assert_response :success
+    assert_select "[data-line-preview-excluded-areas-value]"
+    assert_match "1 start hold and 1 not-in area on Topo ##{topo.id}", response.body
+  end
 end

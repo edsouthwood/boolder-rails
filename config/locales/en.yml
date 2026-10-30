@@ -49,6 +49,7 @@ en:
     sit_start: Sit start
     start_hold: Start hold
     start_holds: Start holds
+    not_in: Not in
     risky: Risky
     featured: Popular
     filters:
@@ -146,9 +147,12 @@ en:
           line: Route line
           line_description: Draw the route on your boulder photo.
           line_upload_photo_first: Select an existing photo above, or upload a new one, to draw the route line.
-          line_draw_instruction: "Click on the photo to mark the route line. You can also mark the starting hand holds."
+          line_draw_instruction: "Click on the photo to mark the route line. You can also mark the starting hand holds and any parts of the boulder that are not in."
           line_mode_line: Route line
           line_mode_holds: Start holds
+          line_mode_excluded: Not in
+          line_excluded_hint: Click around any part of the boulder that's off-limits for this problem (at least 3 points). Use "New area" to mark another one (up to %{count}).
+          line_new_area: New area
           line_hint: A line requires a minimum of 3 points. The more points you add, the more accurately the line will be displayed.
           line_holds_hint: Click on each starting hand hold (up to %{count}).
           line_optional: (optional)

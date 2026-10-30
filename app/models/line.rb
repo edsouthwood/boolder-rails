@@ -9,11 +9,16 @@ class Line < ApplicationRecord
   after_destroy -> { problem.update_has_line }
 
   MAX_START_HOLDS = StartHoldsValidator::MAX_HOLDS
+  MAX_EXCLUDED_AREAS = ExcludedAreasValidator::MAX_AREAS
 
   validate :validate_line_length
   validates :start_holds, start_holds: true
+  validates :excluded_areas, excluded_areas: true
 
-  before_validation -> { self.start_holds = nil if start_holds.blank? }
+  before_validation -> {
+    self.start_holds = nil if start_holds.blank?
+    self.excluded_areas = nil if excluded_areas.blank?
+  }
 
   scope :published, -> { joins(:topo).where(topos: { published: true }) }
   scope :unpublished, -> { joins(:topo).where(topos: { published: false }) }

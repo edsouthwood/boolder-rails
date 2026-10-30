@@ -112,11 +112,12 @@
         <% end %>
       </div>
 
-      <% has_drawing = @contribution.line_coordinates.present? || @contribution.start_holds.present? %>
+      <% has_drawing = @contribution.drawing_parts.any? %>
       <% if has_drawing && @contribution.photos.any? %>
         <div class="mb-4 relative" data-controller="line-preview"
              data-line-preview-coordinates-value="<%= @contribution.line_coordinates.presence || "[]" %>"
-             data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>">
+             data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>"
+             data-line-preview-excluded-areas-value="<%= (@contribution.excluded_areas || []).to_json %>">
           <%= image_tag(@contribution.photos.first, class: "w-full object-cover block rounded",
                 data: { "line-preview-target": "image" }) %>
           <canvas data-line-preview-target="canvas"
@@ -125,10 +126,11 @@
         </div>
       <% elsif has_drawing && @existing_topo %>
         <div class="mb-4">
-          <p class="text-xs text-gray-500 mb-1"><%= @contribution.line_coordinates.present? ? "Line" : "Start holds" %> drawn on <%= link_to "Topo ##{@existing_topo.id}", edit_admin_topo_path(@existing_topo), class: "text-emerald-600 hover:underline" %>:</p>
+          <p class="text-xs text-gray-500 mb-1"><%= @contribution.drawing_parts.to_sentence.upcase_first %> drawn on <%= link_to "Topo ##{@existing_topo.id}", edit_admin_topo_path(@existing_topo), class: "text-emerald-600 hover:underline" %>:</p>
           <div class="relative" data-controller="line-preview"
                data-line-preview-coordinates-value="<%= @contribution.line_coordinates.presence || "[]" %>"
-               data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>">
+               data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>"
+               data-line-preview-excluded-areas-value="<%= (@contribution.excluded_areas || []).to_json %>">
             <%= cdn_image_tag(@existing_topo.photo.variant(:medium), class: "w-full object-cover block rounded",
                   data: { "line-preview-target": "image" }) %>
             <canvas data-line-preview-target="canvas"

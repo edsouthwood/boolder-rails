@@ -33,4 +33,27 @@ class LineTest < ActiveSupport::TestCase
     @line.update!(start_holds: [])
     assert_nil @line.reload.start_holds
   end
+
+  test "accepts not-in areas of 3+ points" do
+    @line.excluded_areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ], [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ]
+    assert @line.valid?
+  end
+
+  test "rejects not-in areas with too few points, bad points or too many areas" do
+    [
+      [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.2, "y" => 0.2 } ] ],
+      [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.2, "y" => 0.2 }, { "x" => 1.5, "y" => 0.2 } ] ],
+      [ { "x" => 0.1, "y" => 0.1 } ],
+      Array.new(Line::MAX_EXCLUDED_AREAS + 1) { [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] }
+    ].each do |areas|
+      @line.excluded_areas = areas
+      assert_not @line.valid?, "expected #{areas.inspect} to be invalid"
+      assert_includes @line.errors.attribute_names, :excluded_areas
+    end
+  end
+
+  test "empty not-in areas are stored as nil" do
+    @line.update!(excluded_areas: [])
+    assert_nil @line.reload.excluded_areas
+  end
 end

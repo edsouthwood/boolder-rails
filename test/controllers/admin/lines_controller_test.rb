@@ -67,4 +67,12 @@ class Admin::LinesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_root_path
     assert_nil their_line.reload.start_holds
   end
+
+  test "saves not-in areas" do
+    areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ]
+    patch admin_line_url(@line, locale: :en), params: { line: { coordinates: COORDINATES.to_json, start_holds: "", excluded_areas: areas.to_json } }
+
+    assert_redirected_to edit_admin_line_path(@line)
+    assert_equal areas, @line.reload.excluded_areas
+  end
 end

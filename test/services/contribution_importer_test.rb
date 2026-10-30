@@ -87,6 +87,16 @@ class ContributionImporterTest < ActiveSupport::TestCase
     assert_equal [ { "x" => 0.2, "y" => 0.8 } ], importer.created_line.reload.start_holds
   end
 
+  test "copies not-in areas onto the line" do
+    topo = existing_topo
+    areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ]
+    contribution = Contribution.create!(state: "accepted", problem: @problem, existing_topo: topo, excluded_areas: areas.to_json)
+
+    ContributionImporter.new(contribution).import!
+
+    assert_equal areas, @problem.lines.find_by(topo: topo).excluded_areas
+  end
+
   private
 
   def existing_topo
