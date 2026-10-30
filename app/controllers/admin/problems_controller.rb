@@ -25,7 +25,7 @@ class Admin::ProblemsController < Admin::BaseController
       arel
     end
 
-    @problems = arel
+    @problems = sort_problems(arel)
 
     circuits = @area.sorted_circuits
     @circuit_tabs = circuits.map { |c| [ c.id, c.name ] }.push([ nil, "All" ])
@@ -132,5 +132,25 @@ class Admin::ProblemsController < Admin::BaseController
   def set_problem
     @problem = Problem.find(params[:id])
     @circuits = @problem.area.sorted_circuits
+  end
+
+  # Column sorting for the area problems list (?sort=name&dir=desc); without a sort param the
+  # list keeps its default order (popularity, or circuit order on a circuit tab).
+  SORTABLE_COLUMNS = {
+    "id" => ->(p) { p.id },
+    "name" => ->(p) { p.name_with_fallback.to_s.downcase.presence },
+    "grade" => ->(p) { Problem.grade_rank(p.grade) },
+    "steepness" => ->(p) { p.steepness }
+  }.freeze
+
+  def sort_problems(problems)
+    key = SORTABLE_COLUMNS[params[:sort]]
+    return problems unless key
+
+    # Blank values (no name/grade) go last in either direction
+    present, blank = problems.to_a.partition { |p| !key.call(p).nil? }
+    sorted = present.sort_by { |p| [ key.call(p), p.id ] }
+    sorted.reverse! if params[:dir] == "desc"
+    sorted + blank
   end
 end

@@ -46,6 +46,8 @@
 
 <% if params[:circuit_id].nil? %>
   <%= form_with url: admin_area_problems_path(@area), method: :get, class: "my-4" do |form| %>
+    <%= hidden_field_tag :sort, params[:sort] if params[:sort].present? %>
+    <%= hidden_field_tag :dir, params[:dir] if params[:dir].present? %>
     <div class="w-full sm:w-1/2">
       <%= form.select :missing, [["All", ""], ["Missing location", "location"], ["Missing line only", "line"]], { selected: params[:missing] }, { onchange: 'this.form.submit()', class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" } %>
     </div>
@@ -59,10 +61,10 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
-              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-              <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Steepness</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= problems_sort_link "Id", "id" %></th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= problems_sort_link "Name", "name" %></th>
+              <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= problems_sort_link "Grade", "grade" %></th>
+              <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= problems_sort_link "Steepness", "steepness" %></th>
               <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Featured</th>
               <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing</th>
               <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contrib</th>

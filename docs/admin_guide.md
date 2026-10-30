@@ -625,11 +625,13 @@ Used to update problem locations and boulder polygons in bulk.
 
 **Admin → Areas → [area] → [circuit or All] → click problem**
 
+The area's problem list is ordered by popularity (or circuit order on a circuit tab) by default. Click the **Id**, **Name**, **Grade** or **Steepness** column header to sort by it; click again to reverse. Problems without a name or grade always go to the bottom. Sorting keeps the circuit tab and the "missing" filter.
+
 From a problem's show page you can:
 - Edit name, grade, steepness, sit start, UKC URL
 - Set or update location (lat/lon)
 - Add a topo photo
-- Draw lines on existing topos
+- Draw lines on existing topos. Click a line's photo to open the line editor (line, start holds and not-in areas)
 - View contribution requests
 
 ### Linking to a circuit
