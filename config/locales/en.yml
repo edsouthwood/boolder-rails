@@ -153,6 +153,8 @@ en:
           line_mode_excluded: Not in
           line_excluded_hint: Click around any part of the boulder that's off-limits for this problem (at least 3 points). Use "New area" to mark another one (up to %{count}).
           line_new_area: New area
+          line_zoom_in: Zoom in
+          line_zoom_out: Zoom out
           line_hint: A line requires a minimum of 3 points. The more points you add, the more accurately the line will be displayed.
           line_holds_hint: Click on each starting hand hold (up to %{count}).
           line_optional: (optional)

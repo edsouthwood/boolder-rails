@@ -1,7 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = [ "textarea", "holdsTextarea", "excludedTextarea", "canvas", "container", "image", "form" ]
+  static targets = [ "textarea", "holdsTextarea", "excludedTextarea", "canvas", "container", "image", "form", "viewport", "zoomLabel" ]
+  static zoomLevels = [ 1, 2, 3 ]
 
   connect() {
     this.points = []
@@ -10,13 +11,16 @@ export default class extends Controller {
     // Each not-in area is its own polygon; clicks extend the last one until "New not-in area"
     this.excludedAreas = this.parsePoints(this.excludedTextareaTarget.value)
     this.startNewArea = true
+    this.zoom = 1
     this.mode = "line"
 
     var image = this.imageTarget
     var self = this
 
     image.onload = function() {
-      self.resize(image.naturalWidth/2, image.naturalHeight/2)
+      self.baseWidth = image.naturalWidth/2
+      self.baseHeight = image.naturalHeight/2
+      self.resize(self.baseWidth * self.zoom, self.baseHeight * self.zoom)
       self.drawOriginalPoints()
     }
 
@@ -45,6 +49,33 @@ export default class extends Controller {
     this.holds = []
     this.holdsTextareaTarget.value = ""
     this.redraw()
+  }
+
+  zoomIn(event) {
+    event.preventDefault()
+    this.setZoom(this.constructor.zoomLevels.find(z => z > this.zoom) || this.zoom)
+  }
+
+  zoomOut(event) {
+    event.preventDefault()
+    this.setZoom([...this.constructor.zoomLevels].reverse().find(z => z < this.zoom) || this.zoom)
+  }
+
+  // Enlarge the photo and canvas inside the scrolling viewport, keeping the same spot centred
+  setZoom(zoom) {
+    if (!this.baseWidth || zoom == this.zoom) return
+
+    var viewport = this.viewportTarget
+    var centreX = (viewport.scrollLeft + viewport.clientWidth / 2) / viewport.scrollWidth
+    var centreY = (viewport.scrollTop + viewport.clientHeight / 2) / viewport.scrollHeight
+
+    this.zoom = zoom
+    this.zoomLabelTarget.textContent = zoom + "×"
+    this.resize(this.baseWidth * zoom, this.baseHeight * zoom)
+    this.redraw()
+
+    viewport.scrollLeft = centreX * viewport.scrollWidth - viewport.clientWidth / 2
+    viewport.scrollTop = centreY * viewport.scrollHeight - viewport.clientHeight / 2
   }
 
   newExcludedArea(event) {

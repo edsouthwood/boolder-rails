@@ -5,8 +5,11 @@ export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
     'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField',
-    'holdsField', 'excludedField', 'modeButton', 'modeHint', 'newAreaButton'
+    'holdsField', 'excludedField', 'modeButton', 'modeHint', 'newAreaButton',
+    'viewport', 'zoomWrapper', 'zoomLabel'
   ]
+
+  static ZOOM_LEVELS = [1, 2, 3]
 
   static MAX_HOLDS = 4
   static HOLD_COLOR = '#10b981'
@@ -20,6 +23,32 @@ export default class extends Controller {
     this.excludedAreas = []
     this.startNewArea = true
     this.mode = 'line'
+    this.zoom = 1
+  }
+
+  zoomIn() {
+    this.setZoom(this.constructor.ZOOM_LEVELS.find(z => z > this.zoom) || this.zoom)
+  }
+
+  zoomOut() {
+    this.setZoom([...this.constructor.ZOOM_LEVELS].reverse().find(z => z < this.zoom) || this.zoom)
+  }
+
+  // Widen the photo inside the scrolling viewport, keeping the same spot centred
+  setZoom(zoom) {
+    if (!this.hasZoomWrapperTarget || zoom === this.zoom) return
+
+    const viewport = this.viewportTarget
+    const centreX = (viewport.scrollLeft + viewport.clientWidth / 2) / viewport.scrollWidth
+    const centreY = (viewport.scrollTop + viewport.clientHeight / 2) / viewport.scrollHeight
+
+    this.zoom = zoom
+    this.zoomWrapperTarget.style.width = `${zoom * 100}%`
+    this.zoomLabelTarget.textContent = `${zoom}×`
+    this.resizeCanvas()
+
+    viewport.scrollLeft = centreX * viewport.scrollWidth - viewport.clientWidth / 2
+    viewport.scrollTop = centreY * viewport.scrollHeight - viewport.clientHeight / 2
   }
 
   setMode(event) {
@@ -132,7 +161,8 @@ export default class extends Controller {
     this.previewImageTarget.src = mediumUrl
   }
 
-  setupCanvas() {
+  // Match the canvas to the photo's displayed size (which changes with zoom) and redraw
+  resizeCanvas() {
     const img = this.previewImageTarget
     const canvas = this.canvasTarget
 
@@ -144,6 +174,12 @@ export default class extends Controller {
     canvas.height = h
     canvas.style.width = w + 'px'
     canvas.style.height = h + 'px'
+    this.redraw()
+  }
+
+  setupCanvas() {
+    this.zoom = 0 // force setZoom(1) to apply
+    this.setZoom(1)
 
     this.points = []
     this.holds = []
