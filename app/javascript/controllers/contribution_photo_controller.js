@@ -4,11 +4,60 @@ import exifr from 'exifr/full'
 export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
-    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField'
+    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField',
+    'holdsField', 'excludedField', 'modeButton', 'modeHint', 'newAreaButton'
   ]
+
+  static MAX_HOLDS = 4
+  static HOLD_COLOR = '#10b981'
+  static MAX_AREAS = 4
+  static EXCLUDED_COLOR = '#dc2626'
 
   connect() {
     this.points = []
+    this.holds = []
+    // "Not in" polygons; clicks extend the last one until "New area" is pressed
+    this.excludedAreas = []
+    this.startNewArea = true
+    this.mode = 'line'
+  }
+
+  setMode(event) {
+    this.mode = event.currentTarget.dataset.mode
+    this.modeButtonTargets.forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.dataset.mode === this.mode ? 'true' : 'false')
+    })
+    if (this.hasModeHintTarget) {
+      this.modeHintTarget.textContent = this.modeHintTarget.dataset[`${this.mode}Hint`]
+    }
+    if (this.hasNewAreaButtonTarget) {
+      this.newAreaButtonTarget.classList.toggle('hidden', this.mode !== 'excluded')
+    }
+  }
+
+  newArea() {
+    this.startNewArea = true
+  }
+
+  // The array the current mode adds points to (or undoes/clears)
+  activePoints() {
+    if (this.mode === 'holds') return this.holds
+    if (this.mode === 'excluded') return this.excludedAreas[this.excludedAreas.length - 1] || []
+    return this.points
+  }
+
+  syncFields() {
+    if (this.hasCoordsFieldTarget) {
+      this.coordsFieldTarget.value = this.points.length > 0 ? JSON.stringify(this.points) : ''
+    }
+    if (this.hasHoldsFieldTarget) {
+      this.holdsFieldTarget.value = this.holds.length > 0 ? JSON.stringify(this.holds) : ''
+    }
+    if (this.hasExcludedFieldTarget) {
+      // Only complete shapes (3+ points) are submitted
+      const areas = this.excludedAreas.filter(area => area.length >= 3)
+      this.excludedFieldTarget.value = areas.length > 0 ? JSON.stringify(areas) : ''
+    }
   }
 
   async handlePhotoChange(event) {
@@ -58,7 +107,10 @@ export default class extends Controller {
       this.lineEditorTarget.classList.add('hidden')
       this.linePromptTarget.classList.remove('hidden')
       this.points = []
-      if (this.hasCoordsFieldTarget) this.coordsFieldTarget.value = ''
+      this.holds = []
+      this.excludedAreas = []
+      this.startNewArea = true
+      this.syncFields()
       return
     }
 
@@ -94,9 +146,10 @@ export default class extends Controller {
     canvas.style.height = h + 'px'
 
     this.points = []
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = ''
-    }
+    this.holds = []
+    this.excludedAreas = []
+    this.startNewArea = true
+    this.syncFields()
     this.redraw()
   }
 
@@ -106,26 +159,36 @@ export default class extends Controller {
     const x = parseFloat(((event.clientX - rect.left) / rect.width).toFixed(4))
     const y = parseFloat(((event.clientY - rect.top) / rect.height).toFixed(4))
 
-    this.points.push({ x, y })
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = JSON.stringify(this.points)
+    if (this.mode === 'holds' && this.holds.length >= this.constructor.MAX_HOLDS) return
+    if (this.mode === 'excluded' && this.startNewArea) {
+      if (this.excludedAreas.length >= this.constructor.MAX_AREAS) return
+      this.excludedAreas.push([])
+      this.startNewArea = false
     }
+
+    this.activePoints().push({ x, y })
+    this.syncFields()
     this.redraw()
   }
 
   undo() {
-    this.points.pop()
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = this.points.length > 0 ? JSON.stringify(this.points) : ''
+    this.activePoints().pop()
+    if (this.mode === 'excluded' && this.excludedAreas.length > 0 && this.activePoints().length === 0) {
+      this.excludedAreas.pop()
+      this.startNewArea = true
     }
+    this.syncFields()
     this.redraw()
   }
 
   clear() {
-    this.points = []
-    if (this.hasCoordsFieldTarget) {
-      this.coordsFieldTarget.value = ''
+    if (this.mode === 'excluded') {
+      this.excludedAreas = []
+      this.startNewArea = true
+    } else {
+      this.activePoints().length = 0
     }
+    this.syncFields()
     this.redraw()
   }
 
@@ -134,10 +197,29 @@ export default class extends Controller {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    if (this.points.length === 0) return
-
     const w = canvas.width
     const h = canvas.height
+
+    ctx.strokeStyle = this.constructor.EXCLUDED_COLOR
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.3)'
+    ctx.lineWidth = 2
+    this.excludedAreas.forEach(area => {
+      ctx.beginPath()
+      area.forEach((p, i) => i === 0 ? ctx.moveTo(p.x * w, p.y * h) : ctx.lineTo(p.x * w, p.y * h))
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+    })
+
+    ctx.strokeStyle = this.constructor.HOLD_COLOR
+    ctx.lineWidth = 3
+    this.holds.forEach(p => {
+      ctx.beginPath()
+      ctx.arc(p.x * w, p.y * h, 10, 0, Math.PI * 2)
+      ctx.stroke()
+    })
+
+    if (this.points.length === 0) return
 
     ctx.strokeStyle = '#ff2626'
     ctx.lineWidth = 3

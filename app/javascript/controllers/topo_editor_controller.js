@@ -1,10 +1,16 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = [ "textarea", "canvas", "container", "image", "form" ]
+  static targets = [ "textarea", "holdsTextarea", "excludedTextarea", "canvas", "container", "image", "form" ]
 
   connect() {
     this.points = []
+    this.originalPoints = this.parsePoints(this.textareaTarget.value)
+    this.holds = this.parsePoints(this.holdsTextareaTarget.value)
+    // Each not-in area is its own polygon; clicks extend the last one until "New not-in area"
+    this.excludedAreas = this.parsePoints(this.excludedTextareaTarget.value)
+    this.startNewArea = true
+    this.mode = "line"
 
     var image = this.imageTarget
     var self = this
@@ -30,6 +36,30 @@ export default class extends Controller {
     canvas.height = height
   }
 
+  setMode(event) {
+    this.mode = event.target.value
+  }
+
+  clearHolds(event) {
+    event.preventDefault()
+    this.holds = []
+    this.holdsTextareaTarget.value = ""
+    this.redraw()
+  }
+
+  newExcludedArea(event) {
+    event.preventDefault()
+    this.startNewArea = true
+  }
+
+  clearExcludedAreas(event) {
+    event.preventDefault()
+    this.excludedAreas = []
+    this.startNewArea = true
+    this.excludedTextareaTarget.value = ""
+    this.redraw()
+  }
+
   createPoint(event) {
     var canvas = this.canvasTarget
     var textarea = this.textareaTarget
@@ -42,6 +72,24 @@ export default class extends Controller {
     var percentY = this.limitPrecision(y / rect.height)
 
     var point = {'x': percentX, 'y': percentY }
+
+    if (this.mode == "excluded") {
+      if (this.startNewArea) {
+        this.excludedAreas.push([])
+        this.startNewArea = false
+      }
+      this.excludedAreas[this.excludedAreas.length - 1].push(point)
+      this.excludedTextareaTarget.value = JSON.stringify(this.excludedAreas)
+      this.redraw()
+      return
+    }
+
+    if (this.mode == "holds") {
+      this.holds.push(point)
+      this.holdsTextareaTarget.value = JSON.stringify(this.holds)
+      this.drawHold(point)
+      return
+    }
 
     this.points.push(point)
     textarea.value = JSON.stringify(this.points)
@@ -69,12 +117,58 @@ export default class extends Controller {
     ctx.fill() // Close the path and fill.
   }
 
+  drawHold(point) {
+    var canvas = this.canvasTarget
+    var ctx = canvas.getContext("2d")
+
+    ctx.strokeStyle = "#10b981"
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(point.x * canvas.width, point.y * canvas.height, 12, 0, Math.PI * 2, true)
+    ctx.stroke()
+  }
+
+  drawExcludedArea(area) {
+    var canvas = this.canvasTarget
+    var ctx = canvas.getContext("2d")
+
+    ctx.strokeStyle = "#dc2626"
+    ctx.fillStyle = "rgba(220, 38, 38, 0.3)"
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    area.forEach((point, index) => {
+      var x = point.x * canvas.width
+      var y = point.y * canvas.height
+      index == 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    })
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+  }
+
+  redraw() {
+    var canvas = this.canvasTarget
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height)
+    this.drawOriginalPoints()
+    this.points.forEach(point => this.draw(point, "#ff2626"))
+  }
+
+  parsePoints(json) {
+    try {
+      return JSON.parse(json) || []
+    } catch (e) {
+      return []
+    }
+  }
+
   drawOriginalPoints() {
-    var originalPoints = JSON.parse(this.textareaTarget.value)
     var self = this
 
-    originalPoints.forEach(function (point, index) {
+    this.originalPoints.forEach(function (point, index) {
       self.draw(point, "#0000ff")
     })
+
+    this.excludedAreas.forEach(area => this.drawExcludedArea(area))
+    this.holds.forEach(point => this.drawHold(point))
   }
 }

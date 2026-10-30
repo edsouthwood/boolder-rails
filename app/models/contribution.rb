@@ -24,6 +24,12 @@ class Contribution < ApplicationRecord
   validate :must_have_some_content
   validate :existing_topo_in_problem_area
   validate :attachments_are_reasonable_images
+  validates :start_holds, start_holds: true
+  validates :excluded_areas, excluded_areas: true
+
+  # The contribution form posts these as JSON strings from hidden fields.
+  JSON_DRAWING_ATTRIBUTES = %i[start_holds excluded_areas]
+  before_validation :parse_json_drawings
 
   def accepted?
     state == "accepted"
@@ -37,6 +43,15 @@ class Contribution < ApplicationRecord
     state == "pending"
   end
 
+  # What was drawn on the photo, for admin labels: e.g. ["line", "2 start holds", "1 not-in area"]
+  def drawing_parts
+    parts = []
+    parts << "line" if line_coordinates.present?
+    parts << ActionController::Base.helpers.pluralize(start_holds.size, "start hold") if start_holds.present?
+    parts << ActionController::Base.helpers.pluralize(excluded_areas.size, "not-in area") if excluded_areas.present?
+    parts
+  end
+
   def self.top_contributors(limit: 15)
     accepted
       .where.not(contributor_name: [ nil, "" ])
@@ -48,6 +63,19 @@ class Contribution < ApplicationRecord
 
   private
 
+  def parse_json_drawings
+    JSON_DRAWING_ATTRIBUTES.each do |attribute|
+      value = self[attribute]
+      begin
+        value = JSON.parse(value) if value.is_a?(String) && value.present?
+      rescue JSON::ParserError
+        errors.add(attribute, "must be valid JSON")
+        throw :abort
+      end
+      self[attribute] = value.presence
+    end
+  end
+
   # Reject empty/spam submissions: a contribution must carry at least one piece of
   # useful information. `location` is set from lat/lon by Geolocatable's before_validation.
   def must_have_some_content
@@ -56,6 +84,8 @@ class Contribution < ApplicationRecord
       location.present? ||
       comment.present? ||
       line_coordinates.present? ||
+      start_holds.present? ||
+      excluded_areas.present? ||
       problem_name.present?
 
     errors.add(:base, "A contribution must include a photo, location, line, comment or problem name") unless has_content

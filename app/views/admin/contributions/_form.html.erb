@@ -14,12 +14,14 @@
     <% if @contribution.existing_topo_id.present? %>
       <label class="flex items-center gap-2 text-sm text-gray-700">
         <%= form.check_box :apply_photo, checked: true %>
-        Line on Topo #<%= @contribution.existing_topo_id %> (no new photo is created)
+        <%= @contribution.drawing_parts.to_sentence.upcase_first.presence || "Nothing drawn" %> on Topo #<%= @contribution.existing_topo_id %> (no new photo is created)
       </label>
     <% elsif @contribution.photos.any? %>
       <label class="flex items-center gap-2 text-sm text-gray-700">
         <%= form.check_box :apply_photo, checked: true %>
         <%= @contribution.line_coordinates.present? ? "Photo & line (new topo)" : "Photo (new topo, no line drawn)" %>
+        <% extras = @contribution.drawing_parts - [ "line" ] %>
+        <% if extras.any? %><span class="text-xs text-gray-500">+ <%= extras.to_sentence %></span><% end %>
       </label>
       <% if @contribution.problem&.topos&.any? %>
         <p class="text-xs text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1">

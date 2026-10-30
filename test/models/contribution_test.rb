@@ -92,6 +92,31 @@ class ContributionTest < ActiveSupport::TestCase
     assert_includes cross_area.errors.attribute_names, :existing_topo_id
   end
 
+  # --- start holds ---
+
+  test "parses start holds posted as JSON from the form" do
+    contribution = Contribution.new(state: "pending", comment: "hi", start_holds: '[{"x":0.2,"y":0.8}]')
+    assert contribution.valid?
+    assert_equal [ { "x" => 0.2, "y" => 0.8 } ], contribution.start_holds
+  end
+
+  test "blank start holds are stored as nil" do
+    contribution = Contribution.create!(state: "pending", comment: "hi", start_holds: "")
+    assert_nil contribution.reload.start_holds
+  end
+
+  test "rejects malformed, out-of-range or too many start holds" do
+    [ "[{x:", '[{"x":2,"y":0.5}]', Array.new(StartHoldsValidator::MAX_HOLDS + 1) { { "x" => 0.5, "y" => 0.5 } }.to_json ].each do |holds|
+      contribution = Contribution.new(state: "pending", comment: "hi", start_holds: holds)
+      assert_not contribution.valid?, "expected #{holds} to be invalid"
+      assert_includes contribution.errors.attribute_names, :start_holds
+    end
+  end
+
+  test "start holds alone count as content" do
+    assert Contribution.new(state: "pending", start_holds: '[{"x":0.2,"y":0.8}]').valid?
+  end
+
   # --- top_contributors ---
 
   test "top_contributors counts only accepted contributions" do
@@ -149,5 +174,27 @@ class ContributionTest < ActiveSupport::TestCase
 
   def accepted_contribution(name:)
     contribution(name: name, state: "accepted")
+  end
+
+  # --- not-in areas ---
+
+  test "parses not-in areas posted as JSON and counts them as content" do
+    contribution = Contribution.new(state: "pending", excluded_areas: '[[{"x":0.1,"y":0.1},{"x":0.3,"y":0.1},{"x":0.2,"y":0.4}]]')
+    assert contribution.valid?
+    assert_equal 1, contribution.excluded_areas.size
+  end
+
+  test "rejects malformed or invalid not-in areas" do
+    [ "[[{x:", '[[{"x":0.1,"y":0.1},{"x":0.3,"y":0.1}]]' ].each do |areas|
+      contribution = Contribution.new(state: "pending", comment: "hi", excluded_areas: areas)
+      assert_not contribution.valid?, "expected #{areas} to be invalid"
+      assert_includes contribution.errors.attribute_names, :excluded_areas
+    end
+  end
+
+  test "drawing_parts summarises what was drawn" do
+    contribution = Contribution.new(line_coordinates: '[{"x":0.1,"y":0.1}]', start_holds: [ { "x" => 0.1, "y" => 0.1 } ],
+      excluded_areas: [ [ { "x" => 0.1, "y" => 0.1 } ] * 3, [ { "x" => 0.2, "y" => 0.2 } ] * 3 ])
+    assert_equal [ "line", "1 start hold", "2 not-in areas" ], contribution.drawing_parts
   end
 end

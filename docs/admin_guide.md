@@ -665,6 +665,24 @@ Topos are the guidebook-style photos that show where to climb on a boulder face.
 3. In the line editor, click on the photo to place control points for the line
 4. Save — the line links the topo to the problem
 
+### Marking start holds (optional)
+You can mark up to 4 starting hand holds on a line's photo. They appear as small rings in the grade colour on the public problem page, with a "Start holds" key under the photo. Problems without them look as they did before.
+1. Open the line editor (edit an existing line)
+2. Above the photo, switch **Clicks add** to **Start holds**
+3. Click each starting hold. Green rings mark them, and the points fill the **Start holds** box
+4. Save. To remove them, click **Clear start holds** (or empty the box) and save again
+
+Holds belong to the line, so they are positioned on that particular photo. If the line is redrawn on a different topo, mark the holds again. Contributors can also mark start holds on the public contribution form; they're copied onto the line when the contribution is accepted (see [Contributions](#contributions)).
+
+### Marking "not in" areas (optional)
+Many Dartmoor problems rule out a feature (an arête, a crack, the neighbouring boulder). You can shade those parts of the photo. On the public problem page they appear as red hatched areas, with a "Not in" key under the photo.
+1. In the line editor, switch **Clicks add** to **Not-in areas**
+2. Click around the off-limits section; each area needs at least 3 points and is drawn as a red shape
+3. To mark a separate section, click **New not-in area** and keep clicking (up to 4 areas per line)
+4. Save. **Clear not-in areas** removes them all
+
+Like start holds, not-in areas belong to the line's photo, and contributors can mark them on the contribution form too.
+
 ### Deleting a topo
 Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 
@@ -699,6 +717,8 @@ Users can submit photos and route information to improve topos. The contribution
 
 - **Boulder photo** — uploaded by the contributor; GPS coordinates are automatically extracted from EXIF metadata if available
 - **Route line** — drawn directly on the uploaded photo using an in-browser canvas tool; stored as normalised JSON coordinates. Alternatively, the contributor can select an existing topo from the area and draw the line on that instead of uploading a new photo.
+- **Start holds** — optional; the contributor switches the drawing tool to **Start holds** and clicks up to 4 starting hand holds on the same photo (shown as green rings)
+- **Not in** — optional; in **Not in** mode the contributor clicks around off-limits parts of the boulder (3+ points each, **New area** for another, up to 4)
 - **UKC link** — optional link to the problem on UK Climbing (ukclimbing.com)
 - **GPS location** — auto-populated from photo EXIF, or entered manually
 
@@ -719,7 +739,7 @@ The edit page records when a contribution was accepted or closed and which admin
 
 When reviewing a contribution, the admin edit page shows:
 - The contributor's UKC link (if provided) as a clickable link
-- The boulder photo with the drawn route line overlaid in red
+- The boulder photo with the drawn route line overlaid in red, any start holds as green rings and any not-in areas as shaded red shapes
 - GPS coordinates, name, and any comments
 
 ### Partial acceptance
@@ -729,6 +749,7 @@ When setting state to **accepted** you can choose which parts to apply using the
 - **Line on Topo #N (no new photo is created)** — shown when the contributor drew on an existing topo; accepting only adds a Line record to that topo
 - **Photo & line (new topo)** — shown when the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay
 - **Photo (new topo, no line drawn)** — shown when the contributor uploaded a photo without drawing a line
+- Start holds and not-in areas always go with the photo/line option. The label lists them ("+ 2 start holds and 1 not-in area", or "Line, 2 start holds and 1 not-in area on Topo #N"). Accepting copies them onto the new line. A contributor can also mark only holds or not-in areas on an existing topo; accepting adds a line with just those
 - **GPS coordinates** — copies the contributor's GPS location to the problem (only applied if the problem has no existing location; a hint appears if the problem is already located)
 
 If the contribution carries no photo/line or no GPS, the corresponding checkbox is replaced by a "nothing to import" note. Checkboxes are checked by default. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa.

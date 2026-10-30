@@ -11,6 +11,25 @@
 </div>
 
 <div data-controller="topo-editor">
+  <div class="my-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+    <span class="font-semibold">Clicks add:</span>
+    <label class="flex items-center space-x-1">
+      <input type="radio" name="topo_editor_mode" value="line" checked data-action="topo-editor#setMode">
+      <span>Line points <span style="color:#ff2626">&#9679;</span></span>
+    </label>
+    <label class="flex items-center space-x-1">
+      <input type="radio" name="topo_editor_mode" value="holds" data-action="topo-editor#setMode">
+      <span>Start holds <span style="color:#10b981">&#9711;</span></span>
+    </label>
+    <label class="flex items-center space-x-1">
+      <input type="radio" name="topo_editor_mode" value="excluded" data-action="topo-editor#setMode">
+      <span>Not-in areas <span style="color:#dc2626">&#9638;</span></span>
+    </label>
+    <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#clearHolds">Clear start holds</a>
+    <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#newExcludedArea">New not-in area</a>
+    <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#clearExcludedAreas">Clear not-in areas</a>
+  </div>
+
   <div style="position:relative" data-topo-editor-target="container">
     <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
     <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
@@ -21,6 +40,16 @@
       <div class="my-3">
         <%= form.label :coordinates %>
         <%= form.text_area :coordinates, rows: "4", data: { "topo-editor-target": 'textarea' }, value: @line.coordinates.to_json %>
+      </div>
+
+      <div class="my-3">
+        <%= form.label :start_holds, "Start holds (optional, up to #{Line::MAX_START_HOLDS})" %>
+        <%= form.text_area :start_holds, rows: "2", data: { "topo-editor-target": 'holdsTextarea' }, value: @line.start_holds&.to_json %>
+      </div>
+
+      <div class="my-3">
+        <%= form.label :excluded_areas, "Not-in areas (optional, up to #{Line::MAX_EXCLUDED_AREAS} shapes of 3+ points each)" %>
+        <%= form.text_area :excluded_areas, rows: "3", data: { "topo-editor-target": 'excludedTextarea' }, value: @line.excluded_areas&.to_json %>
       </div>
 
       <div class="my-3">

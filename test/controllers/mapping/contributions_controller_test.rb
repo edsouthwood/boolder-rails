@@ -23,4 +23,29 @@ class Mapping::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "body", text: /Looks great/
   end
+
+  test "the form carries the start holds mode and field" do
+    get new_mapping_contribution_url(locale: :en, problem_id: @problem.id)
+
+    assert_select "button[data-mode=holds]"
+    assert_select "input[type=hidden][name='contribution[start_holds]']"
+    assert_select "button[data-mode=excluded]"
+    assert_select "input[type=hidden][name='contribution[excluded_areas]']"
+  end
+
+  test "saves start holds submitted with a contribution" do
+    # Submit the fields a freshly loaded form carries (invisible_captcha's spinner etc.), not too fast.
+    get new_mapping_contribution_url(locale: :en, problem_id: @problem.id)
+    fields = css_select("form input[type=hidden][name]").to_h { |input| [ input["name"], input["value"].to_s ] }
+
+    travel 10.seconds do
+      assert_difference "Contribution.count", 1 do
+        post mapping_contributions_url(locale: :en), params: fields.merge(
+          "contribution[comment]" => "Start matched on the jug", "contribution[start_holds]" => '[{"x":0.2,"y":0.8}]'
+        )
+      end
+    end
+
+    assert_equal [ { "x" => 0.2, "y" => 0.8 } ], Contribution.last.start_holds
+  end
 end
