@@ -126,7 +126,9 @@ export async function downloadArea(dataUrl, onProgress = () => {}) {
     problemUrls: data.problem_urls || [],
     pageUrls: [data.area_url],
     mapKeys,
-    failedCount: downloader.failures.length
+    failedCount: downloader.failures.length,
+    // Shown on /offline-status ("Details") so a failure on a phone can be diagnosed.
+    failedUrls: downloader.failures.slice(0, 20)
   }
   localStorage.setItem(STORAGE_PREFIX + data.slug, JSON.stringify(state))
   if (downloader.failures.length > 0) {
@@ -198,18 +200,8 @@ class AreaDownloader {
   }
 
   async downloadTopos(urls) {
-    const cache = await caches.open(TOPO_CACHE)
-    let count = 0
-    for (let i = 0; i < urls.length; i++) {
-      this.onProgress(`Downloading photos: ${i + 1} of ${urls.length}`)
-      try {
-        await cache.add(urls[i])
-        count++
-      } catch (_) {
-        this.failures.push(urls[i])
-      }
-    }
-    return count
+    const failed = await this.cacheAll(await caches.open(TOPO_CACHE), urls, "Downloading photos")
+    return urls.length - failed
   }
 
   // Pre-fetch the area's problem pages into APP_CACHE so the navigate handler serves them
@@ -324,22 +316,39 @@ class AreaDownloader {
   }
 
   // Fetches each URL and stores it in the given cache, updating the progress label.
-  // Failed URLs are recorded in this.failures instead of being silently dropped.
+  // Anything that fails gets one more try at the end (a phone's signal or the tile
+  // server can drop the odd request); what still fails is recorded in this.failures,
+  // with the reason, instead of being silently dropped. Returns how many failed.
   async cacheAll(cache, urls, label) {
-    let done = 0
-    for (const url of urls) {
-      this.onProgress(`${label}: ${done + 1} of ${urls.length}`)
-      try {
-        const res = await fetch(url)
-        if (res.ok) {
-          await this.putClean(cache, url, res)
-        } else {
-          this.failures.push(`${url} (${res.status})`)
-        }
-      } catch (_) {
-        this.failures.push(url)
+    let retry = []
+    for (const [index, url] of urls.entries()) {
+      this.onProgress(`${label}: ${index + 1} of ${urls.length}`)
+      if (await this.fetchInto(cache, url)) retry.push(url)
+    }
+    if (retry.length === 0) return 0
+
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    let failed = 0
+    for (const [index, url] of retry.entries()) {
+      this.onProgress(`${label}: retrying ${index + 1} of ${retry.length}`)
+      const reason = await this.fetchInto(cache, url)
+      if (reason) {
+        this.failures.push(`${url} (${reason})`)
+        failed++
       }
-      done++
+    }
+    return failed
+  }
+
+  // Fetches one URL into the cache. Returns null on success, else why it failed.
+  async fetchInto(cache, url) {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) return `HTTP ${res.status}`
+      await this.putClean(cache, url, res)
+      return null
+    } catch (error) {
+      return `${error.name}: ${error.message}`
     }
   }
 

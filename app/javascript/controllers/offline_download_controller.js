@@ -67,7 +67,8 @@ export default class extends Controller {
     this.buttonTarget.textContent = "Saved"
 
     const warning = state.failedCount > 0
-      ? ` <span class="text-amber-600">${state.failedCount} file${state.failedCount === 1 ? "" : "s"} failed to download — try saving again on a better connection.</span>`
+      ? ` <span class="text-amber-600">${state.failedCount} file${state.failedCount === 1 ? "" : "s"} failed to download — try saving again on a better connection.</span> ` +
+        `<a href="/${locale()}/offline-status" class="underline">Details</a> ·`
       : ""
     const update = outdated
       ? ` <span class="text-amber-600">This area has changed since you saved it.</span> ` +
