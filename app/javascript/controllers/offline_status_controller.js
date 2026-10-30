@@ -130,7 +130,11 @@ export default class extends Controller {
           <div>Topo photos: ${topos.present} of ${topos.total} cached</div>
           <div>Problem pages: ${pages.present} of ${pages.total} cached</div>
           <div>Map files: ${mapEntries.present} of ${mapEntries.total} cached</div>
-          ${state.failedCount ? `<div class="text-amber-600">${state.failedCount} files failed during download</div>` : ""}
+          ${state.failedCount ? `<div class="text-amber-600">${state.failedCount} files failed during download${
+            Array.isArray(state.failedUrls) && state.failedUrls.length
+              ? `:<ul class="mt-1 ml-4 list-disc break-all text-xs">${state.failedUrls.map(f => `<li>${escapeHtml(f)}</li>`).join("")}</ul>`
+              : ""
+          }</div>` : ""}
           ${topos.present < topos.total || pages.present < pages.total || mapEntries.present < mapEntries.total
             ? '<div class="text-amber-600">Incomplete — re-save this area from its page.</div>'
             : '<div class="text-emerald-600">Complete.</div>'}
