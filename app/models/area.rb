@@ -96,6 +96,46 @@ class Area < ApplicationRecord
       .limit(limit)
   end
 
+  # A short fingerprint of everything "Save for offline" stores for an area (problems,
+  # boulders, topo lines and photos, cover): it changes whenever any of them do, so a
+  # device can tell its saved copy is out of date. Batched so a page listing every area
+  # costs a handful of queries. Returns { area_id => "1a2b3c4d5e6f" }.
+  def self.offline_versions(areas)
+    ids = areas.map(&:id)
+    by_area = "problems.area_id"
+    latest = OFFLINE_VERSION_LATEST
+    parts = [
+      Problem.where(area_id: ids).group(by_area).pluck(by_area, latest[:problems]),
+      Boulder.where(area_id: ids).group(:area_id).pluck(:area_id, latest[:boulders]),
+      Line.reorder(nil).joins(:problem).where(problems: { area_id: ids }).group(by_area).pluck(by_area, latest[:lines]),
+      Topo.published.joins(lines: :problem).where(problems: { area_id: ids }).group(by_area)
+        .pluck(by_area, latest[:topos], Arel.sql("array_agg(DISTINCT topos.id ORDER BY topos.id)")),
+      ActiveStorage::Attachment.where(name: "photo", record_type: "Topo")
+        .joins("JOIN lines ON lines.topo_id = active_storage_attachments.record_id")
+        .joins("JOIN problems ON problems.id = lines.problem_id")
+        .where(problems: { area_id: ids }).group(by_area)
+        .pluck(by_area, Arel.sql("array_agg(DISTINCT active_storage_attachments.blob_id ORDER BY active_storage_attachments.blob_id)")),
+      ActiveStorage::Attachment.where(name: "cover", record_type: "Area", record_id: ids).pluck(:record_id, :blob_id)
+    ].map { |rows| rows.to_h { |area_id, *values| [ area_id, values ] } }
+
+    areas.to_h do |area|
+      fingerprint = [ area.updated_at.to_f, *parts.map { |part| part[area.id] } ].to_json
+      [ area.id, Digest::SHA256.hexdigest(fingerprint)[0, 12] ]
+    end
+  end
+
+  # Literal (non-interpolated) "latest change + row count" expressions per table.
+  OFFLINE_VERSION_LATEST = {
+    problems: Arel.sql("max(problems.updated_at), count(*)"),
+    boulders: Arel.sql("max(boulders.updated_at), count(*)"),
+    lines: Arel.sql("max(lines.updated_at), count(*)"),
+    topos: Arel.sql("max(topos.updated_at), count(*)")
+  }.freeze
+
+  def offline_version
+    Area.offline_versions([ self ])[id]
+  end
+
   def download_size
     topos_count.to_f * 0.15
   end

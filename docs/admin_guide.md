@@ -908,6 +908,31 @@ Sizes are small — a single area is on the order of a few MB. A timestamp and a
 link appear once saved; **Remove** clears that area's tiles and photos again. If any files
 fail to download, the saved message says how many — re-save on a better connection.
 
+### My downloads: /en/downloads
+
+**My downloads** (`/en/downloads` — footer link "Offline downloads", "Manage downloads" under
+the home page's saved list, "All downloads" next to a saved area) lists every published
+area with its offline state:
+
+- **Save** / **Remove** any area, or **Save all areas** in one go (one area at a time, with
+  progress; one failure doesn't stop the rest).
+- Each saved area shows its date and size. When an area has **changed since it was saved**
+  (problems, boulders, topo lines or photos, cover), it says **Update available** and offers
+  **Update**; "Update all" does every outdated area. The area page and the home page's saved
+  list flag the same thing.
+- Removing an area keeps any files another saved area still uses (the base map, overlapping
+  tiles of neighbouring areas).
+- With no connection it lists only the saved areas, read-only. "No connection" is checked by
+  actually pinging the server (`/up`): on the moor phones often show signal with nothing
+  getting through.
+
+For developers: the download/remove logic is `app/javascript/offline_areas.js` (shared by the
+area page's button, My downloads and the home page list). "Changed since saved" compares the
+saved copy's version with `Area.offline_versions` — a 12-character hash of the area's
+problems/boulders/lines/topos (timestamps and counts), topo photo and cover blob ids, computed
+for many areas in a handful of queries. Saves from before versions existed show as needing
+an update.
+
 ### Installing the app
 
 The site is an installable app (a PWA). Installing it is what keeps saved areas safe:

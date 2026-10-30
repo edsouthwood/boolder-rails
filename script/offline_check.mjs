@@ -30,6 +30,10 @@ const { chromium } = require("playwright")
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000"
 const LOCALE = process.env.LOCALE || "en"
 const SLUG = process.argv[2] || "Smallacomberocks"
+// A second area, ideally near the first (overlapping map tiles), saved and removed
+// via "My downloads" to prove removal keeps files the first area still needs.
+const SECOND_SLUG = process.argv[3] || "belltor"
+const DOWNLOADS_URL = `${BASE_URL}/${LOCALE}/downloads`
 const AREA_URL = `${BASE_URL}/${LOCALE}/dartmoor/${SLUG}`
 const MAP_URL = `${BASE_URL}/${LOCALE}/map/${SLUG}`
 const STATUS_URL = `${BASE_URL}/${LOCALE}/offline-status`
@@ -90,6 +94,47 @@ async function checkViewportRoundTrip(page, label, pid, problemPath) {
         `${label}: map restored the saved viewport (#${page.url().split("#")[1]})`)
 }
 
+// "My downloads": lists the saved area; saves and removes a second area without
+// breaking the first; flags an outdated save and updates it.
+async function checkDownloadsPage(page, state) {
+  const row = slug => `li[data-slug="${slug}"]`
+  const allPresent = async keys => page.evaluate(async urls => {
+    for (const url of urls) if (!(await caches.match(url, { ignoreVary: true }))) return url
+    return null
+  }, keys)
+
+  await page.goto(DOWNLOADS_URL, { waitUntil: "load" })
+  await page.waitForSelector(`${row(SLUG)} .size:not(:empty)`, { timeout: 30000 })
+    .then(() => check(true, "downloads: saved area listed with its size"))
+    .catch(() => check(false, "downloads: saved area listed with its size"))
+  check(!(await page.textContent(row(SLUG))).includes("Update available"), "downloads: fresh save is up to date")
+
+  await page.click(`${row(SECOND_SLUG)} button[data-action$="#save"]`)
+  await page.waitForFunction(s => !!localStorage.getItem(`offline_area_${s}`), SECOND_SLUG, { timeout: 300000 })
+  await page.waitForSelector(`${row(SECOND_SLUG)} button[data-action$="#remove"]:not([disabled])`, { timeout: 30000 })
+  check(true, `downloads: saved a second area (${SECOND_SLUG})`)
+
+  await page.click(`${row(SECOND_SLUG)} button[data-action$="#remove"]`)
+  await page.waitForFunction(s => !localStorage.getItem(`offline_area_${s}`), SECOND_SLUG, { timeout: 30000 })
+  const missing = await allPresent([...state.mapKeys, ...state.cachedUrls, ...state.problemUrls])
+  check(missing === null, `downloads: removing ${SECOND_SLUG} kept every file ${SLUG} needs${missing ? ` (missing ${missing})` : ""}`)
+
+  // Pretend the saved copy is from an older version of the area.
+  await page.evaluate(s => {
+    const key = `offline_area_${s}`
+    localStorage.setItem(key, JSON.stringify({ ...JSON.parse(localStorage.getItem(key)), version: "outdated" }))
+  }, SLUG)
+  await page.reload({ waitUntil: "load" })
+  check((await page.textContent(row(SLUG))).includes("Update available"), "downloads: outdated save shows Update available")
+  await page.click(`${row(SLUG)} button[data-action$="#save"]`)
+  await page.waitForFunction(s => JSON.parse(localStorage.getItem(`offline_area_${s}`)).version !== "outdated", SLUG, { timeout: 300000 })
+  await page.waitForSelector(`${row(SLUG)} .size:not(:empty)`, { timeout: 30000 }).catch(() => {})
+  const updated = await page.evaluate(s => JSON.parse(localStorage.getItem(`offline_area_${s}`)), SLUG)
+  check(!(await page.textContent(row(SLUG))).includes("Update available") && updated.failedCount === 0,
+    `downloads: Update refreshed the area (failedCount=${updated.failedCount})`)
+  Object.assign(state, updated)
+}
+
 function check(ok, label) {
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`)
   if (!ok) failures.push(label)
@@ -105,6 +150,8 @@ try {
   let context = await chromium.launchPersistentContext(profileDir, { headless: true, args: COMMON_ARGS })
   let page = context.pages()[0] || await context.newPage()
   page.on("dialog", async dialog => {
+    // "My downloads" confirms removals; anything else (e.g. a failure alert) is a bug.
+    if (dialog.type() === "confirm" && dialog.message().startsWith("Remove ")) return dialog.accept()
     failures.push(`Unexpected dialog: ${dialog.message()}`)
     await dialog.dismiss()
   })
@@ -136,6 +183,7 @@ try {
   const pid = (state.problemUrls[0].match(/\/(\d+)[^/]*$/) || [])[1]
 
   await checkViewportRoundTrip(page, "online", pid, state.problemUrls[0])
+  await checkDownloadsPage(page, state)
 
   await context.close()
 
@@ -225,6 +273,18 @@ try {
   await page.waitForSelector(`#saved-list a[href="${state.path}"]`, { timeout: 5000 })
     .then(() => check(true, "offline fallback links the saved area"))
     .catch(() => check(false, "offline fallback links the saved area"))
+
+  // "My downloads" works offline and lists only what's saved, with no save buttons.
+  const downloadsResponse = await page.goto(DOWNLOADS_URL, { waitUntil: "load", timeout: 30000 })
+  check(downloadsResponse.ok(), `downloads page served offline (status ${downloadsResponse.status()})`)
+  await page.waitForSelector(`li[data-slug="${SLUG}"]`, { timeout: 10000 })
+    .then(() => check(true, "downloads page lists the saved area offline"))
+    .catch(() => check(false, "downloads page lists the saved area offline"))
+  await page.waitForSelector('[data-offline-downloads-target="offlineNote"]:not(.hidden)', { timeout: 10000 })
+    .then(() => check(true, "downloads page notices it's offline"))
+    .catch(() => check(false, "downloads page notices it's offline"))
+  check(await page.locator('button[data-action$="#save"]').count() === 0, "downloads page offers no saving while offline")
+  check(await page.locator(`li[data-slug="${SECOND_SLUG}"]`).count() === 0, "downloads page hides unsaved areas while offline")
 
   const statusResponse = await page.goto(STATUS_URL, { waitUntil: "load", timeout: 30000 })
   check(statusResponse.ok(), `offline-status page served offline (status ${statusResponse.status()})`)

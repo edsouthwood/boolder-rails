@@ -6,6 +6,10 @@ class WelcomeController < ApplicationController
     @popular_areas_ids = Area.published.any_tags(:popular).pluck(:id)
     @problem_count = Problem.with_location.joins(:area).where(areas: { published: true }).count
     @area_count = Area.published.count
+    # For the home page's "Saved for offline" list to flag areas that changed since saving.
+    published = Area.published.to_a
+    versions = Area.offline_versions(published)
+    @offline_versions = published.to_h { |area| [ area.slug, versions[area.id] ] }
   end
 
   def root
