@@ -14,8 +14,8 @@ export default class extends Controller {
     }
 
     // Highlight selected thumbnail
-    this.thumbnailTargets.forEach(t => t.classList.remove('border-emerald-500', 'border-2'))
-    el.classList.add('border-emerald-500', 'border-2')
+    this.thumbnailTargets.forEach(t => t.classList.remove('border-granite', 'border-2'))
+    el.classList.add('border-granite', 'border-2')
 
     // Populate hidden field
     this.topoIdFieldTarget.value = id
@@ -30,7 +30,7 @@ export default class extends Controller {
   }
 
   deselect() {
-    this.thumbnailTargets.forEach(t => t.classList.remove('border-emerald-500', 'border-2'))
+    this.thumbnailTargets.forEach(t => t.classList.remove('border-granite', 'border-2'))
     this.topoIdFieldTarget.value = ''
     this.previewTarget.classList.add('hidden')
     this.previewImageTarget.src = ''

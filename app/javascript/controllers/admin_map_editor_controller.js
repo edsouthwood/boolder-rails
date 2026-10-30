@@ -77,7 +77,7 @@ export default class extends Controller {
     const el = document.createElement('div')
     el.className = [
       'w-4 h-4 rounded-full border-2 border-white cursor-move shadow-md',
-      'bg-emerald-600 hover:bg-emerald-700 transition-colors',
+      'bg-granite hover:bg-granite-dark transition-colors',
     ].join(' ')
     el.title = name
 
@@ -181,7 +181,7 @@ export default class extends Controller {
 
   showToast(message, isError = false) {
     const toast = document.createElement('div')
-    const bg = isError ? 'bg-red-600' : 'bg-emerald-600'
+    const bg = isError ? 'bg-red-600' : 'bg-granite'
     toast.className = `fixed bottom-4 right-4 ${bg} text-white text-sm px-4 py-2 rounded shadow-lg z-50 transition-opacity`
     toast.textContent = message
     document.body.appendChild(toast)

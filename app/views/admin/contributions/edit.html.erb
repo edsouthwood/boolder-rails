@@ -6,7 +6,7 @@
 <% add_breadcrumb "Contribution ##{@contribution.id}", nil, class: "active" %>
 
 <div class="mb-4">
-  <%= link_to "<- contributions", admin_contributions_path(state: session[:contributions_filter].presence), class: "text-emerald-600" %>
+  <%= link_to "<- contributions", admin_contributions_path(state: session[:contributions_filter].presence), class: "text-granite" %>
 </div>
 
 <div class="mt-10 sm:mt-0">
@@ -101,7 +101,7 @@
         <div class="mb-4">
           <span class="text-sm font-medium text-gray-600">UKC: </span>
           <%= link_to @contribution.ukc_url, @contribution.ukc_url, target: "_blank",
-                class: "text-sm text-emerald-600 hover:underline break-all" %>
+                class: "text-sm text-granite hover:underline break-all" %>
         </div>
       <% end %>
 
@@ -126,7 +126,7 @@
         </div>
       <% elsif has_drawing && @existing_topo %>
         <div class="mb-4">
-          <p class="text-xs text-gray-500 mb-1"><%= @contribution.drawing_parts.to_sentence.upcase_first %> drawn on <%= link_to "Topo ##{@existing_topo.id}", edit_admin_topo_path(@existing_topo), class: "text-emerald-600 hover:underline" %>:</p>
+          <p class="text-xs text-gray-500 mb-1"><%= @contribution.drawing_parts.to_sentence.upcase_first %> drawn on <%= link_to "Topo ##{@existing_topo.id}", edit_admin_topo_path(@existing_topo), class: "text-granite hover:underline" %>:</p>
           <div class="relative" data-controller="line-preview"
                data-line-preview-coordinates-value="<%= @contribution.line_coordinates.presence || "[]" %>"
                data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>"

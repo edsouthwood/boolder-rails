@@ -1,0 +1,9 @@
+<%# The bowda lockup: logo B + "bowda" + "Dartmoor bouldering". Shared by _nav and _map_nav. %>
+<%= link_to root_localized_path, class: "flex items-center gap-2.5 shrink-0 min-h-[44px]" do %>
+  <%= image_tag "logo.svg", width: 35, height: 40, class: "w-[35px] h-10", alt: "" %>
+  <span class="flex flex-col">
+    <span class="text-[30px] font-extrabold tracking-[-0.04em] leading-[0.95] text-granite lowercase">bowda</span>
+    <span class="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted">Dartmoor bouldering</span>
+  </span>
+  <span class="sr-only">— home</span>
+<% end %>

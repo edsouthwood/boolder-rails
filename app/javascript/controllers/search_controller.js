@@ -91,7 +91,7 @@ export default class extends Controller {
     if (this._activeDescendant) {
       const prevElement = document.getElementById(this._activeDescendant);
       if (prevElement) {
-        prevElement.classList.remove('bg-emerald-600/10');
+        prevElement.classList.remove('bg-granite/10');
         prevElement.setAttribute('aria-selected', 'false');
       }
     }
@@ -101,7 +101,7 @@ export default class extends Controller {
     if (this._activeDescendant) {
       const newElement = document.getElementById(this._activeDescendant);
       if (newElement) {
-        newElement.classList.add('bg-emerald-600/10');
+        newElement.classList.add('bg-granite/10');
         newElement.setAttribute('aria-selected', 'true');
       }
     }

@@ -78,7 +78,7 @@ export default class extends Controller {
     if (this.marker) {
       this.marker.setLngLat([lng, lat])
     } else {
-      this.marker = new maplibregl.Marker({ draggable: true, color: '#059669' })
+      this.marker = new maplibregl.Marker({ draggable: true, color: '#33393D' })
         .setLngLat([lng, lat])
         .addTo(this.map)
       this.marker.on('dragend', () => {

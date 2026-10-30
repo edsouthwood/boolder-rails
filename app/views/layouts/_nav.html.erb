@@ -1,31 +1,21 @@
-<nav class="bg-white shadow">
-  <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-    <div class="flex justify-between h-16">
-      <div class="flex px-2 lg:px-0">
-        
-        <div class="flex-shrink-0 flex items-center">
-          <%= link_to root_localized_path do %>
-            <%= image_tag 'logo.svg', class: "h-8 w-auto", alt: "Boolder Dartmoor home" %>
-          <% end %>
-        </div>
-        <div class="ml-6 flex space-x-8">
-          <%= link_to areas_path, class: nav_link_classes(active: controller_name.in?(%w[areas problems circuits])) do %>
-            <%= t("views.layout.nav.discover") %>
-          <% end %>
+<nav class="bg-white border-b border-line">
+  <div class="max-w-site mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+    <%= render "layouts/brand" %>
 
-          <%= link_to map_path, class: nav_link_classes(active: controller_name == "map") do %>
-            <%= t("views.layout.nav.map") %>
-          <% end %>
+    <div class="flex items-center gap-1 -mx-3.5 sm:mx-0">
+      <%= link_to areas_path, class: nav_link_classes(active: controller_name.in?(%w[areas problems circuits])) do %>
+        <%= t("views.layout.nav.discover") %>
+      <% end %>
 
-          <%= link_to contribute_path, class: nav_link_classes(active: action_name == "contribute" || controller_path.start_with?("mapping")) do %>
-            <%= t("views.layout.footer.contribute") %>
-          <% end %>
+      <%= link_to map_path, class: nav_link_classes(active: controller_name == "map") do %>
+        <%= t("views.layout.nav.map") %>
+      <% end %>
 
-          <%= render 'shared/search_modal', show_button: true %>
-        </div>
-      </div>
+      <%= link_to contribute_path, class: nav_link_classes(active: action_name == "contribute" || controller_path.start_with?("mapping")) do %>
+        <%= t("views.layout.footer.contribute") %>
+      <% end %>
 
+      <%= render 'shared/search_modal', show_button: true %>
     </div>
   </div>
-
 </nav>

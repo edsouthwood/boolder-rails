@@ -113,7 +113,7 @@ export default class extends Controller {
         this.latFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
         this.lonFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
         this.gpsStatusTarget.textContent = 'GPS location read from photo'
-        this.gpsStatusTarget.className = 'text-xs text-emerald-600'
+        this.gpsStatusTarget.className = 'text-xs text-granite'
       } else {
         this.gpsStatusTarget.textContent = 'No GPS found in photo — enter manually if known'
         this.gpsStatusTarget.className = 'mt-1 text-xs text-gray-500'
@@ -131,7 +131,7 @@ export default class extends Controller {
     // Toggle deselect
     if (this.hasExistingTopoFieldTarget && this.existingTopoFieldTarget.value === topoId) {
       this.existingTopoFieldTarget.value = ''
-      btn.classList.remove('border-emerald-500')
+      btn.classList.remove('border-granite')
       btn.classList.add('border-transparent')
       this.lineEditorTarget.classList.add('hidden')
       this.linePromptTarget.classList.remove('hidden')
@@ -145,12 +145,12 @@ export default class extends Controller {
 
     // Deselect any previously selected thumbnail
     this.topoThumbnailTargets.forEach(t => {
-      t.classList.remove('border-emerald-500')
+      t.classList.remove('border-granite')
       t.classList.add('border-transparent')
     })
 
     btn.classList.remove('border-transparent')
-    btn.classList.add('border-emerald-500')
+    btn.classList.add('border-granite')
 
     if (this.hasExistingTopoFieldTarget) this.existingTopoFieldTarget.value = topoId
 

@@ -46,7 +46,7 @@
               deliberate — Tailwind emits .hidden after .flex, so it starts hidden and
               removing .hidden reveals it as a flex row. %>
           <%= link_to map_path, rel: "nofollow", data: { turbo: false, map_return_target: "back" },
-                      class: "flex hidden items-center space-x-1 text-emerald-600 hover:text-emerald-700" do %>
+                      class: "flex hidden items-center space-x-1 text-granite hover:text-granite-dark" do %>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -92,7 +92,7 @@
                 <%= render 'svg/nophoto', width: 64, height: 64 %>
               </span>
               <p class="text-sm text-gray-500">No photo yet.</p>
-              <%= link_to mapping_map_path(@problem.area), class: "text-sm text-emerald-600 hover:underline" do %>
+              <%= link_to mapping_map_path(@problem.area), class: "text-sm text-granite hover:underline" do %>
                 Help us add one &rarr;
               <% end %>
             </div>
@@ -110,7 +110,7 @@
         <% if @problem.location.present? %>
           <%= link_to map_path(@problem.area, pid: @problem.id), rel: "nofollow",
                       data: { map_return_target: "seeOnMap" } do %>
-            <div class="flex items-center space-x-2 text-emerald-600 mt-2">
+            <div class="flex items-center space-x-2 text-granite mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -122,7 +122,7 @@
 
         <% if @problem.bleau_info_id.present? %>
           <%= link_to bleau_info_url(@problem), rel: "nofollow", target: "_blank" do %>
-            <div class="flex items-center space-x-2 text-emerald-600 mt-2">
+            <div class="flex items-center space-x-2 text-granite mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
@@ -143,7 +143,7 @@
 
         <% if session[:admin] %>
           <%= link_to admin_problem_path(@problem), rel: "nofollow", target: "_blank" do %>
-            <div class="flex items-center space-x-2 text-emerald-600 mt-2">
+            <div class="flex items-center space-x-2 text-granite mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

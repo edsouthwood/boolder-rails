@@ -111,7 +111,7 @@ export default class extends Controller {
 
   button(label, action, slug, primary) {
     const button = element("button", primary
-      ? "rounded-md border border-emerald-600 px-3 py-1 font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+      ? "rounded-md border border-granite px-3 py-1 font-medium text-granite-dark hover:bg-ground disabled:opacity-50"
       : "text-gray-500 underline hover:text-gray-700 disabled:opacity-50", label)
     button.type = "button"
     button.disabled = this.busy

@@ -505,7 +505,7 @@ export default class extends Controller {
       return
     }
     this.boulderListTarget.innerHTML = ids.map(id =>
-      `<div class="py-1 cursor-pointer hover:text-emerald-700" data-boulder-id="${id}" data-action="click->admin-boulder-editor#sidebarClick">
+      `<div class="py-1 cursor-pointer hover:text-granite-dark" data-boulder-id="${id}" data-action="click->admin-boulder-editor#sidebarClick">
         Boulder #${id}
       </div>`
     ).join('')
@@ -582,7 +582,7 @@ export default class extends Controller {
 
   showToast(message, isError = false) {
     const toast = document.createElement('div')
-    const bg = isError ? 'bg-red-600' : 'bg-emerald-600'
+    const bg = isError ? 'bg-red-600' : 'bg-granite'
     toast.className = `fixed bottom-4 right-4 ${bg} text-white text-sm px-4 py-2 rounded shadow-lg z-50`
     toast.textContent = message
     document.body.appendChild(toast)
@@ -712,7 +712,7 @@ export default class extends Controller {
       b.type = 'button'
       b.textContent = label
       b.className = primary
-        ? 'px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700'
+        ? 'px-2 py-1 rounded bg-granite text-white hover:bg-granite-dark'
         : 'px-2 py-1 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
       b.addEventListener('click', () => { this.suggestionPopup.remove(); onClick() })
       el.appendChild(b)

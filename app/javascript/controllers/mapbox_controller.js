@@ -293,9 +293,9 @@ export default class extends Controller {
         'minzoom': 8,
         'maxzoom': 16,
         'paint': {
-          'circle-color': '#10b981',
+          'circle-color': '#6F767A',
           'circle-opacity': 0.25,
-          'circle-stroke-color': '#10b981',
+          'circle-stroke-color': '#6F767A',
           'circle-stroke-width': 1,
           'circle-stroke-opacity': 0.5,
           'circle-radius': [

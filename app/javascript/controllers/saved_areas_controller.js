@@ -19,12 +19,12 @@ export default class extends Controller {
       const li = document.createElement("li")
       const link = document.createElement("a")
       link.href = area.path
-      link.className = "text-emerald-600 font-medium hover:underline"
+      link.className = "text-granite font-medium hover:underline"
       link.textContent = area.name
       li.append(link)
       if (area.downloadedAt) {
         const date = document.createElement("span")
-        date.className = "text-gray-400 text-sm ml-2"
+        date.className = "text-muted text-sm ml-2"
         date.textContent = `saved ${new Date(area.downloadedAt).toLocaleDateString()}`
         li.append(date)
       }

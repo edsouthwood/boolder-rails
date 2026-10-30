@@ -1,3 +1,5 @@
+<img src="app/assets/images/bowda-header.svg" alt="bowda – Dartmoor bouldering" width="287">
+
 # Boolder Dartmoor
 
 A Rails web platform for discovering and mapping bouldering problems on Dartmoor. This is a fork of [boolder-org/boolder-rails](https://github.com/boolder-org/boolder-rails), adapted from its original Fontainebleau focus for the Dartmoor climbing community.
