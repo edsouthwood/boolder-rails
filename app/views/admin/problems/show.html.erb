@@ -86,9 +86,12 @@
       <% end %>
 
       <% @problem.lines.published.each do |line| %>
-        <%= link_to edit_admin_line_path(line) do %>
+        <%= link_to edit_admin_line_path(line), class: "block rounded-lg hover:ring-2 hover:ring-emerald-500", title: "Edit this line" do %>
           <%= render 'shared/topo_with_line', line: line, scope: :admin %>
         <% end %>
+      <% end %>
+      <% if @problem.lines.published.any? %>
+        <p class="mt-2 text-sm text-gray-500">Click the photo to edit the line, start holds and not-in areas.</p>
       <% end %>
 
       <% unless @problem.lines.none? %>

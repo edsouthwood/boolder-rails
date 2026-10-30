@@ -155,6 +155,16 @@ class Problem < ApplicationRecord
     Problem.where(circuit_id: circuit_id).where(circuit_number: circuit_number.to_i, circuit_letter: [ nil, "" ]).first
   end
 
+  # Sortable number for a grade, slotting simplified sub-6a grades ("4", "4+") in among the
+  # detailed ones ("4a".."4c+"): 4a < 4 < 4+ < 4b < 4c. Nil for a blank or unknown grade.
+  def self.grade_rank(grade)
+    match = grade.to_s.strip.downcase.match(/\A(\d)([abc])?(\+)?\z/)
+    return unless match
+
+    number, letter, plus = match.captures
+    number.to_i + (letter ? { "a" => 0, "b" => 0.34, "c" => 0.67 }[letter] : 0.2) + (plus ? 0.15 : 0)
+  end
+
   def enumerable_circuit_number
     boost = { LETTER_BIS => 0.1, LETTER_TER => 0.2, LETTER_QUATER => 0.3 }
     circuit_number.to_i + boost.fetch(circuit_letter, 0)

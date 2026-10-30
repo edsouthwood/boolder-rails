@@ -469,11 +469,12 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       <%= render "admin/docs/section_header", title: "Individual Problem Editing" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
         <p>Navigate to a problem via <strong>Admin → Areas → [area] → [circuit]</strong> then click a problem.</p>
+        <p>The area's problem list is ordered by popularity (or circuit order) by default. Click the <strong>Id</strong>, <strong>Name</strong>, <strong>Grade</strong> or <strong>Steepness</strong> header to sort, and click again to reverse. Problems without a name or grade stay at the bottom.</p>
         <p>From the problem show page you can:</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li>Edit name, grade, steepness, sit start, UKC URL</li>
           <li>Set or update location (lat/lon)</li>
-          <li>Add a topo photo or draw lines on existing topos</li>
+          <li>Add a topo photo or draw lines on existing topos. Click a line's photo to open the line editor</li>
           <li>View and respond to contribution requests</li>
           <li>Link to a circuit via the edit form</li>
         </ul>
