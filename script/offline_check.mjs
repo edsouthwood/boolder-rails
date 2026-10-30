@@ -116,12 +116,27 @@ async function checkDownloadsPage(page, state) {
   await page.waitForSelector(`${row(SECOND_SLUG)} button[data-action$="#remove"]:not([disabled])`, { timeout: 30000 })
   check(true, `downloads: saved a second area (${SECOND_SLUG})`)
 
-  await page.click(`${row(SECOND_SLUG)} button[data-action$="#remove"]`)
-  await page.waitForFunction(s => !localStorage.getItem(`offline_area_${s}`), SECOND_SLUG, { timeout: 30000 })
-  const missing = await allPresent([...state.mapKeys, ...state.cachedUrls, ...state.problemUrls])
-  check(missing === null, `downloads: removing ${SECOND_SLUG} kept every file ${SLUG} needs${missing ? ` (missing ${missing})` : ""}`)
+  // Pretend the second area was saved under an older tile snapshot: its tiles now
+  // live under a different URL than the pinned TileJSON points to.
+  const FAKE = "/planet/19990101_000000_pt/"
+  const fakeTiles = await page.evaluate(async ({ s, fake }) => {
+    const key = `offline_area_${s}`
+    const state = JSON.parse(localStorage.getItem(key))
+    const cache = await caches.open("map-v1")
+    const isTile = url => /\/planet\/[^/]+\/\d+\/\d+\/\d+\.\w+$/.test(url)
+    const fakes = []
+    state.mapKeys = await Promise.all(state.mapKeys.map(async url => {
+      if (!isTile(url)) return url
+      const old = url.replace(/\/planet\/[^/]+\//, fake)
+      await cache.put(old, new Response("old tile"))
+      fakes.push(old)
+      return old
+    }))
+    localStorage.setItem(key, JSON.stringify(state))
+    return fakes
+  }, { s: SECOND_SLUG, fake: FAKE })
 
-  // Pretend the saved copy is from an older version of the area.
+  // Pretend the first area's saved copy is from an older version of the area.
   await page.evaluate(s => {
     const key = `offline_area_${s}`
     localStorage.setItem(key, JSON.stringify({ ...JSON.parse(localStorage.getItem(key)), version: "outdated" }))
@@ -129,11 +144,28 @@ async function checkDownloadsPage(page, state) {
   await page.reload({ waitUntil: "load" })
   check((await page.textContent(row(SLUG))).includes("Update available"), "downloads: outdated save shows Update available")
   await page.click(`${row(SLUG)} button[data-action$="#save"]`)
-  await page.waitForFunction(s => JSON.parse(localStorage.getItem(`offline_area_${s}`)).version !== "outdated", SLUG, { timeout: 300000 })
-  await page.waitForSelector(`${row(SLUG)} .size:not(:empty)`, { timeout: 30000 }).catch(() => {})
+  // "Done" appears once the whole save has finished, including refreshing other
+  // areas' map tiles (the area's own new version is recorded before that).
+  await page.waitForFunction(() => document.querySelector('[data-offline-downloads-target="progress"]')?.textContent.startsWith("Done"), null, { timeout: 300000 })
+  await page.waitForSelector(`${row(SLUG)} .size:not(:empty)`, { timeout: 60000 }).catch(() => {})
   const updated = await page.evaluate(s => JSON.parse(localStorage.getItem(`offline_area_${s}`)), SLUG)
   check(!(await page.textContent(row(SLUG))).includes("Update available") && updated.failedCount === 0,
     `downloads: Update refreshed the area (failedCount=${updated.failedCount})`)
+
+  const second = await page.evaluate(s => JSON.parse(localStorage.getItem(`offline_area_${s}`)), SECOND_SLUG)
+  const secondTiles = second.mapKeys.filter(url => /\/planet\/[^/]+\/\d+\/\d+\/\d+\.\w+$/.test(url))
+  check(secondTiles.length > 0 && !secondTiles.some(url => url.includes(FAKE)) && (await allPresent(secondTiles)) === null,
+    `snapshot: ${SECOND_SLUG}'s tiles moved to the current snapshot (${secondTiles.length})`)
+  const leftovers = await page.evaluate(async urls => {
+    const cache = await caches.open("map-v1")
+    return (await Promise.all(urls.map(url => cache.match(url)))).filter(Boolean).length
+  }, fakeTiles)
+  check(leftovers === 0, `snapshot: old-snapshot tiles removed (${leftovers} of ${fakeTiles.length} left)`)
+
+  await page.click(`${row(SECOND_SLUG)} button[data-action$="#remove"]`)
+  await page.waitForFunction(s => !localStorage.getItem(`offline_area_${s}`), SECOND_SLUG, { timeout: 30000 })
+  const missing = await allPresent([...updated.mapKeys, ...updated.cachedUrls, ...updated.problemUrls])
+  check(missing === null, `downloads: removing ${SECOND_SLUG} kept every file ${SLUG} needs${missing ? ` (missing ${missing})` : ""}`)
   Object.assign(state, updated)
 }
 
