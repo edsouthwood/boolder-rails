@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_10_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -190,6 +190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_10_130000) do
     t.bigint "topo_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "start_holds"
     t.index ["problem_id"], name: "index_lines_on_problem_id"
     t.index ["topo_id"], name: "index_lines_on_topo_id"
   end

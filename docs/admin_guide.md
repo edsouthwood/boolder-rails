@@ -665,6 +665,15 @@ Topos are the guidebook-style photos that show where to climb on a boulder face.
 3. In the line editor, click on the photo to place control points for the line
 4. Save — the line links the topo to the problem
 
+### Marking start holds (optional)
+You can mark up to 4 starting hand holds on a line's photo. They appear as small rings in the grade colour on the public problem page, with a "Start holds" key under the photo. Problems without them look as they did before.
+1. Open the line editor (edit an existing line)
+2. Above the photo, switch **Clicks add** to **Start holds**
+3. Click each starting hold. Green rings mark them, and the points fill the **Start holds** box
+4. Save. To remove them, click **Clear start holds** (or empty the box) and save again
+
+Holds belong to the line, so they are positioned on that particular photo. If the line is redrawn on a different topo, mark the holds again.
+
 ### Deleting a topo
 Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 

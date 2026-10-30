@@ -25,8 +25,9 @@ class Admin::LinesController < Admin::BaseController
     set_line
 
     coordinates = JSON.parse(params[:line][:coordinates])
+    start_holds = params[:line][:start_holds].presence && JSON.parse(params[:line][:start_holds])
 
-    if @line.update(coordinates: coordinates)
+    if @line.update(coordinates: coordinates, start_holds: start_holds)
       auto_close_contribution_request(@line)
 
       flash[:notice] = "Line updated"
@@ -35,6 +36,9 @@ class Admin::LinesController < Admin::BaseController
       flash[:error] = @line.errors.full_messages.join("; ")
       render "edit", status: :unprocessable_entity
     end
+  rescue JSON::ParserError
+    flash.now[:error] = "Coordinates and start holds must be valid JSON"
+    render "edit", status: :unprocessable_entity
   end
 
   def create

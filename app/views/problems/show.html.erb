@@ -69,6 +69,12 @@
       <div class="mt-4">
         <% if @line %>
           <%= render 'shared/topo_with_line', line: @line, scope: :front %>
+          <% if @line.start_holds.present? %>
+            <div class="mt-2 px-4 sm:px-0 flex items-center space-x-2 text-sm text-gray-500">
+              <span class="inline-block rounded-full" style="width:14px; height:14px; border:2px solid <%= grade_outline_color(@problem.grade) || grade_color(@problem.grade) %>;"></span>
+              <span><%= t("problem.start_holds") %></span>
+            </div>
+          <% end %>
         <% else %>
           <div class="w-full aspect-w-4 aspect-h-3 bg-gray-200 sm:rounded-lg">
             <div class="flex flex-col items-center justify-center space-y-2">

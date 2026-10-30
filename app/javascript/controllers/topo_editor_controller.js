@@ -1,10 +1,13 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = [ "textarea", "canvas", "container", "image", "form" ]
+  static targets = [ "textarea", "holdsTextarea", "canvas", "container", "image", "form" ]
 
   connect() {
     this.points = []
+    this.originalPoints = this.parsePoints(this.textareaTarget.value)
+    this.holds = this.parsePoints(this.holdsTextareaTarget.value)
+    this.mode = "line"
 
     var image = this.imageTarget
     var self = this
@@ -30,6 +33,17 @@ export default class extends Controller {
     canvas.height = height
   }
 
+  setMode(event) {
+    this.mode = event.target.value
+  }
+
+  clearHolds(event) {
+    event.preventDefault()
+    this.holds = []
+    this.holdsTextareaTarget.value = ""
+    this.redraw()
+  }
+
   createPoint(event) {
     var canvas = this.canvasTarget
     var textarea = this.textareaTarget
@@ -42,6 +56,13 @@ export default class extends Controller {
     var percentY = this.limitPrecision(y / rect.height)
 
     var point = {'x': percentX, 'y': percentY }
+
+    if (this.mode == "holds") {
+      this.holds.push(point)
+      this.holdsTextareaTarget.value = JSON.stringify(this.holds)
+      this.drawHold(point)
+      return
+    }
 
     this.points.push(point)
     textarea.value = JSON.stringify(this.points)
@@ -69,12 +90,39 @@ export default class extends Controller {
     ctx.fill() // Close the path and fill.
   }
 
+  drawHold(point) {
+    var canvas = this.canvasTarget
+    var ctx = canvas.getContext("2d")
+
+    ctx.strokeStyle = "#10b981"
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(point.x * canvas.width, point.y * canvas.height, 12, 0, Math.PI * 2, true)
+    ctx.stroke()
+  }
+
+  redraw() {
+    var canvas = this.canvasTarget
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height)
+    this.drawOriginalPoints()
+    this.points.forEach(point => this.draw(point, "#ff2626"))
+  }
+
+  parsePoints(json) {
+    try {
+      return JSON.parse(json) || []
+    } catch (e) {
+      return []
+    }
+  }
+
   drawOriginalPoints() {
-    var originalPoints = JSON.parse(this.textareaTarget.value)
     var self = this
 
-    originalPoints.forEach(function (point, index) {
+    this.originalPoints.forEach(function (point, index) {
       self.draw(point, "#0000ff")
     })
+
+    this.holds.forEach(point => this.drawHold(point))
   }
 }

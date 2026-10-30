@@ -45,6 +45,17 @@
     <% end %>
   <% end %>
 
+  <% if line.start_holds.present? %>
+    <% hold_color = grade_outline_color(line.problem.grade) || grade_color(line.problem.grade) %>
+    <% line.start_holds.each do |hold| %>
+      <div class="absolute z-10" style="left:<%= hold['x']*100 %>%; top:<%= hold['y']*100 %>%">
+        <div class="absolute hidden topo-line-shadow" style="top:-9px; left:-9px;" data-topo-line-target="circle">
+          <div class="rounded-full" style="width:18px; height:18px; border:2px solid white; box-shadow:0 0 0 2px <%= hold_color %>, inset 0 0 0 2px <%= hold_color %>;" title="<%= t("problem.start_hold") %>"></div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
   <% if line.coordinates %>
     <div class="absolute z-20" style="left:<%= line.coordinates.first['x']*100 %>%; top:<%= line.coordinates.first['y']*100 %>%">
       <div class="absolute hidden" style="top:-12px; left:-12px;" data-topo-line-target="circle">

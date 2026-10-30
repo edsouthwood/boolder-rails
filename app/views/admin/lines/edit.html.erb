@@ -11,6 +11,19 @@
 </div>
 
 <div data-controller="topo-editor">
+  <div class="my-3 flex items-center space-x-4 text-sm">
+    <span class="font-semibold">Clicks add:</span>
+    <label class="flex items-center space-x-1">
+      <input type="radio" name="topo_editor_mode" value="line" checked data-action="topo-editor#setMode">
+      <span>Line points <span style="color:#ff2626">&#9679;</span></span>
+    </label>
+    <label class="flex items-center space-x-1">
+      <input type="radio" name="topo_editor_mode" value="holds" data-action="topo-editor#setMode">
+      <span>Start holds <span style="color:#10b981">&#9711;</span></span>
+    </label>
+    <a href="#" class="text-emerald-600 font-semibold" data-action="topo-editor#clearHolds">Clear start holds</a>
+  </div>
+
   <div style="position:relative" data-topo-editor-target="container">
     <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
     <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
@@ -21,6 +34,11 @@
       <div class="my-3">
         <%= form.label :coordinates %>
         <%= form.text_area :coordinates, rows: "4", data: { "topo-editor-target": 'textarea' }, value: @line.coordinates.to_json %>
+      </div>
+
+      <div class="my-3">
+        <%= form.label :start_holds, "Start holds (optional, up to #{Line::MAX_START_HOLDS})" %>
+        <%= form.text_area :start_holds, rows: "2", data: { "topo-editor-target": 'holdsTextarea' }, value: @line.start_holds&.to_json %>
       </div>
 
       <div class="my-3">

@@ -47,6 +47,8 @@ en:
       traverse: Traverse
       other: Other
     sit_start: Sit start
+    start_hold: Start hold
+    start_holds: Start holds
     risky: Risky
     featured: Popular
     filters:
