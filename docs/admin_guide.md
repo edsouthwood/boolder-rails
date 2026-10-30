@@ -933,6 +933,15 @@ problems/boulders/lines/topos (timestamps and counts), topo photo and cover blob
 for many areas in a handful of queries. Saves from before versions existed show as needing
 an update.
 
+**Map tile snapshots (developers).** OpenFreeMap tile URLs contain a dated snapshot
+(`/planet/20261025_080012_pt/…`) and each save re-pins the shared TileJSON to the current one.
+After every save, `refreshOtherAreasTiles` (in `offline_areas.js`) re-downloads the tiles of
+any other saved area still on an older snapshot (otherwise its map would be blank offline) and
+deletes tiles from snapshots no saved area uses. Saves keep their `bounds` for this; older
+saves fetch them from `offline-data`. Classic `<script>`/`<link>` assets from CDNs (MapLibre,
+es-module-shims) are fetched `no-cors` during a save, matching how the page loads them — the
+service worker may hold opaque copies, which a normal fetch can't receive.
+
 ### Searching offline
 
 With no connection (or a signal that doesn't answer within 5 seconds), the search box

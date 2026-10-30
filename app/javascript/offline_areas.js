@@ -125,6 +125,8 @@ export async function downloadArea(dataUrl, onProgress = () => {}) {
     cachedUrls: data.topo_urls,
     problemUrls: data.problem_urls || [],
     pageUrls: [data.area_url],
+    // Lets a later save re-download this area's map tiles when the tile snapshot moves on.
+    bounds: data.bounds,
     mapKeys,
     failedCount: downloader.failures.length,
     // Shown on /offline-status ("Details") so a failure on a phone can be diagnosed.
@@ -135,11 +137,57 @@ export async function downloadArea(dataUrl, onProgress = () => {}) {
     console.warn("Offline download: failed URLs", downloader.failures)
   }
   if (previous) await deleteUnused(previous)
+  await refreshOtherAreasTiles(downloader, data.slug, onProgress)
 
   // Ask the browser not to evict saved areas under storage pressure. Chrome
   // grants it silently for installed or frequently used sites; Firefox asks.
   navigator.storage?.persist?.().catch(() => {})
   return { slug: data.slug, ...state }
+}
+
+// OpenFreeMap tile URLs contain a dated snapshot ("/planet/20261025_080012_pt/14/…"),
+// and every save re-pins the shared TileJSON to the current one. Areas saved under an
+// older snapshot would then ask for tile URLs that were never cached — a blank map
+// offline. So after a save, re-download other saved areas' tiles for the current
+// snapshot, then drop tiles from snapshots no saved area uses (browsing leftovers too).
+const SNAPSHOT_TILE = /^https:\/\/tiles\.openfreemap\.org\/planet\/[^/]+\/\d+\/\d+\/\d+\.\w+$/
+
+async function refreshOtherAreasTiles(downloader, currentSlug, onProgress) {
+  const prefixes = downloader.tilePrefixes
+  if (!prefixes?.length) return
+  const current = url => prefixes.some(prefix => url.startsWith(prefix))
+  const mapCache = await caches.open(MAP_CACHE)
+
+  for (const area of savedAreas()) {
+    if (area.slug === currentSlug) continue
+    const tiles = (area.mapKeys || []).filter(url => SNAPSHOT_TILE.test(url))
+    if (tiles.every(current)) continue
+
+    try {
+      onProgress(`Updating the map for ${area.name}`)
+      // Saves from before bounds were stored: ask the server.
+      const bounds = area.bounds ||
+        (await (await fetch(`${area.path}/offline-data`)).json()).bounds
+      const refresher = new AreaDownloader(onProgress)
+      const { assetUrls } = await refresher.collectMapAssetUrls(mapCache, downloader.style, bounds)
+      const newTiles = assetUrls.filter(url => SNAPSHOT_TILE.test(url))
+      await refresher.cacheAll(mapCache, newTiles, `Updating the map for ${area.name}`)
+
+      const state = savedState(area.slug)
+      state.bounds = bounds
+      state.mapKeys = [...new Set([...state.mapKeys.filter(url => !SNAPSHOT_TILE.test(url)), ...newTiles])]
+      state.failedCount = (state.failedCount || 0) + refresher.failures.length
+      localStorage.setItem(STORAGE_PREFIX + area.slug, JSON.stringify(state))
+    } catch (error) {
+      console.warn("Couldn't refresh map tiles for", area.slug, error)
+    }
+  }
+
+  const inUse = new Set(savedAreas().flatMap(area => area.mapKeys || []))
+  const stale = (await mapCache.keys())
+    .map(request => request.url)
+    .filter(url => SNAPSHOT_TILE.test(url) && !current(url) && !inUse.has(url))
+  await Promise.all(stale.map(url => mapCache.delete(url)))
 }
 
 // Removes a saved area's files, keeping any that another saved area also uses (the
@@ -245,6 +293,7 @@ class AreaDownloader {
     // snapshot that rotates, and downloading tiles for a stale cached snapshot yields
     // 404s for every tile — an invisibly empty offline map.
     const style = await this.fetchFreshJson(mapCache, MAP_STYLE_URL)
+    this.style = style
     const { assetUrls, tilejsonUrls } = await this.collectMapAssetUrls(mapCache, style, data.bounds)
     const overlayUrls = [data.map_data_url, data.area_labels_url].filter(Boolean)
 
@@ -421,6 +470,8 @@ class AreaDownloader {
       if (!tileset) continue
       if (tileset.tilejsonUrl) tilejsonUrls.push(tileset.tilejsonUrl)
       assetUrls.push(...this.tileUrls(tileset, bounds))
+      const template = tileset.tiles[0].replace("{s}", "a")
+      this.tilePrefixes = [...(this.tilePrefixes || []), template.slice(0, template.indexOf("{z}"))]
     }
 
     return { assetUrls, tilejsonUrls }
