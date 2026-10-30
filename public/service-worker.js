@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '6'
+const SW_VERSION = '7'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -224,8 +224,10 @@ self.addEventListener('fetch', event => {
   // null response. Map pages get an extra fallback that ignores the query string:
   // "See on the map" links carry ?pid=<problem>, but only the bare map page is
   // pre-cached (mapbox_controller re-resolves the pid client-side from cached data).
+  // Same for the report form: "Report a mistake" links carry ?problem_id=, and
+  // report_form_controller fills the problem in from the URL.
   if (isHtmlRequest(request)) {
-    const fallback = isMapPage(url)
+    const fallback = isMapPage(url) || isReportForm(url)
       ? () => caches.match(request, { ignoreSearch: true, ignoreVary: true })
           .then(cached => cached || offlinePage())
       : offlinePage
@@ -235,4 +237,8 @@ self.addEventListener('fetch', event => {
 
 function isMapPage(url) {
   return /^\/[a-z]{2}\/map(\/|$)/.test(url.pathname)
+}
+
+function isReportForm(url) {
+  return /^\/[a-z]{2}\/reports\/new$/.test(url.pathname)
 }

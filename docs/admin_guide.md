@@ -951,6 +951,29 @@ now include `path`). `Area::OFFLINE_FORMAT` is part of the offline version hash:
 whenever what a saved area contains changes shape, so every saved copy shows
 "Update available" and picks up the new data (it was bumped to 2 for this).
 
+### Reporting a mistake offline
+
+Every problem page has a **"Report a mistake"** link. It opens the report form already set to
+that problem ("About: Flagpole 5 · Bonehill"), so the report arrives in
+**Admin → Contributions** linked to the problem (the list shows its name and area instead of
+"(empty)").
+
+It works with no signal: the form is saved with each area, and a report that can't be sent is
+**kept on the phone** ("your report is saved on this phone and will be sent automatically when
+you're back online"). The next time any page of the site opens with a connection, it's sent
+and a message confirms it. Sending takes about 5 seconds, because the spam check rejects forms
+submitted within 4 seconds of loading.
+
+For developers: `app/javascript/offline_reports.js` (queue in localStorage `queued_reports`,
+flushed from `application.js` on every page load and on `online`) and
+`report_form_controller.js`. Every send — immediate or queued — first loads a fresh
+`/reports/new` (so invisible_captcha's session timestamp and spinner and the CSRF token are
+valid), waits 4.5 s, then posts asking for JSON: `ReportsController#create` answers 201, or
+422 with `errors` (validation, `rejected` for the honeypot, `too_fast` for the timestamp check)
+— the HTML responses redirect in all three cases, so they can't be told apart. Network
+failures and 429s keep the report queued. `script/offline_check.mjs` with `REPORT_SEND=1`
+also checks the send-on-reconnect (creates a real report: dev only).
+
 ### Installing the app
 
 The site is an installable app (a PWA). Installing it is what keeps saved areas safe:
