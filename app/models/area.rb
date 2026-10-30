@@ -127,7 +127,8 @@ class Area < ApplicationRecord
   # Bump when what a saved area contains changes shape (e.g. new fields in the map data
   # that offline features rely on): every saved copy then shows "Update available".
   # 2: map-data problems carry areaName, area-labels carry path (offline search).
-  OFFLINE_FORMAT = 2
+  # 3: problem pages link "Report a mistake"; the report form is saved too.
+  OFFLINE_FORMAT = 3
 
   # Literal (non-interpolated) "latest change + row count" expressions per table.
   OFFLINE_VERSION_LATEST = {

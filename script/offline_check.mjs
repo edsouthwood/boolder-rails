@@ -15,6 +15,8 @@
 //   node script/offline_check.mjs [areaSlug]  # default slug: Smallacomberocks
 //
 // Env: BASE_URL (default http://localhost:3000), LOCALE (default en).
+// REPORT_SEND=1 also checks that a report queued offline is sent once back online —
+// this creates a real report and emails staff, so don't set it against production.
 // Needs the `playwright` npm package resolvable (e.g. `npm i -g playwright`,
 // or NODE_PATH pointing at a node_modules that contains it) and its Chromium
 // downloaded (`npx playwright install chromium`).
@@ -167,6 +169,32 @@ async function checkOfflineSearch(page, state) {
   await search("zzqxv nothing")
   check((await page.textContent('[data-search-target="offlineNote"]')).includes("no matches"),
     "offline search: reports no matches")
+}
+
+// "Report a mistake" from a saved problem page with no connection: the saved form
+// opens, knows the problem, and keeps the report on the phone.
+async function checkOfflineReport(page, state) {
+  await page.goto(BASE_URL + state.problemUrls[0], { waitUntil: "load", timeout: 30000 })
+  const link = page.locator('a[href*="/reports/new?problem_id="]')
+  check(await link.count() === 1, "offline report: problem page links Report a mistake")
+  await link.click()
+  await page.waitForSelector('[data-controller="report-form"]', { timeout: 15000 })
+    .then(() => check(true, "offline report: saved form opens offline"))
+    .catch(() => check(false, "offline report: saved form opens offline"))
+  await page.waitForFunction(
+    () => !document.querySelector('[data-report-form-target="about"]').classList.contains("hidden") &&
+      !document.querySelector('[data-report-form-target="aboutName"]').textContent.startsWith("problem #"),
+    null, { timeout: 10000 }
+  ).then(() => check(true, "offline report: form names the problem from saved data"))
+    .catch(() => check(false, "offline report: form names the problem from saved data"))
+
+  await page.fill('[data-report-form-target="comment"]', "offline_check: test report, please ignore")
+  await page.click('[data-report-form-target="form"] [type=submit]')
+  await page.waitForFunction(() => (localStorage.getItem("queued_reports") || "").includes("offline_check"), null, { timeout: 30000 })
+    .then(() => check(true, "offline report: kept on the phone"))
+    .catch(() => check(false, "offline report: kept on the phone"))
+  check((await page.textContent('[data-report-form-target="status"]')).includes("saved on this phone"),
+    "offline report: tells the user it will be sent later")
 }
 
 function check(ok, label) {
@@ -322,6 +350,8 @@ try {
   check(await page.locator('button[data-action$="#save"]').count() === 0, "downloads page offers no saving while offline")
   check(await page.locator(`li[data-slug="${SECOND_SLUG}"]`).count() === 0, "downloads page hides unsaved areas while offline")
 
+  await checkOfflineReport(page, state)
+
   const statusResponse = await page.goto(STATUS_URL, { waitUntil: "load", timeout: 30000 })
   check(statusResponse.ok(), `offline-status page served offline (status ${statusResponse.status()})`)
   await page.waitForFunction(
@@ -334,6 +364,21 @@ try {
   await page.screenshot({ path: join(ARTIFACT_DIR, "offline-status.png"), fullPage: true })
 
   await context.close()
+
+  // ---------- Phase C: back online, the queued report is sent ----------
+  if (process.env.REPORT_SEND === "1") {
+    console.log("\nPhase C (online again): sending the queued report")
+    context = await chromium.launchPersistentContext(profileDir, { headless: true, args: COMMON_ARGS })
+    page = context.pages()[0] || await context.newPage()
+    await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load" })
+    await page.waitForFunction(() => !localStorage.getItem("queued_reports"), null, { timeout: 30000 })
+      .then(() => check(true, "queued report sent once back online"))
+      .catch(() => check(false, "queued report sent once back online"))
+    await page.waitForSelector('[role="status"]', { timeout: 5000 })
+      .then(async el => check((await el.textContent()).includes("has been sent"), "toast confirms the report was sent"))
+      .catch(() => check(false, "toast confirms the report was sent"))
+    await context.close()
+  }
 } finally {
   rmSync(profileDir, { recursive: true, force: true })
 }

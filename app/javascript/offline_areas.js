@@ -238,6 +238,8 @@ class AreaDownloader {
       ...this.parsePageImages(await this.cachePage(appCache, `/${locale()}`))
     ]
     await this.cachePage(appCache, `/${locale()}/downloads`)
+    // "Report a mistake" from a problem page works offline (queued by offline_reports.js).
+    await this.cachePage(appCache, `/${locale()}/reports/new`)
     await this.cachePage(appCache, `/${locale()}/offline-status`)
     if (data.map_index_url) await this.cachePage(appCache, data.map_index_url)
     const shellUrls = await this.cacheMapPage(appCache, data.map_url)
