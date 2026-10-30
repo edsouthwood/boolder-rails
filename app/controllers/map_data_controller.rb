@@ -30,6 +30,8 @@ class MapDataController < ApplicationController
         name: problem.name_with_fallback,
         grade: problem.grade,
         steepness: problem.steepness,
+        # For offline search results ("Bonehill" next to the problem name).
+        area_name: problem.area.name,
         **circuit,
         # Canonical problem page URL — lets the map link directly (no redirect hop) so the
         # page works offline from the pre-downloaded cache.

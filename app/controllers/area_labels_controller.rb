@@ -13,6 +13,8 @@ class AreaLabelsController < ApplicationController
 
       factory.feature(center, area.id, {
         name:         area.name,
+        # Area page URL, for offline search results.
+        path:         area_path(area),
         priority:     area.priority,
         problemCount: area.problems.count,
         southWestLon: b[:south_west].lon,

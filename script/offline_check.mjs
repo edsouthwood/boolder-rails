@@ -135,6 +135,40 @@ async function checkDownloadsPage(page, state) {
   Object.assign(state, updated)
 }
 
+// Search with no connection: matches come from the saved map data, and tapping one
+// opens the saved problem page.
+async function checkOfflineSearch(page, state) {
+  const problemPath = state.problemUrls[0]
+  const name = await page.evaluate(async path => {
+    const cached = await caches.match(`/${location.pathname.split("/")[1]}/map-data.geojson`)
+    const feature = cached && (await cached.json()).features.find(f => f.properties.path === path)
+    return feature?.properties.name
+  }, problemPath)
+  check(!!name, `offline search: saved map data has the problem (${name})`)
+
+  const search = async query => {
+    await page.locator('[data-action="click->search#openModal"]:visible').first().click()
+    await page.fill("#search-input", query)
+    await page.waitForSelector('[data-search-target="offlineNote"]:not(.hidden)', { timeout: 15000 })
+  }
+
+  await search(name)
+  const result = page.locator('[data-search-target="searchResults"] li', { hasText: name }).first()
+  check(await result.count() === 1, "offline search: finds a saved problem by name")
+  check((await page.textContent('[data-search-target="offlineNote"]')).includes("saved areas"),
+    "offline search: says results come from saved areas")
+  await result.click()
+  await page.waitForURL(url => url.pathname === problemPath, { timeout: 15000 })
+    .then(() => check(true, "offline search: result opens the problem page"))
+    .catch(() => check(false, `offline search: result opens the problem page (at ${page.url()})`))
+  check(!(await page.content()).includes("You're offline"), "offline search: problem page is the saved copy")
+
+  await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load", timeout: 30000 })
+  await search("zzqxv nothing")
+  check((await page.textContent('[data-search-target="offlineNote"]')).includes("no matches"),
+    "offline search: reports no matches")
+}
+
 function check(ok, label) {
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`)
   if (!ok) failures.push(label)
@@ -266,6 +300,8 @@ try {
     `home page photos served from cache (${homeImages.filter(Boolean).length}/${homeImages.length})`)
   page.off("response", onHomeImage)
   await page.screenshot({ path: join(ARTIFACT_DIR, "offline-home.png"), fullPage: true })
+
+  await checkOfflineSearch(page, state)
 
   // A page that was never saved gets the offline fallback, which links saved areas.
   await page.goto(`${BASE_URL}/${LOCALE}/never-saved-page`, { waitUntil: "load", timeout: 30000 })

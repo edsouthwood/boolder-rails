@@ -35,6 +35,9 @@ class SearchController < ApplicationController
         id: area.id,
         name: area.name,
         bounds: area.serialized_bounds,
+        # Canonical page URL, so a result opens directly (no /redirects hop) — which
+        # also works offline when the page is saved.
+        path: area_path(area),
         type: "Area"
       }
     end
@@ -49,6 +52,7 @@ class SearchController < ApplicationController
         circuit_color: problem.circuit&.color,
         geolocation: problem.geolocation,
         grade: problem.grade,
+        path: helpers.problem_friendly_path(problem),
         type: "Problem"
       }
     end

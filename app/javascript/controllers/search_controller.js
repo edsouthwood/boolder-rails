@@ -1,4 +1,9 @@
 import { Controller } from "@hotwired/stimulus";
+import { searchOffline } from "offline_areas";
+
+// How long to wait for /search before falling back to the saved offline data. On the
+// moor a phone can show signal while requests hang for tens of seconds.
+const SEARCH_TIMEOUT_MS = 5000;
 
 function debouncePromise(fn, time) {
   let timerId;
@@ -10,11 +15,24 @@ function debouncePromise(fn, time) {
   };
 }
 
-const debouncedFetch = debouncePromise((query, params = {}) => {
-  if (!query) return Promise.resolve(null);
-  const searchParams = new URLSearchParams({ query, ...params });
-  return fetch(`/search?${searchParams.toString()}`).then(res => res.json());
+// Resolves to { results, offline }: the server's results, or — when it can't be
+// reached — matches from the areas saved for offline use (offline_areas.js).
+const debouncedSearch = debouncePromise(async (query, params = {}) => {
+  if (!query) return null;
+  if (navigator.onLine !== false) {
+    try {
+      const searchParams = new URLSearchParams({ query, ...params });
+      const res = await fetch(`/search?${searchParams.toString()}`, { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS) });
+      if (res.ok) return { results: await res.json(), offline: false };
+    } catch (_) {}
+  }
+  if (!("caches" in window)) return { results: [], offline: true };
+  return { results: await searchOffline(query, params.locale), offline: true };
 }, 400);
+
+function escapeHtml(text) {
+  return String(text ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
 export default class extends Controller {
   static targets = [
@@ -25,7 +43,8 @@ export default class extends Controller {
     "spinnerIcon",
     "cancelButton",
     "clearButton",
-    "searchModal"
+    "searchModal",
+    "offlineNote"
   ];
 
   static values = {
@@ -99,8 +118,8 @@ export default class extends Controller {
       this.clearButtonTarget.classList.remove("hidden");
     }
 
-    const results = await debouncedFetch(query, 
-      this.showUnpublished ? { show_unpublished: true } : {});
+    const response = await debouncedSearch(query,
+      { locale: this.locale, ...(this.showUnpublished ? { show_unpublished: true } : {}) });
 
     this.searchResultsTarget.classList.remove('!text-gray-400', 'grayscale', 'filter');
 
@@ -112,10 +131,10 @@ export default class extends Controller {
     this.searchIconTarget.classList.remove("hidden");
     this.spinnerIconTarget.classList.add("hidden");
 
-    this.updateResults(results);
+    this.updateResults(response.results, response.offline);
   }
 
-  updateResults(results) {
+  updateResults(results, offline = false) {
     this.searchResultsTarget.innerHTML = "";
 
     this.disableMouseEvents = true;
@@ -141,7 +160,14 @@ export default class extends Controller {
       this.disableMouseEvents = false;
     }, 100);
 
-    if (results.length > 0) {
+    if (this.hasOfflineNoteTarget) {
+      this.offlineNoteTarget.textContent = results.length > 0
+        ? "Offline — showing results from your saved areas"
+        : "Offline — no matches in your saved areas";
+      this.offlineNoteTarget.classList.toggle("hidden", !offline);
+    }
+
+    if (results.length > 0 || (offline && this.hasOfflineNoteTarget)) {
       this.searchDropdownTarget.classList.remove("hidden");
       this.searchInputTarget.setAttribute("aria-expanded", "true");
       this.searchInputTarget.setAttribute("aria-activedescendant", this.activeDescendant);
@@ -170,16 +196,16 @@ export default class extends Controller {
         <div class="flex justify-between items-center">
           <div class="flex items-center">
             <span style="background: ${this.gradeStyle(item.grade).background}; color: ${this.gradeStyle(item.grade).color}; box-shadow: ${this.gradeStyle(item.grade).shadow}" class="rounded-full h-6 w-6 leading-6 inline-flex justify-center flex-shrink-0">
-              ${item.circuit_number || "&nbsp;"}
+              ${escapeHtml(item.circuit_number) || "&nbsp;"}
             </span>
-            <span class="ml-2">${item.name}</span>
-            <span class="ml-2 text-gray-400">${item.grade}</span>
+            <span class="ml-2">${escapeHtml(item.name)}</span>
+            <span class="ml-2 text-gray-400">${escapeHtml(item.grade)}</span>
           </div>
-          <span class="ml-2 text-gray-400 flex-shrink-0">${item.area_name}</span>
+          <span class="ml-2 text-gray-400 flex-shrink-0">${escapeHtml(item.area_name)}</span>
         </div>
       `;
     } else {
-      return item.name;
+      return escapeHtml(item.name);
     }
   }
 
@@ -196,6 +222,7 @@ export default class extends Controller {
       return {
         id: item.id,
         name: item.name,
+        path: item.path,
         south_west_lat: item.bounds.south_west.lat,
         south_west_lon: item.bounds.south_west.lng,
         north_east_lat: item.bounds.north_east.lat,
@@ -206,6 +233,7 @@ export default class extends Controller {
         id: item.id,
         name: item.name,
         grade: item.grade,
+        path: item.path,
         lat: item.geolocation.lat,
         lon: item.geolocation.lng
       };

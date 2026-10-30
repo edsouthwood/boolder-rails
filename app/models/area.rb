@@ -119,10 +119,15 @@ class Area < ApplicationRecord
     ].map { |rows| rows.to_h { |area_id, *values| [ area_id, values ] } }
 
     areas.to_h do |area|
-      fingerprint = [ area.updated_at.to_f, *parts.map { |part| part[area.id] } ].to_json
+      fingerprint = [ OFFLINE_FORMAT, area.updated_at.to_f, *parts.map { |part| part[area.id] } ].to_json
       [ area.id, Digest::SHA256.hexdigest(fingerprint)[0, 12] ]
     end
   end
+
+  # Bump when what a saved area contains changes shape (e.g. new fields in the map data
+  # that offline features rely on): every saved copy then shows "Update available".
+  # 2: map-data problems carry areaName, area-labels carry path (offline search).
+  OFFLINE_FORMAT = 2
 
   # Literal (non-interpolated) "latest change + row count" expressions per table.
   OFFLINE_VERSION_LATEST = {
