@@ -36,10 +36,12 @@
     </span>
   </div>
 
-  <%# Zooming enlarges the photo and canvas; this viewport scrolls to pan %>
+  <%# Zooming enlarges the photo and canvas; this viewport scrolls to pan. The photo needs
+      max-width:none, or Tailwind's img { max-width: 100% } shrinks it below the canvas when
+      zoomed wider than the page and clicks land in the wrong place. %>
   <div style="overflow:auto; max-width:100%; max-height:80vh" data-topo-editor-target="viewport">
     <div style="position:relative" data-topo-editor-target="container">
-      <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;") %>
+      <%= cdn_image_tag(@line.topo.photo.variant(:medium), data: { "topo-editor-target": "image" }, style: "position:absolute;z-index:1;max-width:none;") %>
       <canvas data-topo-editor-target="canvas" data-action="click->topo-editor#createPoint" style="position:relative;z-index:20;"></canvas>
     </div>
   </div>

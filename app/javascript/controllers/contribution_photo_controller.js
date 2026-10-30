@@ -9,7 +9,7 @@ export default class extends Controller {
     'viewport', 'zoomWrapper', 'zoomLabel'
   ]
 
-  static ZOOM_LEVELS = [1, 2, 3]
+  static ZOOM_LEVELS = [1, 2]
 
   static MAX_HOLDS = 4
   static HOLD_COLOR = '#10b981'
