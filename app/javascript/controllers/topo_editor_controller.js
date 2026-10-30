@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static targets = [ "textarea", "holdsTextarea", "excludedTextarea", "canvas", "container", "image", "form", "viewport", "zoomLabel" ]
-  static zoomLevels = [ 1, 2, 3 ]
+  static zoomLevels = [ 1, 2 ]
 
   connect() {
     this.points = []
