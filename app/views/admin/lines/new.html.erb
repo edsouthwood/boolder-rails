@@ -27,7 +27,7 @@
             <div class="grid grid-cols-3 gap-2 mb-4 max-h-80 overflow-y-auto p-1">
               <% @area_topos.each do |topo| %>
                 <div
-                  class="cursor-pointer rounded border-2 border-transparent hover:border-emerald-400 transition-colors"
+                  class="cursor-pointer rounded border-2 border-transparent hover:border-stone transition-colors"
                   data-topo-picker-target="thumbnail"
                   data-topo-id="<%= topo.id %>"
                   data-medium-url="<%= cdn_image_url(topo.photo.variant(:medium)) %>"
@@ -91,9 +91,9 @@
 
               <% if @line.problem.location.nil? %>
                 <div data-admin-line-upload-target="gpsSection" class="hidden mt-3">
-                  <p data-admin-line-upload-target="gpsStatus" class="text-xs text-emerald-600 mb-2"></p>
+                  <p data-admin-line-upload-target="gpsStatus" class="text-xs text-granite mb-2"></p>
                   <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" name="use_gps_location" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                    <input type="checkbox" name="use_gps_location" value="1" class="rounded border-gray-300 text-granite focus:ring-granite">
                     <span>Use photo GPS coordinates as the problem's location</span>
                   </label>
                 </div>

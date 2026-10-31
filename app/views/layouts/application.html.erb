@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <%= render "layouts/pwa_head" %>
 
@@ -11,7 +11,8 @@
     <%= csp_meta_tag %>
     <%= render "layouts/bugsnag" %>
 
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "outfit-font", "data-turbo-track": "reload" %>
+    <%= preload_link_tag "outfit-latin.woff2" %>
     
     <script async src="https://ga.jspm.io/npm:es-module-shims@1.8.2/dist/es-module-shims.js" data-turbo-track="reload"></script>
     <%= javascript_importmap_tags %>
@@ -36,9 +37,9 @@
     </script>
   </head>
 
-  <body class="bg-white">
+  <body class="bg-ground">
 
-    <div class="bg-gray-100">
+    <div class="bg-ground">
       <%= render "layouts/nav" unless @hide_nav %>
       <%= render "layouts/flash" %>
       <%= yield %>

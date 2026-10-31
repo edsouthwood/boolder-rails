@@ -3,7 +3,7 @@
 <%= form_with url: admin_mapping_path, method: :get, class: "my-4" do |form| %>
   <div class="w-1/2">
     <%# label for="missing" class="block text-sm font-medium text-gray-700" What's missing? %>
-    <%= form.select :missing, [["Missing location", "location"], ["Missing line only", "line"]], { selected: @missing }, { onchange: 'this.form.submit()', class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" } %>
+    <%= form.select :missing, [["Missing location", "location"], ["Missing line only", "line"]], { selected: @missing }, { onchange: 'this.form.submit()', class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
   </div>
 <% end %>
 

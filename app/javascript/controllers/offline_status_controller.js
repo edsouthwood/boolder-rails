@@ -137,7 +137,7 @@ export default class extends Controller {
           }</div>` : ""}
           ${topos.present < topos.total || pages.present < pages.total || mapEntries.present < mapEntries.total
             ? '<div class="text-amber-600">Incomplete — re-save this area from its page.</div>'
-            : '<div class="text-emerald-600">Complete.</div>'}
+            : '<div class="text-granite">Complete.</div>'}
         </div>`)
     }
     this.areasTarget.innerHTML = blocks.join("")

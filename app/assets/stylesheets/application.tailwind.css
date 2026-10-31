@@ -4,18 +4,24 @@
 
 /* MapLibre popup font matching the rest of the site */
 .maplibregl-popup-content {
-  font-family: "Inter var", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: "Outfit", system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   font-size: 0.875rem;
 }
 .maplibregl-popup-content a {
   font-weight: 500;
-  color: rgba(5, 150, 105, 1);
+  color: #33393D;
   text-decoration: underline;
+}
+
+@layer base {
+  body {
+    @apply text-granite;
+  }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500;
+    @apply inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-granite hover:bg-granite-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-granite;
   }
 
   .btn-danger {
@@ -47,7 +53,7 @@
   }
 
   .turbo-progress-bar {
-    @apply bg-emerald-600
+    @apply bg-granite
   }
 
   .topo-line-shadow {

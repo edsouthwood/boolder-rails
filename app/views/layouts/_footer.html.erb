@@ -1,43 +1,21 @@
-<footer class="bg-white border-t border-gray-200">
-  <div class="max-w-7xl mx-auto py-4 px-4 overflow-hidden sm:px-6 lg:px-8">
+<footer class="bg-granite text-on-dark">
+  <div class="max-w-site mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+    <%= link_to root_localized_path, class: "flex items-center gap-2 min-h-[44px]" do %>
+      <%= bowda_logo_svg(color: "#C9CDD0", width: 26, height: 30) %>
+      <span class="text-[22px] font-extrabold tracking-[-0.04em] text-white">bowda</span>
+    <% end %>
 
-    <div class="flex justify-between">
+    <nav class="flex flex-wrap -mx-3" aria-label="Footer">
+      <% link_class = "flex items-center min-h-[44px] px-3 text-on-dark hover:text-white hover:underline" %>
+      <a href="<%= about_path %>" class="<%= link_class %>"><%= t('views.layout.footer.about') %></a>
+      <a href="<%= contribute_path %>" class="<%= link_class %>"><%= t('views.layout.footer.contribute') %></a>
+      <a href="<%= downloads_path %>" class="<%= link_class %>">Offline downloads</a>
+      <a href="<%= privacy_path %>" class="<%= link_class %>"><%= t('views.layout.footer.privacy') %></a>
 
-      <nav class="flex flex-wrap justify-center" aria-label="Footer">
-        <div class="pr-4 py-2">
-          <a href="<%= about_path %>" class="text-base text-gray-400 hover:text-gray-900">
-            <%= t('views.layout.footer.about') %>
-          </a>
-        </div>
-
-<div class="px-4 py-2">
-          <a href="<%= contribute_path %>" class="text-base text-gray-400 hover:text-gray-900">
-            <%= t('views.layout.footer.contribute') %>
-          </a>
-        </div>
-
-        <div class="px-4 py-2">
-          <a href="<%= downloads_path %>" class="text-base text-gray-400 hover:text-gray-900">
-            Offline downloads
-          </a>
-        </div>
-
-        <div class="px-4 py-2">
-          <a href="<%= privacy_path %>" class="text-base text-gray-400 hover:text-gray-900">
-            <%= t('views.layout.footer.privacy') %>
-          </a>
-        </div>
-
-        <%# Hidden in production until the contributors have agreed the CC0 license. %>
-        <% if Rails.env.local? %>
-        <div class="px-4 py-2">
-          <a href="<%= about_path(anchor: "open-data") %>" class="text-base text-gray-400 hover:text-gray-900">
-            <%= t('views.layout.footer.open_data') %>
-          </a>
-        </div>
-        <% end %>
-      </nav>
-    </div>
+      <%# Hidden in production until the contributors have agreed the CC0 license. %>
+      <% if Rails.env.local? %>
+        <a href="<%= about_path(anchor: "open-data") %>" class="<%= link_class %>"><%= t('views.layout.footer.open_data') %></a>
+      <% end %>
+    </nav>
   </div>
 </footer>
-

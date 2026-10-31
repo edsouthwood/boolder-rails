@@ -3,143 +3,96 @@
 
 <% set_meta_tags og: { type: "website", image: image_url("hero-homepage.jpg") } %>
 
-<div class="relative bg-white overflow-hidden">
-  <div class="max-w-7xl mx-auto relative">
-    <div class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-20 xl:pb-24 ">
-      <svg class="hidden lg:block absolute right-0 inset-y-0 h-full w-48 text-white transform translate-x-1/2" fill="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <polygon points="50,0 100,0 50,100 0,100" />
-      </svg>
-
-
-      <main class="pt-8 mx-auto max-w-7xl px-4 sm:pt-10 sm:px-6 md:pt-12 lg:pt-16 lg:px-8 xl:pt-20">
-        <div class="sm:text-center lg:text-left">
-          <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span class="inline"><%= t("views.homepage.title1") %></span>
-            <span class="block text-emerald-600 xl:inline"><%= t("views.homepage.title2") %></span>
-          </h1>
-          <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-            <%= t("views.homepage.subtitle") %>
-          </p>
-          <p class="mt-2 text-sm text-gray-400 sm:text-center lg:text-left">
-            <%= @problem_count %> problems across <%= @area_count %> areas
-          </p>
-          <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-            <div class="rounded-md shadow">
-              <a href="<%= map_path %>" class="flex w-full items-center justify-center rounded-md border border-transparent bg-emerald-600 px-8 py-3 text-base font-medium text-white hover:bg-emerald-700 md:py-4 md:px-10 md:text-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                  <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd">
-                  </path>
-                </svg>
-                <span class="ml-2"><%= t("views.homepage.see_map") %></span>
-              </a>
-            </div>
-          </div>
-
-          <div data-controller="saved-areas" data-saved-areas-versions-value="<%= @offline_versions.to_json %>" class="hidden mt-6 text-left">
-            <h2 class="text-sm font-semibold text-gray-900">Saved for offline</h2>
-            <ul data-saved-areas-target="list" class="mt-1 space-y-1"></ul>
-            <a href="<%= downloads_path %>" class="inline-block mt-2 text-sm text-gray-500 underline">Manage downloads</a>
-          </div>
-
-          <%= render "shared/install_prompt", class: "mt-6 text-left" %>
-        </div>
-      </main>
+<%# Hero band: granite, edge to edge %>
+<section class="bg-granite text-white">
+  <div class="max-w-site mx-auto px-6 py-14 grid gap-10 sm:grid-cols-2 sm:items-center">
+    <div class="flex flex-col gap-5">
+      <p class="text-sm font-semibold tracking-[0.14em] uppercase text-on-dark-muted">Devon · granite</p>
+      <h1 class="text-[2.75rem] sm:text-[3.5rem] font-extrabold tracking-[-0.03em] leading-[1.02]">
+        <%= t("views.homepage.title1") %> <%= t("views.homepage.title2") %>
+      </h1>
+      <p class="text-xl text-on-dark"><%= t("views.homepage.subtitle") %></p>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <a href="<%= map_path %>" class="inline-flex items-center gap-2 h-12 px-5 rounded-[10px] bg-white text-granite font-bold hover:bg-ground">
+          <%= t("views.homepage.see_map") %>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5" aria-hidden="true">
+            <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        <p class="text-on-dark-muted">
+          <span class="font-extrabold text-white"><%= @problem_count %></span> problems across
+          <span class="font-extrabold text-white"><%= @area_count %></span> areas
+        </p>
+      </div>
     </div>
-    <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-      <%= image_tag "hero-homepage.jpg", alt: "A climber bouldering on Dartmoor granite", class: "h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" %>
+    <%= image_tag "hero-homepage.jpg", alt: "A climber bouldering on Dartmoor granite", class: "w-full h-[340px] rounded-2xl object-cover" %>
+  </div>
+</section>
+
+<div class="max-w-site mx-auto px-6 pt-12 pb-16 flex flex-col gap-14">
+  <%# Saved for offline: shown by saved-areas once something has been saved %>
+  <div data-controller="saved-areas" data-saved-areas-versions-value="<%= @offline_versions.to_json %>"
+       class="hidden bg-white border border-line rounded-2xl p-6">
+    <div class="flex flex-wrap items-start justify-between gap-5">
+      <div class="flex items-start gap-4 min-w-0">
+        <div class="flex items-center justify-center shrink-0 w-11 h-11 rounded-[10px] bg-ground text-stone">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h2 class="text-xl font-extrabold">Saved for offline</h2>
+          <p class="text-muted">Areas you've saved to use without signal.</p>
+          <ul data-saved-areas-target="list" class="mt-2 space-y-1"></ul>
+        </div>
+      </div>
+      <a href="<%= downloads_path %>" class="inline-flex items-center h-11 px-4 rounded-[10px] border-2 border-granite text-granite font-bold hover:bg-granite hover:text-white">
+        Manage downloads
+      </a>
     </div>
   </div>
-  
-</div>
+  <%= render "shared/install_prompt" %>
 
-<div class="border-t ">
-
-  <div class="max-w-7xl mx-auto py-8">
-
-    <h2 class="px-4 sm:px-6 lg:px-8 text-2xl font-bold text-gray-900"><%= t("views.homepage.popular_areas") %></h2>
-
-    <div class="py-2 relative">
-      <div class="flex flex-nowrap overflow-x-auto py-4 space-x-2 px-4 sm:px-6 lg:px-8">
-        <% Area.with_ids_keep_order(@popular_areas_ids).each do |area| %>
-          <%= link_to area_path(area) do %>
-            <%= render 'shared/area_card', area: area %>
+  <section>
+    <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 mb-5">
+      <h2 class="text-[32px] font-extrabold tracking-[-0.02em]"><%= t("views.homepage.popular_areas") %></h2>
+      <a href="<%= areas_path %>" class="inline-flex items-center min-h-[44px] font-semibold text-granite hover:text-granite-dark hover:underline">
+        <%= t("views.homepage.all_areas") %>
+      </a>
+    </div>
+    <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(210px,1fr))]">
+      <% Area.with_ids_keep_order(@popular_areas_ids).each do |area| %>
+        <%= link_to area_path(area), class: "group block bg-white border border-line rounded-[14px] overflow-hidden hover:border-stone" do %>
+          <% if area.cover.persisted? %>
+            <img src="<%= cdn_image_url(area.cover.variant(:thumb)) %>" alt="" loading="lazy" class="block w-full h-[140px] object-cover bg-photo">
+          <% else %>
+            <div class="h-[140px] bg-photo"></div>
           <% end %>
+          <div class="flex items-center justify-between gap-2 px-4 py-3">
+            <span class="text-lg font-bold text-granite group-hover:text-granite-dark"><%= area.name %></span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 shrink-0 text-stone" aria-hidden="true">
+              <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+            </svg>
+          </div>
         <% end %>
-        <div class="pr-16">&nbsp;</div>
-
-        <div class="hidden lg:block inset-y-0 right-0 flex bg-gradient-to-l from-gray-100 pl-8 pr-8 pointer-events-none absolute"></div>
-      </div>
+      <% end %>
     </div>
+  </section>
 
-    <a href="<%= areas_path %>" class="place-self-center">
-      <div class="px-4 sm:px-6 lg:px-8 text-emerald-500 flex space-x-2">
-
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 ">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div><%= t("views.homepage.all_areas") %></div>
-      </div>
-    </a>
-
-  </div>
-
+  <section class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+    <% [
+         [ethics_path, "banner-app-outdoors.jpg", "ethics"],
+         [beginners_guide_path, "banner-shoes.jpg", "beginners_guide"],
+         [about_path, "hero-about.jpg", "about"]
+       ].each do |path, banner, key| %>
+      <a href="<%= path %>" class="group flex flex-col bg-white border border-line rounded-2xl overflow-hidden hover:border-stone">
+        <%= image_tag banner, alt: "", class: "h-48 w-full object-cover bg-photo" %>
+        <div class="flex flex-1 flex-col gap-2 p-6">
+          <h3 class="text-xl font-extrabold"><%= t("views.homepage.promoted.#{key}.title") %></h3>
+          <p class="text-muted"><%= t("views.homepage.promoted.#{key}.subtitle") %></p>
+          <span class="mt-auto pt-2 font-semibold text-granite group-hover:text-granite-dark group-hover:underline"><%= t("views.homepage.promoted.#{key}.cta") %></span>
+        </div>
+      </a>
+    <% end %>
+  </section>
 </div>
-
-
-<div class="relative border-t bg-white">
-  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-    <div class="mx-auto grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-3">
-
-      <a href="<%= ethics_path %>" class="mt-2 block">
-        <div class="flex flex-col overflow-hidden rounded-lg shadow-lg">
-          <div class="flex-shrink-0">
-            <%= image_tag "banner-app-outdoors.jpg", class: "h-48 w-full object-cover"  %>
-          </div>
-
-          <div class="flex flex-1 flex-col justify-between p-6">
-            <div class="flex-1">
-              <p class="text-xl font-semibold text-gray-900"><%= t("views.homepage.promoted.ethics.title") %></p>
-              <p class="mt-3 text-base text-gray-500"><%= t("views.homepage.promoted.ethics.subtitle") %></p>
-              <p class="mt-3 text-base text-emerald-500"><%= t("views.homepage.promoted.ethics.cta") %></p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <a href="<%= beginners_guide_path %>" class="mt-2 block">
-        <div class="flex flex-col overflow-hidden rounded-lg shadow-lg">
-          <div class="flex-shrink-0">
-            <%= image_tag "banner-shoes.jpg", class: "h-48 w-full object-cover"  %>
-          </div>
-
-          <div class="flex flex-1 flex-col justify-between p-6">
-            <div class="flex-1">
-              <p class="text-xl font-semibold text-gray-900"><%= t("views.homepage.promoted.beginners_guide.title") %></p>
-              <p class="mt-3 text-base text-gray-500"><%= t("views.homepage.promoted.beginners_guide.subtitle") %></p>
-              <p class="mt-3 text-base text-emerald-500"><%= t("views.homepage.promoted.beginners_guide.cta") %></p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <a href="<%= about_path %>" class="mt-2 block">
-        <div class="flex flex-col overflow-hidden rounded-lg shadow-lg">
-          <div class="flex-shrink-0">
-            <%= image_tag "hero-about.jpg", class: "h-48 w-full object-cover"  %>
-          </div>
-
-          <div class="flex flex-1 flex-col justify-between p-6">
-            <div class="flex-1">
-              <p class="text-xl font-semibold text-gray-900"><%= t("views.homepage.promoted.about.title") %></p>
-              <p class="mt-3 text-base text-gray-500"><%= t("views.homepage.promoted.about.subtitle") %></p>
-              <p class="mt-3 text-base text-emerald-500"><%= t("views.homepage.promoted.about.cta") %></p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-
-    </div>
-  </div>
-</div>
-

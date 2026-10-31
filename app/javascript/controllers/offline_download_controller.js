@@ -72,7 +72,7 @@ export default class extends Controller {
       : ""
     const update = outdated
       ? ` <span class="text-amber-600">This area has changed since you saved it.</span> ` +
-        `<a href="#" data-action="click->offline-download#download" class="underline text-emerald-700 font-medium">Update</a> · `
+        `<a href="#" data-action="click->offline-download#download" class="underline text-granite-dark font-medium">Update</a> · `
       : " "
     this.statusTarget.innerHTML =
       `Map & ${state.topoCount} photos saved (${date}).${warning}${update}` +

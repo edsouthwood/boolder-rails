@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '7'
+const SW_VERSION = '8'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -85,14 +85,14 @@ function offlinePage() {
     '<!doctype html><html><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<title>Offline</title></head>' +
-    '<body style="font-family:sans-serif;text-align:center;padding:3rem 1.5rem;color:#374151">' +
+    '<body style="font-family:sans-serif;text-align:center;padding:3rem 1.5rem;color:#33393D">' +
     "<h1 style=\"font-size:1.25rem\">You're offline</h1>" +
-    '<p style="color:#6b7280">This page hasn\'t been saved for offline use. ' +
+    '<p style="color:#5E6468">This page hasn\'t been saved for offline use. ' +
     'Reconnect, or save the area for offline from its page.</p>' +
     '<div id="saved" hidden><h2 style="font-size:1rem;margin-top:2rem">Saved for offline</h2>' +
     '<ul id="saved-list" style="list-style:none;padding:0;line-height:2"></ul>' +
-    '<p><a id="map-link" href="/en/map" style="color:#059669">Open the map</a> · ' +
-    '<a id="downloads-link" href="/en/downloads" style="color:#059669">My downloads</a></p></div>' +
+    '<p><a id="map-link" href="/en/map" style="color:#33393D">Open the map</a> · ' +
+    '<a id="downloads-link" href="/en/downloads" style="color:#33393D">My downloads</a></p></div>' +
     '<script>' + listSavedAreas.toString() + 'listSavedAreas()</script>' +
     '</body></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
@@ -113,7 +113,7 @@ function listSavedAreas() {
     var link = document.createElement('a')
     link.href = state.path || '/' + locale + '/dartmoor/' + slug
     link.textContent = state.name || slug
-    link.style.color = '#059669'
+    link.style.color = '#33393D'
     var item = document.createElement('li')
     item.appendChild(link)
     list.appendChild(item)

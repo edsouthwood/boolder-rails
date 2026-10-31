@@ -29,7 +29,7 @@
                 </td>
                 <td class="px-6 py-2 whitespace-nowrap w-8/12">
                   <% if audit&.action == "create" %>
-                    <span class="text-emerald-500">new</span>
+                    <span class="text-granite">new</span>
                   <% else %>
                     <table>
                       <tbody>
@@ -56,7 +56,7 @@
 
 <p class="mt-4">
   <% if @import.applied? %>
-    <span class="text-emerald-500">Applied at <%= @import.applied_at %></span>
+    <span class="text-granite">Applied at <%= @import.applied_at %></span>
   <% else %>
     <%= link_to "Apply changes", apply_admin_import_path(@import), class: "btn" %>
   <% end %>
