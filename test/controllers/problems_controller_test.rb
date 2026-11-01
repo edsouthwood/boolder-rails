@@ -44,4 +44,32 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "svg[aria-label='Not in']", 0
   end
+
+  test "browse by grade lists published, located problems of that grade, topos first" do
+    @problem.update!(lat: 50.6, lon: -3.9)
+    @area.problems.create!(name: "Legacy four", grade: "5a", steepness: "slab", lat: 50.6, lon: -3.9)
+    @area.problems.create!(name: "Unplaced", grade: "5", steepness: "slab")
+    hidden = Area.create!(name: "Hidden", slug: "hidden", published: false)
+    hidden.problems.create!(name: "Secret", grade: "5", steepness: "wall", lat: 50.6, lon: -3.9)
+    @area.problems.create!(name: "Harder", grade: "6b", steepness: "wall", lat: 50.6, lon: -3.9)
+
+    get problems_url(locale: :en, grade: "5")
+
+    assert_response :success
+    assert_select "h1", "Problems by grade"
+    assert_select "option[selected][value='5']", "5 (2)"
+    assert_select "option[value='6b']", "6b (1)"
+    assert_select "ul[role=list] li", 2
+    assert_select "ul[role=list] li:first-child", /Flagpole/
+    assert_select "ul[role=list] li", text: /Legacy four/
+    assert_no_match "Unplaced", response.body
+    assert_no_match "Secret", response.body
+  end
+
+  test "browse by grade falls back to a grade that has problems" do
+    @problem.update!(lat: 50.6, lon: -3.9)
+    get problems_url(locale: :en, grade: "9c")
+    assert_response :success
+    assert_select "option[selected][value='5']"
+  end
 end

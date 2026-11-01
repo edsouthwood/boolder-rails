@@ -1,4 +1,6 @@
 class Mapping::ContributionsController < ApplicationController
+  include RemembersContributor
+
   invisible_captcha only: [ :create ], on_spam: :handle_spam
 
   def show
@@ -6,19 +8,14 @@ class Mapping::ContributionsController < ApplicationController
   end
 
   def new
-    @contribution = Contribution.new(
-      problem_id: params[:problem_id],
-      contributor_name: session[:contribution_name],
-      contributor_email: session[:contribution_email],
-    )
+    @contribution = Contribution.new(**remembered_contributor, problem_id: params[:problem_id])
     @area_topos = area_topos_for_problem(params[:problem_id])
   end
 
   def create
     @contribution = Contribution.new(contribution_params)
 
-    session[:contribution_name] = @contribution.contributor_name
-    session[:contribution_email] = @contribution.contributor_email
+    remember_contributor(@contribution)
 
     if @contribution.save
       flash[:notice] = t("views.mapping.contributions.new.flash_success")

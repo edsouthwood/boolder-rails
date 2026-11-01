@@ -28,47 +28,34 @@ en:
       white: White
       black: Black
     long_name: "%{name} circuit"
-    off_circuit: Other
     dangerous: "This circuit is dangerous : some boulders are very high and/or with difficult landings"
     beginner_friendly: This circuit is suited for beginners
   problem:
     no_name: No name
     start: Start
-    problems: Problems
-    level_x: Level %{level} 
     see_on_bleau_info: See on bleau.info
     see_on_map: See on the map
     back_to_map: Back to the map
-    steepness:
-      wall: Wall
-      slab: Slab
-      overhang: Overhang
-      roof: Roof
-      traverse: Traverse
-      other: Other
     sit_start: Sit start
     start_hold: Start hold
     start_holds: Start holds
     not_in: Not in
-    risky: Risky
     featured: Popular
-    filters:
-      level: Level
-      circuit: Circuit
-      selection: Selection
   area:
     tags:
       popular: popular
       beginner_friendly: beginner friendly
       family_friendly: family friendly
       dry_fast: dries fast
+      sheltered: sheltered
+      sensitive_access: sensitive access
+      remote: remote
   views:
     homepage:
       title1: Bouldering
       title2: on Dartmoor
       subtitle: Discover granite bouldering on Dartmoor, Devon.
       see_map: See the map
-      read_guide: Read the beginner's guide
       popular_areas: Areas
       all_areas: See all areas
       promoted:
@@ -103,7 +90,6 @@ en:
             other: "%{count} contributions"
           metas:
             title: Mapping
-            description: Help map all the bouldering routes on Dartmoor
       problems:
         index:
           title: Problems to map in %{area}
@@ -162,8 +148,6 @@ en:
           line_clear: Clear
           location: Start location
           location_description: Indicate exactly where the start of the problem is on the map.
-          location_gps: Enter the GPS location of the boulder
-          location_optional: (optional)
           comments: Comments
           private: Private
           private_info: Personal information
@@ -211,26 +195,6 @@ en:
         grade_max: Grade max
         apply: Apply
         clear: Clear
-    app_landing:
-      title: All Dartmoor in your pocket
-      subtitle: "Hopefully coming soon on iPhone and Android just like the font app"
-      android_announcement: We are looking for an Android developer
-      selling_points:
-        map:
-          title: Interactive map and geolocation
-          subtitle: Find your way in the forest thanks to the GPS
-        levels:
-          title: Thousands of problems or all levels
-          subtitle: Filter problems and circuits for your level
-        search:
-          title: Advanced search
-          subtitle: Find any problem or area in a few seconds
-        offline:
-          title: Offline mode
-          subtitle: The app works even in airplane mode
-      metas:
-        title: All Dartmoor in your pocket
-        description: The bouldering guide for Dartmoor that fits in your pocket
     privacy:
       metas:
         title: Privacy
@@ -240,92 +204,24 @@ en:
       mapping_description: Go to an area and take pictures of the missing boulders with your phone.
       report_title: Report a mistake
       report_description: Report a mistake on an existing problem or circuit.
-      dev_title: For Developers
-      dev_description: "Contribute to the source code of our apps: Ruby on Rails, iPhone and Android."
       metas:
         title: Contribute
         description: Map areas, take photos of boudlers, report mistakes, or contribute to the open source project
     about:
-      title_prefix: About
-      history:
-        title: The story
-        p1: "Boolder was born from the meeting between Romain, Cyril and Nicolas - two climbing enthusiasts and one technology enthusiast - living just a stone's throw from one of the most beautiful bouldering spots in the world: Dartmoor."
-        p2: 'For Nicolas, it was love at first sight. His two friends made him discover the magic of "Font": the emblematic sectors, the history of the forest, the joy of climbing in the middle of nature, as well as the rules to respect (clean your shoes!).'
-        p3: "The richness of the forest remained however intimidating: more than 200 sectors, several tens of thousands of boulders, and hundreds of circuits for all levels. How to find your way around?"
-        p4: Nicolas then decided to map the forest in detail for nearly 2 years and create a modern guidebook. In 2023, Boolder launched as a free app on iPhone and Android.
-        podcast: "Learn more: Nicolas's interview on the podcast \"Allez\" (in French)"
-      project:
-        title: The Project
-        contact: contact
-        p1: Boolder is a non-profit project, managed by volunteers.
-        p2_html: Our goal is to make discovering bouldering in Dartmoor <strong>fun</strong> and <strong>respectful of the forest</strong>.
-        p3_html: The project is still very young, we welcome suggestions and ideas to foster help within the climbing community. Feel free to %{link} us!
-      team:
-        title: The team
-        nico_desc: Dev, mapping
-        romain_desc: Climbing lover
-        cyril_desc: Climbing lover
-        emile_desc: Mapping
-      contact:
-        title: Contact
-        p1: For any questions, you can contact us at 
-      support:
-        title: Thanks
-        p1: "We extend our thanks to everyone who has contributed to the Font ecosystem: the route setters, the circuit creators (aka \"track painters\"), and all those who have contributed to the maintenance and cleaning of boulders, anti-erosion operations, ..."
-        p2_html: Special thanks to %{link_bleau}, whose team has referenced almost 50.000 problems with great care and passion for the past 20 years, and made it free for everyone. You can support them on their %{link_bleau_sponsoring} page.
-        p3_html: We also extend our thanks to the %{link_cosiroc} association and the %{link_topo_bleau} website, which have provided a wealth of firsthand data and carried out numerous on-the-ground operations.
-        app: app
-      open:
-        title: A collaborative platform
-        p1_html: The code and data of the apps are available in open source on %{link}.
-        p2_html: You can also %{link} by mapping missing problems or by reporting mistakes.
-        contribute_link: contribute
       web_dev:
         title: Know how to code?
         p1_html: We are actively looking for a %{link_web} and an %{link_ios} dev. Come and join us!
-      faq:
-        title: Frequently asked questions
-        data:
-          question: Where does the data come from?
-          p1: Photos and geographical data (GPS) were collected by the Boolder team.
-          p2_html: The problem names and grades come mainly from %{link_bleau}, %{link_cosiroc} and %{link_topo_bleau}.
-          p3: Some of the boulder drawings (in top view) are inspired by existing guidebooks. We are working to replace them with original drawings.
-        why_free:
-          question: Why is the app free?
-          p1: Because we want as many people as possible to enjoy it!
-          p2: Nicolas took advantage of a sabbatical year to map many areas and code the first version of the application. Thanks to this, costs remained very low. We plan to keep this momentum going in the future thanks to volunteering and open source.
-        privacy:
-          question: Do you collect personal data?
-          p1_html: You can consult our %{link}.
-          policy: Privacy policy
-      metas:
-        title: About Boolder
     areas:
       index:
-        title: Dartmoor
-        sort_by:
-          label: Sort by
-          problems: Number of problems
-          problems_of_level: Number of problems (grade %{level})
-          area_name: Area name
-        problems: Problems
-        problems_of_level_html: "Grade %{level} <br/> problems"
-        area_column: Area
-        problems_column: Problems
-        levels_column: Levels
         popular: Popular
         areas: All areas
         cards:
           beginner_html: Beginner's guide
           level: By level
-          dry_fast: Dries fast
           sheltered: Sheltered
-          train_html: Accessible <br>by train + bike
         metas: 
           title: All areas in Dartmoor
           description: Discover the best bouldering areas in Dartmoor, the best spot in the world.
-        map:
-          see: "See"
       levels:
         beginner_friendly: Beginner friendly
         areas: All areas by levels
@@ -334,22 +230,14 @@ en:
           description: Discover beginner friendly areas, and areas with the most problems graded 4, 5, 6, 7 or 8.
       show:
         see_map: See on the map
-        see_parking: See parking
-        levels: "Levels:"
         problems_count: "%{count} problems"
         popular_problems: Popular problems
         all_problems: See all problems (%{count})
         access: Access
-        problems: Problems
         problems_in: Problems in %{area}
-        loading: Loading...
-        levels_chart:
-          title: Number of problems by level
         metas:
           title: "%{area}, Dartmoor"
           description: "All you need to know to climb in %{area} in Dartmoor : problems, circuits, map, topos, access, ..."
-      train_station: "%{name} train station"
-      train_station_generic: "Train station"
     circuits:
       show:
         metas:
@@ -357,31 +245,22 @@ en:
       index:
         metas:
           title: All Dartmoor circuits
-      metas:
-        title: Fond of Font - 100 7a circuit
-        description: The impossible circuit of 100 7a in Dartmoor by Seb Berthe and Hugo Parmentier.
     problems:
       show:
-        see_circuit: See the circuit
         variants: Variants
-        see_also: See also
         metas:
           title: "%{problem} - %{grade} - %{area}"
       index:
         metas:
-          title: Popular problems in Dartmoor
+          title: "%{grade} bouldering problems on Dartmoor"
     search:
       placeholder: Name of problem or area
-      clear: Clear
       cancel: Cancel
-      submit: Search
     layout:
       nav:
-        open_menu: Open main menu
         discover: Discover
         map: Map
       footer:
-        contact: Contact
         privacy: Privacy Policy
         about: About
         open_data: Open data

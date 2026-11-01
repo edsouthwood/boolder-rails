@@ -4,13 +4,15 @@ class MapController < ApplicationController
   def index
     if params[:slug] && (area = Area.find_by(slug: params[:slug]))
       @area = area # FIXME: don't forget to refactor _map_nav when changing this
+      # serialized_bounds falls back to the default Dartmoor view for an area with
+      # nothing mapped yet, which otherwise has no bounds at all
+      bounds = area.serialized_bounds
       @bounds = {
-        south_west_lat: area.bounds[:south_west].lat,
-        south_west_lon: area.bounds[:south_west].lon,
-        north_east_lat: area.bounds[:north_east].lat,
-        north_east_lon: area.bounds[:north_east].lon
-      }.
-      with_indifferent_access.deep_transform_keys { |key| key.camelize(:lower) }
+        southWestLat: bounds[:south_west][:lat],
+        southWestLon: bounds[:south_west][:lng],
+        northEastLat: bounds[:north_east][:lat],
+        northEastLon: bounds[:north_east][:lng]
+      }.with_indifferent_access
     end
 
     if params[:pid] && (problem = Problem.find(params[:pid]))

@@ -21,7 +21,7 @@ class Area < ApplicationRecord
   scope :published, -> { where(published: true) }
   include HasTagsConcern
 
-  normalizes :name, :short_name, :description_fr, :description_en, :warning_fr, :warning_en, with: ->(s) { s.strip.presence }
+  normalizes :name, :short_name, :description_en, :warning_en, with: ->(s) { s.strip.presence }
 
   validates :tags, array: { inclusion: { in: %w[popular beginner_friendly family_friendly dry_fast sheltered sensitive_access remote] } }
   validates :slug, presence: true

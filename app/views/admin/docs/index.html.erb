@@ -28,6 +28,7 @@
       <li><a href="#pois" class="hover:underline">POIs and Routes</a></li>
       <li><a href="#contributions" class="hover:underline">Contributions</a></li>
       <li><a href="#offline-use" class="hover:underline">Offline Use (Map &amp; Photos)</a></li>
+      <li><a href="#problems-by-grade" class="hover:underline">Problems by Grade and Map Grade Filters</a></li>
     </ol>
   </nav>
 
@@ -634,6 +635,15 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p><strong>Currently development-only</strong> — disabled in production until the other contributors have agreed to the CC0 license. In development, the problems dataset is downloadable as CSV from <code>/data/problems.csv</code> (linked from the About page and footer). It includes <code>id, name, grade, steepness, latitude, longitude, area, url</code> for problems in <strong>published areas with a location</strong> — unpublished areas, unlocated problems and contributor details are never exported.</p>
         <p class="font-medium text-gray-800">Email delivery</p>
         <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending uses the SMTP server configured under the <code>smtp</code> key in Rails credentials (address, port, username, password, from). See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist and how to test from the console.</p>
+      </div>
+    </section>
+
+    <%# Problems by grade %>
+    <section id="problems-by-grade">
+      <%= render "admin/docs/section_header", title: "Problems by Grade and Map Grade Filters" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p><strong>Problems by grade</strong> (<%= link_to "/en/dartmoor/problems", problems_path, class: "text-blue-600 hover:underline" %>, linked from a card on the Dartmoor areas page) lists every published, located problem of one grade. Problems with a topo come first. The menu only offers grades that have problems.</p>
+        <p>Sub-6a grades are entered simplified (4, 4+). Older detailed grades still match: 4 covers 4a–4b and 4+ covers 4b+–4c+. The map's grade filters use the same grouping.</p>
       </div>
     </section>
 

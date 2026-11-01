@@ -86,62 +86,14 @@
             <div class="">
               <label for="gradeMin" class="block text-sm font-medium text-gray-700"><%= t('views.map.filters.grade_min') %></label>
               <select data-mapbox-target="gradeMin" data-action="mapbox#didSelectGradeMin" id="gradeMin" name="gradeMin" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm">
-                <option>1a</option>
-                <option>1b</option>
-                <option>1c</option>
-                <option>2a</option>
-                <option>2b</option>
-                <option>2c</option>
-                <option>3a</option>
-                <option>3b</option>
-                <option>3c</option>
-                <option selected>4a</option>
-                <option>4b</option>
-                <option>4c</option>
-                <option>5a</option>
-                <option>5b</option>
-                <option>5c</option>
-                <option>6a</option>
-                <option>6b</option>
-                <option>6c</option>
-                <option>7a</option>
-                <option>7b</option>
-                <option>7c</option>
-                <option>8a</option>
-                <option>8b</option>
-                <option>8c</option>
-                <option>9a</option>
+                <%= options_for_select(Problem::DISPLAY_GRADE_VALUES, "4") %>
               </select>
             </div>
 
             <div>
               <label for="gradeMax" class="block text-sm font-medium text-gray-700"><%= t('views.map.filters.grade_max') %></label>
               <select data-mapbox-target="gradeMax" data-action="mapbox#didSelectGradeMax" id="gradeMax" name="gradeMax" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm">
-                <option>1a</option>
-                <option>1b</option>
-                <option>1c</option>
-                <option>2a</option>
-                <option>2b</option>
-                <option>2c</option>
-                <option>3a</option>
-                <option>3b</option>
-                <option>3c</option>
-                <option>4a</option>
-                <option>4b</option>
-                <option>4c</option>
-                <option selected>5a</option>
-                <option>5b</option>
-                <option>5c</option>
-                <option>6a</option>
-                <option>6b</option>
-                <option>6c</option>
-                <option>7a</option>
-                <option>7b</option>
-                <option>7c</option>
-                <option>8a</option>
-                <option>8b</option>
-                <option>8c</option>
-                <option>9a</option>
+                <%= options_for_select(Problem::DISPLAY_GRADE_VALUES, "5+") %>
               </select>
             </div>
           </div>

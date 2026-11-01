@@ -96,6 +96,16 @@ class Problem < ApplicationRecord
   }
   scope :significant_ascents, -> { where("ascents >= ?", 20) }
   scope :exclude_bis, -> { where(circuit_letter: [ nil, "" ]) }
+  # Problems whose name, grade or sit start differ from their bleau.info source
+  scope :bleau_name_mismatch,  -> { joins(:bleau_problem).where("problems.name IS DISTINCT FROM bleau_problems.name") }
+  scope :bleau_grade_mismatch, -> { joins(:bleau_problem).where("problems.grade IS DISTINCT FROM bleau_problems.grade") }
+  scope :bleau_sit_start_mismatch, -> { joins(:bleau_problem).where("problems.sit_start IS DISTINCT FROM bleau_problems.sit_start") }
+
+  # Sit-start mismatches worth fixing: names ending "(assis)" are sit starts whatever bleau.info says
+  def self.bleau_sit_start_mismatches
+    bleau_sit_start_mismatch.reject { |p| p.sit_start && p.name&.include?("assis)") }
+  end
+
   scope :with_location, -> { where.not(location: nil) }
   scope :without_location, -> { where(location: nil) }
   scope :with_line, -> { where(has_line: true) }
@@ -157,6 +167,17 @@ class Problem < ApplicationRecord
 
   def main
     Problem.where(circuit_id: circuit_id).where(circuit_number: circuit_number.to_i, circuit_letter: [ nil, "" ]).first
+  end
+
+  # The stored grades a display grade stands for when browsing by grade. Simplified sub-6a
+  # grades also take in the legacy detailed ones: 4 covers 4a–4b, 4+ covers 4b+–4c+.
+  def self.grades_matching(display_grade)
+    return [] unless DISPLAY_GRADE_VALUES.include?(display_grade)
+
+    number, plus = display_grade.match(/\A(\d)(\+)?\z/)&.captures
+    return [ display_grade ] unless number
+
+    plus ? [ display_grade, "#{number}b+", "#{number}c", "#{number}c+" ] : [ display_grade, "#{number}a", "#{number}a+", "#{number}b" ]
   end
 
   # Sortable number for a grade, slotting simplified sub-6a grades ("4", "4+") in among the

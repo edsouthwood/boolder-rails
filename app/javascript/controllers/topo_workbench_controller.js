@@ -1,10 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
+import { LINE_RED as RED, pointFromClick, drawDot, drawHold, drawExcludedArea, drawPath } from 'topo_drawing'
 
 // Topo workbench: every line on one photo, drawn and saved without leaving the page.
 // Points are stored like the line editor's: { x, y } as fractions of the photo size.
-const RED = '#ff2626'
-const GREEN = '#10b981'
-const NOT_IN = '#dc2626'
 
 export default class extends Controller {
   static targets = [
@@ -94,9 +92,7 @@ export default class extends Controller {
   click(event) {
     if (!this.draft) return this.setStatus('Pick a problem on the right first.', true)
 
-    const rect = this.canvasTarget.getBoundingClientRect()
-    const round = value => parseFloat(value.toFixed(4))
-    const point = { x: round((event.clientX - rect.left) / rect.width), y: round((event.clientY - rect.top) / rect.height) }
+    const point = pointFromClick(event, this.canvasTarget)
     const draft = this.draft
 
     if (this.mode === 'holds') {
@@ -317,55 +313,17 @@ export default class extends Controller {
     // Other lines faint, so you can see what's already on the photo
     this.lines.forEach((line, index) => {
       if (index === this.activeIndex || !line.coordinates) return
-      this.drawPath(ctx, line.coordinates, 'rgba(0,0,0,0.45)', 5)
-      this.drawPath(ctx, line.coordinates, 'rgba(255,255,255,0.85)', 2.5)
+      drawPath(ctx, line.coordinates, 'rgba(0,0,0,0.45)', 5)
+      drawPath(ctx, line.coordinates, 'rgba(255,255,255,0.85)', 2.5)
       this.drawLabel(ctx, line.coordinates[0], line.name)
     })
 
     const draft = this.draft
     if (!draft) return
-    draft.excluded.forEach(area => this.drawArea(ctx, area))
-    this.drawPath(ctx, draft.points, draft.replaceOnClick ? 'rgba(0,0,255,0.7)' : RED, 3)
-    draft.points.forEach(point => this.drawDot(ctx, point, draft.replaceOnClick ? '#0000ff' : RED))
-    draft.holds.forEach(point => this.drawHold(ctx, point))
-  }
-
-  drawPath(ctx, points, color, width) {
-    if (points.length < 2) return
-    ctx.strokeStyle = color
-    ctx.lineWidth = width
-    ctx.lineJoin = 'round'
-    ctx.lineCap = 'round'
-    ctx.beginPath()
-    points.forEach((p, i) => i ? ctx.lineTo(p.x * ctx.canvas.width, p.y * ctx.canvas.height) : ctx.moveTo(p.x * ctx.canvas.width, p.y * ctx.canvas.height))
-    ctx.stroke()
-  }
-
-  drawDot(ctx, point, color) {
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 6, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  drawHold(ctx, point) {
-    ctx.strokeStyle = GREEN
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 12, 0, Math.PI * 2)
-    ctx.stroke()
-  }
-
-  drawArea(ctx, area) {
-    if (!area.length) return
-    ctx.strokeStyle = NOT_IN
-    ctx.fillStyle = 'rgba(220, 38, 38, 0.3)'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    area.forEach((p, i) => i ? ctx.lineTo(p.x * ctx.canvas.width, p.y * ctx.canvas.height) : ctx.moveTo(p.x * ctx.canvas.width, p.y * ctx.canvas.height))
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
+    draft.excluded.forEach(area => drawExcludedArea(ctx, area))
+    drawPath(ctx, draft.points, draft.replaceOnClick ? 'rgba(0,0,255,0.7)' : RED, 3)
+    draft.points.forEach(point => drawDot(ctx, point, draft.replaceOnClick ? '#0000ff' : RED))
+    draft.holds.forEach(point => drawHold(ctx, point))
   }
 
   drawLabel(ctx, point, text) {

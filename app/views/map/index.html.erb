@@ -24,6 +24,7 @@ class="h-screen w-full relative"
 data-mapbox-target="map"
 data-mapbox-locale-value="<%= I18n.locale %>"
 data-mapbox-grade-colors-value="<%= grade_colors_json %>"
+data-mapbox-grade-groups-value="<%= Problem::DISPLAY_GRADE_VALUES.map { |grade| [ grade, Problem.grades_matching(grade) ] }.to_json %>"
 
 data-mapbox-contribute-source-value="<%= mapping_requests_path(format: :geojson) %>"
 data-mapbox-contribute-value="<%= params[:contribute] ? "true" : "false" %>"
