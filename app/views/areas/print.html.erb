@@ -1,0 +1,95 @@
+<% set_meta_tags title: "#{@area.name} topo sheet" %>
+
+<div class="max-w-3xl mx-auto px-4 py-6 print:p-0 print:max-w-none">
+  <div class="flex items-center justify-between gap-4 mb-6 print:hidden" data-controller="print">
+    <%= link_to "← #{@area.name}", area_path(@area), class: "text-sm text-gray-600 hover:underline" %>
+    <button type="button" data-action="print#print"
+            class="px-4 py-2 rounded-md bg-granite text-white text-sm font-medium hover:bg-granite-dark">Print this sheet</button>
+  </div>
+
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold"><%= @area.name %></h1>
+    <p class="text-sm text-gray-500 mt-1">
+      Topo sheet · <%= pluralize(@numbers.size + @without_topo.size, "problem") %> ·
+      printed <%= l(Date.current, format: :long) %> from <%= area_url(@area) %>
+    </p>
+    <% if @area.warning_en.present? %>
+      <div class="mt-4 p-3 border-2 border-gray-800 rounded text-sm">
+        <p class="font-semibold">Before you climb</p>
+        <%= simple_format(@area.warning_en, class: "mt-1") %>
+      </div>
+    <% end %>
+    <% if @area.description_en.present? %>
+      <div class="mt-4 text-sm text-gray-700"><%= simple_format(@area.description_en) %></div>
+    <% end %>
+  </header>
+
+  <% @topos.each do |topo, lines| %>
+    <section class="topo-block mb-8">
+      <div class="relative">
+        <%= image_tag topo_proxy_path(topo), alt: "Topo photo", class: "w-full rounded border border-gray-200" %>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" class="absolute inset-0 w-full h-full">
+          <% lines.each do |line| %>
+            <path d="<%= topo_line_path(line.coordinates) %>" fill="none" stroke="#000" stroke-opacity="0.45" stroke-width="5" stroke-linecap="round" />
+            <path d="<%= topo_line_path(line.coordinates) %>" fill="none" stroke="<%= grade_color(line.problem.grade) %>" stroke-width="3" stroke-linecap="round" />
+          <% end %>
+          <% lines.each do |line| %>
+            <% x, y = topo_line_start(line.coordinates) %>
+            <circle cx="<%= x %>" cy="<%= y %>" r="8" fill="<%= grade_color(line.problem.grade) %>" stroke="#000" stroke-opacity="0.6" stroke-width="1.5" />
+            <text x="<%= x %>" y="<%= y %>" dy="3.3" text-anchor="middle" font-size="9.5" font-weight="700" font-family="sans-serif"
+                  fill="<%= grade_text_color(line.problem.grade) %>"><%= @numbers[line.problem_id] %></text>
+          <% end %>
+        </svg>
+      </div>
+
+      <ol class="mt-2 text-sm divide-y divide-gray-100">
+        <% lines.uniq(&:problem_id).each do |line| %>
+          <% problem = line.problem %>
+          <li class="flex gap-3 py-1">
+            <span class="w-6 text-right font-bold tabular-nums"><%= @numbers[problem.id] %></span>
+            <span class="flex-1 min-w-0">
+              <span class="font-medium"><%= problem.name_with_fallback %></span>
+              <span class="ml-1 font-semibold"><%= problem.grade %></span>
+              <% if problem.sit_start %><span class="ml-1 text-gray-500">sit start</span><% end %>
+              <% if problem.description.present? %>
+                <span class="block text-gray-600"><%= problem.description.truncate(160) %></span>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ol>
+    </section>
+  <% end %>
+
+  <% if @without_topo.any? %>
+    <section class="topo-block">
+      <h2 class="text-xl font-bold mb-2"><%= @topos.any? ? "Problems without a photo yet" : "Problems" %></h2>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500 border-b border-gray-300">
+            <th class="py-1 pr-2 font-medium">Problem</th>
+            <th class="py-1 pr-2 font-medium">Grade</th>
+            <th class="py-1 font-medium">Notes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% @without_topo.each do |problem| %>
+            <tr class="align-top">
+              <td class="py-1 pr-2 font-medium"><%= problem.name_with_fallback %></td>
+              <td class="py-1 pr-2 font-semibold whitespace-nowrap"><%= problem.grade %></td>
+              <td class="py-1 text-gray-600"><%= [ ("sit start" if problem.sit_start), problem.description.to_s.truncate(120).presence ].compact.join(" · ") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+
+  <% if @topos.empty? && @without_topo.empty? %>
+    <p class="text-gray-500">No problems have been mapped here yet.</p>
+  <% end %>
+
+  <p class="mt-8 text-xs text-gray-500">
+    Grades and access change: check <%= area_url(@area) %> before you go. Climb within your ability and respect the moor.
+  </p>
+</div>
