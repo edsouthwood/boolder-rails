@@ -1,0 +1,25 @@
+<%# Minimal layout for printable pages: no site navigation or footer. %>
+<!doctype html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "outfit-font", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <style>
+      @page { margin: 12mm; }
+      @media print {
+        .topo-block { break-inside: avoid; }
+        a { color: inherit; text-decoration: none; }
+      }
+    </style>
+  </head>
+  <body class="bg-white text-gray-900">
+    <%= yield %>
+  </body>
+</html>
