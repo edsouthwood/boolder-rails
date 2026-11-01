@@ -2,14 +2,14 @@ en:
   contribute_mailer:
     greeting: "Hi %{name},"
     fallback_name: there
-    signoff: "Thanks for helping map Dartmoor — the Boolder team"
+    signoff: "Thanks for helping map Dartmoor — the Bowda team"
     acknowledgement_email:
       subject: "We received your contribution"
       unlisted_problem: "a new problem"
       body: "Thanks for your contribution to %{problem}. It's now pending review by our team — we'll let you know once it's been looked at."
     accepted_email:
       subject: "Your contribution was accepted"
-      body: "Good news — your contribution to %{problem} has been accepted and is now live on Boolder. Thank you for helping improve the map!"
+      body: "Good news — your contribution to %{problem} has been accepted and is now live on Bowda. Thank you for helping improve the map!"
     declined_email:
       subject: "About your recent contribution"
       body: "Thanks for your contribution to %{problem}. After review we weren't able to add this one to the map."
