@@ -15,7 +15,8 @@ class PwaTest < ActionDispatch::IntegrationTest
     assert_includes sizes, [ "512x512", "maskable" ]
 
     (manifest["icons"] + manifest["screenshots"]).each do |image|
-      path = Rails.public_path.join(image["src"].delete_prefix("/"))
+      # Icon URLs carry a cache-busting ?v= (ApplicationHelper::ICON_VERSION)
+      path = Rails.public_path.join(image["src"].delete_prefix("/").split("?").first)
       assert path.exist?, "#{image["src"]} is missing"
       width, height = image["sizes"].split("x").map(&:to_i)
       assert_equal [ width, height ], Vips::Image.new_from_file(path.to_s).then { |img| [ img.width, img.height ] },
@@ -27,7 +28,7 @@ class PwaTest < ActionDispatch::IntegrationTest
     get root_localized_path(locale: :en)
 
     assert_select "link[rel=manifest][href='/manifest']"
-    assert_select "link[rel=apple-touch-icon][href='/apple-touch-icon.png']"
+    assert_select "link[rel=apple-touch-icon][href=?]", "/apple-touch-icon.png?v=#{ApplicationHelper::ICON_VERSION}"
     assert_includes response.body, "serviceWorker.register('/service-worker.js'"
     assert_select "[data-controller=saved-areas]"
     assert_select "[data-controller=install-prompt]"
