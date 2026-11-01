@@ -6,6 +6,11 @@ class Rack::Attack
   end
 
   # Same for the general "report a problem" form, which also emails staff.
+  # Browsers send these on their own; a page with a problem can send a burst
+  throttle("csp-violations/ip", limit: 60, period: 1.minute) do |req|
+    req.ip if req.post? && req.path == "/csp-violations"
+  end
+
   throttle("reports/ip", limit: 5, period: 10.minutes) do |req|
     req.ip if req.post? && req.path.match?(%r{/reports\z})
   end

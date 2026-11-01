@@ -231,6 +231,33 @@ visitors' devices. The privacy policy describes this — update it if the setup 
 
 ---
 
+### Content-Security-Policy {#content-security-policy}
+
+Every page sends a Content-Security-Policy listing where scripts, styles, images and
+connections may come from (`config/initializers/content_security_policy.rb`). It is in
+**report-only** mode: browsers block nothing, they just report anything that *would*
+have been blocked to `/csp-violations`, which writes a line to the production log:
+
+```bash
+journalctl --user -u boolder-rails --since "7 days ago" | grep "\[CSP\]"
+```
+
+Each line names the rule, what was blocked and the page, e.g.
+`[CSP] img-src blocked https://tiles.example.com/... on https://bowda.edsouthwood.com/en/map`.
+A legitimate new service (a new tile provider, say) means adding its host to the policy;
+anything unfamiliar is worth a closer look. Once a stretch of real traffic reports nothing
+unexpected, enforce it by setting `content_security_policy_report_only = false`.
+
+Rules for page code, so the policy keeps working:
+- Inline `<script>` blocks need `javascript_tag nonce: true` (or `nonce="<%= content_security_policy_nonce %>"`)
+- No inline event handlers (`onclick=`, `onchange=`) or `javascript:` links; use Stimulus actions
+- MapLibre is loaded with the `shared/maplibre_script` partial, which raises `maplibre-ready`
+
+A **Permissions-Policy** header is enforced too: no camera, microphone, USB or payments;
+geolocation (the map's "locate me" button) and fullscreen for the site itself only.
+
+---
+
 ## Backups
 
 Daily automated backups run via a systemd timer and rsync to hosted webspace at `edsouthwood.com`.

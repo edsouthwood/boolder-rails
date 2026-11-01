@@ -15,7 +15,7 @@
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
+    <%= javascript_tag nonce: true do %>
       // This code uses custom events coming from search_controller.js
       // FIXME: make code more robust
       let locale = "<%= I18n.locale %>";
@@ -25,7 +25,7 @@
       window.addEventListener('gotoarea', function(event) {
         window.location = `/${locale}/admin/redirects/new?area_id=${event.detail.id}`
       });
-    </script>
+    <% end %>
   </head>
 
   <body class="bg-gray-100" data-turbo="false">

@@ -31,5 +31,11 @@ module Boolder
     # Mission Control's own HTTP basic auth. Must be set here, before the engine's initializers.
     config.mission_control.jobs.base_controller_class = "Admin::JobsBaseController"
     config.mission_control.jobs.http_basic_auth_enabled = false
+
+    # Browser features pages may use. Set directly: Rails' permissions_policy DSL still
+    # only emits the legacy Feature-Policy header. The map's "locate me" button needs
+    # geolocation; nothing uses the camera, microphone, payments or USB.
+    config.action_dispatch.default_headers["Permissions-Policy"] =
+      "camera=(), microphone=(), usb=(), payment=(), gyroscope=(), geolocation=(self), fullscreen=(self)"
   end
 end

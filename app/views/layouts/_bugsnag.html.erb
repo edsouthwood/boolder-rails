@@ -4,7 +4,7 @@
     Offline (see public/service-worker.js) the script doesn't load, hence the guard. %>
 <% if Rails.env.production? %>
   <script src="https://d2wy8f7a9ursnm.cloudfront.net/v8/bugsnag.min.js"></script>
-  <script>
+  <%= javascript_tag nonce: true do %>
     if (window.Bugsnag && !window.Bugsnag.isStarted()) {
       Bugsnag.start({
         apiKey: '518e6ecba7b973f09d53ab057d201a43',
@@ -18,5 +18,5 @@
         generateAnonymousId: false,
       })
     }
-  </script>
+  <% end %>
 <% end %>

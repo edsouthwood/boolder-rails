@@ -159,6 +159,9 @@ Rails.application.routes.draw do
   # Guessable urls (used by the mobile apps)
   get "/proxy/topos/:id", to: "proxy#show", as: :topo_proxy
 
+  # Content-Security-Policy violation reports (see config/initializers/content_security_policy.rb)
+  post "/csp-violations", to: "csp_reports#create", as: :csp_reports
+
   # General solution
   direct :cdn_image do |model, options|
     expires_in = options.delete(:expires_in) { ActiveStorage.urls_expire_in }

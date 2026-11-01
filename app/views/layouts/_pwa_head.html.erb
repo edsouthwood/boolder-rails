@@ -5,7 +5,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dartmoor">
-<script>
+<%= javascript_tag nonce: true do %>
   // Register on every page (a shared map link may be someone's first visit), so
   // the offline cache and install support are ready wherever they land.
   if ('serviceWorker' in navigator) {
@@ -18,4 +18,4 @@
     window.deferredInstallPrompt = event
     window.dispatchEvent(new Event('installprompt-available'))
   })
-</script>
+<% end %>
