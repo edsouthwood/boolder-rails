@@ -1,0 +1,103 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
+<% add_breadcrumb "Photos", admin_area_topos_path(area_slug: @area.slug, undrawn: 1) %>
+<% add_breadcrumb "Topo ##{@topo.id}", nil, class: "active" %>
+
+<div class="my-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]"
+     data-controller="topo-workbench"
+     data-topo-workbench-lines-value="<%= @lines.map(&:workbench_json).to_json %>"
+     data-topo-workbench-candidates-value="<%= @candidates.to_json %>"
+     data-topo-workbench-topo-id-value="<%= @topo.id %>"
+     data-topo-workbench-lines-url-value="<%= admin_lines_path %>"
+     data-topo-workbench-line-url-value="<%= admin_line_path(id: "__ID__") %>"
+     data-topo-workbench-quick-problem-url-value="<%= quick_problem_admin_topo_path(@topo) %>"
+     data-topo-workbench-problem-url-value="<%= admin_problem_path(id: "__ID__") %>">
+
+  <div class="min-w-0">
+    <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+      <span class="font-semibold">Clicks add:</span>
+      <label class="flex items-center gap-1">
+        <input type="radio" name="workbench_mode" value="line" checked data-action="topo-workbench#setMode" data-topo-workbench-target="modeRadio">
+        <span>Line <span style="color:#ff2626">&#9679;</span> <kbd class="text-xs text-gray-400">1</kbd></span>
+      </label>
+      <label class="flex items-center gap-1">
+        <input type="radio" name="workbench_mode" value="holds" data-action="topo-workbench#setMode" data-topo-workbench-target="modeRadio">
+        <span>Start holds <span style="color:#10b981">&#9711;</span> <kbd class="text-xs text-gray-400">2</kbd></span>
+      </label>
+      <label class="flex items-center gap-1">
+        <input type="radio" name="workbench_mode" value="excluded" data-action="topo-workbench#setMode" data-topo-workbench-target="modeRadio">
+        <span>Not-in <span style="color:#dc2626">&#9638;</span> <kbd class="text-xs text-gray-400">3</kbd></span>
+      </label>
+      <span class="flex items-center gap-2">
+        <span class="font-semibold">Zoom:</span>
+        <button type="button" class="text-granite font-semibold px-1" data-action="topo-workbench#zoomOut" aria-label="Zoom out">&minus;</button>
+        <span class="tabular-nums" data-topo-workbench-target="zoomLabel">1&times;</span>
+        <button type="button" class="text-granite font-semibold px-1" data-action="topo-workbench#zoomIn" aria-label="Zoom in">+</button>
+      </span>
+    </div>
+
+    <%# Same structure as the line editor: the photo needs max-width:none or Tailwind shrinks it below the canvas when zoomed %>
+    <div style="overflow:auto; max-width:100%; max-height:80vh" class="bg-gray-100 rounded" data-topo-workbench-target="viewport">
+      <div style="position:relative" data-topo-workbench-target="container">
+        <%= cdn_image_tag(@topo.photo.variant(:medium), data: { "topo-workbench-target": "image" }, style: "position:absolute;z-index:1;max-width:none;") %>
+        <canvas data-topo-workbench-target="canvas" data-action="click->topo-workbench#click" style="position:relative;z-index:20;cursor:crosshair"></canvas>
+      </div>
+    </div>
+
+    <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+      <button type="button" class="btn" data-action="topo-workbench#save" data-topo-workbench-target="saveBtn">Save <kbd class="ml-1 text-xs opacity-70">Enter</kbd></button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#undo">Undo point <kbd class="text-xs text-gray-400">Z</kbd></button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#clearMode">Clear</button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#newExcludedArea">New not-in area</button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#revert">Undo changes <kbd class="text-xs text-gray-400">Esc</kbd></button>
+      <span data-topo-workbench-target="status" class="text-gray-600" aria-live="polite"></span>
+    </div>
+    <p class="mt-1 text-xs text-gray-500">
+      Pick a problem on the right, click along its line from bottom to top, then press Enter. On a line that's already drawn, the first click starts it again.
+      <kbd>N</kbd> jumps to the next problem with no line.
+    </p>
+  </div>
+
+  <aside class="space-y-4 text-sm">
+    <div class="bg-white shadow sm:rounded-md p-3">
+      <p class="font-semibold text-gray-800">
+        <%= link_to "Topo ##{@topo.id}", edit_admin_topo_path(@topo), class: "hover:underline" %>
+        <% if @boulder_id %><span class="font-normal text-gray-500">· boulder #<%= @boulder_id %></span><% end %>
+      </p>
+      <p class="mt-1 text-xs text-gray-500">Problems on this photo. Click one to draw it.</p>
+      <ul data-topo-workbench-target="list" class="mt-2 divide-y divide-gray-100"></ul>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-md p-3 space-y-2">
+      <p class="font-semibold text-gray-800">Add a problem to this photo</p>
+      <input type="search" placeholder="Filter <%= @area.name %> problems…" autocomplete="off"
+             data-topo-workbench-target="filter" data-action="input->topo-workbench#renderCandidates"
+             class="block w-full rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite">
+      <ul data-topo-workbench-target="candidates" class="max-h-64 overflow-y-auto divide-y divide-gray-100"></ul>
+
+      <form data-action="submit->topo-workbench#quickCreate" class="pt-2 border-t border-gray-100 space-y-2">
+        <p class="text-xs text-gray-500">Or create a new one<%= " (placed on boulder ##{@boulder_id} where the photo was taken)" if @boulder_id && @topo.metadata_latitude %>:</p>
+        <div class="flex gap-2">
+          <input type="text" name="name" placeholder="Name" required data-topo-workbench-target="nameField"
+                 class="min-w-0 flex-1 rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite">
+          <%= select_tag :grade, options_for_select(Problem::DISPLAY_GRADE_VALUES), include_blank: "Grade",
+                data: { "topo-workbench-target": "gradeField" },
+                class: "w-24 rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite" %>
+        </div>
+        <button type="submit" class="btn w-full">Create and draw</button>
+      </form>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-md p-3 space-y-1">
+      <% if @next_topo %>
+        <%= link_to "Next photo to draw →", workbench_admin_topo_path(@next_topo),
+              data: { "topo-workbench-target": "nextPhoto" },
+              class: "block text-center px-3 py-2 rounded bg-granite text-white hover:bg-granite-dark font-medium" %>
+        <p class="text-xs text-gray-500 text-center"><%= pluralize(@undrawn_count, "other photo") %> left to draw in <%= @area.name %></p>
+      <% else %>
+        <p class="text-xs text-gray-500 text-center">No other photos left to draw in <%= @area.name %>.</p>
+      <% end %>
+      <p class="text-center"><%= link_to "Upload more photos", new_admin_area_photo_path(area_slug: @area.slug), class: "text-xs text-granite hover:underline" %></p>
+    </div>
+  </aside>
+</div>

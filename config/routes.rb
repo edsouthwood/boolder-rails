@@ -21,7 +21,12 @@ Rails.application.routes.draw do
       resources :imports do
         get "apply", on: :member
       end
-      resources :topos
+      resources :topos do
+        member do
+          get  :workbench
+          post :quick_problem
+        end
+      end
       resources :problem_imports
       resources :bleau_problems do
         member do

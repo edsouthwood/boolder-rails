@@ -31,15 +31,31 @@ class Admin::LinesController < Admin::BaseController
     if @line.update(coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas)
       auto_close_contribution_request(@line)
 
-      flash[:notice] = "Line updated"
-      redirect_to edit_admin_line_path(@line)
+      respond_to do |format|
+        format.html do
+          flash[:notice] = "Line updated"
+          redirect_to edit_admin_line_path(@line)
+        end
+        format.json { render json: @line.workbench_json }
+      end
     else
-      flash[:error] = @line.errors.full_messages.join("; ")
-      render "edit", status: :unprocessable_entity
+      respond_to do |format|
+        format.html do
+          flash[:error] = @line.errors.full_messages.join("; ")
+          render "edit", status: :unprocessable_entity
+        end
+        format.json { render json: { error: @line.errors.full_messages.join("; ") }, status: :unprocessable_entity }
+      end
     end
   rescue JSON::ParserError
-    flash.now[:error] = "Coordinates, start holds and not-in areas must be valid JSON"
-    render "edit", status: :unprocessable_entity
+    message = "Coordinates, start holds and not-in areas must be valid JSON"
+    respond_to do |format|
+      format.html do
+        flash.now[:error] = message
+        render "edit", status: :unprocessable_entity
+      end
+      format.json { render json: { error: message }, status: :unprocessable_entity }
+    end
   end
 
   def create
@@ -52,13 +68,23 @@ class Admin::LinesController < Admin::BaseController
         @line.problem.update(lat: params[:gps_lat], lon: params[:gps_lon])
       end
 
-      flash[:notice] = "Line created"
-      redirect_to edit_admin_line_path(@line)
+      respond_to do |format|
+        format.html do
+          flash[:notice] = "Line created"
+          redirect_to edit_admin_line_path(@line)
+        end
+        format.json { render json: @line.workbench_json, status: :created }
+      end
     else
-      @line.build_topo
-      @area_topos = area_topos_for(@line.problem)
-      flash[:error] = @line.errors.full_messages.join("; ")
-      render "new", status: :unprocessable_entity
+      respond_to do |format|
+        format.html do
+          @line.build_topo
+          @area_topos = area_topos_for(@line.problem)
+          flash[:error] = @line.errors.full_messages.join("; ")
+          render "new", status: :unprocessable_entity
+        end
+        format.json { render json: { error: @line.errors.full_messages.join("; ") }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -66,8 +92,13 @@ class Admin::LinesController < Admin::BaseController
     line = Line.find(params[:id])
     line.destroy!
 
-    flash[:notice] = "Line destroyed"
-    redirect_to admin_problem_path(line.problem)
+    respond_to do |format|
+      format.html do
+        flash[:notice] = "Line destroyed"
+        redirect_to admin_problem_path(line.problem)
+      end
+      format.json { head :no_content }
+    end
   end
 
   private
@@ -79,6 +110,11 @@ class Admin::LinesController < Admin::BaseController
   def require_new_line_area_access
     problem_id = params[:problem_id] || params.dig(:line, :problem_id)
     require_area_access(Problem.find(problem_id).area.slug) if problem_id.present?
+    return if performed?
+
+    # An existing photo must be in an area this admin can access too
+    topo_area_id = params.dig(:line, :topo_id).presence && Topo.find(params[:line][:topo_id]).area_id
+    require_area_access(Area.find(topo_area_id).slug) if topo_area_id
   end
 
   def line_params

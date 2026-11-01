@@ -17,7 +17,7 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
     <% @topos.each do |topo| %>
       <div class="border border-gray-200 rounded overflow-hidden bg-white shadow-sm">
-        <%= link_to edit_admin_topo_path(topo) do %>
+        <%= link_to workbench_admin_topo_path(topo), title: "Draw lines on this photo" do %>
           <%= cdn_image_tag topo.photo.variant(:thumb), class: "w-full h-36 object-cover block" %>
         <% end %>
         <div class="p-2">
@@ -37,7 +37,8 @@
                     class: "text-xs text-gray-700 hover:underline truncate" %>
             </div>
           <% end %>
-          <div class="mt-2">
+          <div class="mt-2 flex items-center gap-3">
+            <%= link_to "Draw lines", workbench_admin_topo_path(topo), class: "text-xs text-granite font-medium hover:underline" %>
             <%= button_to "Delete", admin_topo_path(topo),
                   method: :delete,
                   data: { turbo_confirm: "Delete topo ##{topo.id} and all its lines? This cannot be undone." },

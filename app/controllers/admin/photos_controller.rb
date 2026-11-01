@@ -26,7 +26,7 @@ class Admin::PhotosController < Admin::BaseController
     }.compact)
 
     if topo.save
-      render json: { id: topo.id, suggested_boulder_id: boulder&.id, edit_url: edit_admin_topo_path(topo) }, status: :created
+      render json: { id: topo.id, suggested_boulder_id: boulder&.id, edit_url: workbench_admin_topo_path(topo) }, status: :created
     else
       render json: { error: topo.errors.full_messages.join("; ") }, status: :unprocessable_entity
     end

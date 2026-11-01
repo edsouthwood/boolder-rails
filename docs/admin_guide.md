@@ -428,7 +428,7 @@ What happens to each photo:
 - If it has GPS, the nearest boulder within 15 m is noted as **near boulder #N**. This is only a hint for you when drawing; the real link to a boulder is made once lines are drawn
 - The GPS position and compass heading are kept with the photo
 
-**Photos to draw** on the area's Topos page lists photos with no lines yet, plus any with a line still to draw (for example from a bulk upload). To draw a line on an inbox photo, open the problem, choose **New line**, and pick the photo from the area's existing photos.
+**Photos to draw** on the area's Topos page lists photos with no lines yet, plus any with a line still to draw (for example from a bulk upload). Click a photo there (or **Photo #N →** straight after uploading) to open it in the [Topo Workbench](#topo-workbench) and draw its lines.
 
 ---
 
@@ -692,7 +692,26 @@ Topos are the guidebook-style photos that show where to climb on a boulder face.
 - Upload the photo file
 - Optionally upload a metadata JSON file (from the iOS app) to auto-link to problems
 
-### Drawing lines
+### Topo workbench (quickest way to draw lines) {#topo-workbench}
+
+One page per photo where you add every problem on it and draw all their lines, with no page reloads. Open it from:
+- the area's **Topos** page: click a photo, or **Draw lines**. **Photos to draw** lists the ones still needing work
+- the **Photo #N →** link after uploading through the [Photo Inbox](#photo-inbox)
+- **Draw lines on this photo** on a topo's edit page, or **Draw all lines on this photo** in the line editor
+
+How to use it:
+1. On the right, pick a problem that's already on the photo, or **add one**:
+   - type to filter the area's problems. Ones **on boulder** (near the photo's boulder) come first, then ones with **no line**
+   - or type a name and grade and click **Create and draw**. If the photo has GPS and was matched to a boulder, the new problem is placed on that boulder's edge nearest where you stood; otherwise place it later in the [Location Editor](#location-editor)
+2. Click along the line from bottom to top. Other lines on the photo show faintly with their names
+3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
+4. When every problem has a line, click **Next photo to draw →**
+
+Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point · **N** next problem without a line · **1 / 2 / 3** switch between line, start holds and not-in areas. Picking a problem always switches back to line mode. Zoom to 2× with **+** for detail.
+
+On a line that's already drawn, the first click starts it afresh (the old line shows in blue until then). **✕** removes a problem from the photo (its line here is deleted; the problem stays). **↗** opens the problem in a new tab.
+
+### Drawing lines (one problem at a time)
 1. Open a problem's show page
 2. Click **New line** (or edit an existing line)
 3. In the line editor, click on the photo to place control points for the line

@@ -8,6 +8,7 @@
 </div>
 <div class="my-3">
   <%= link_to "Topo ##{@line.topo.id}", edit_admin_topo_path(@line.topo) %>
+  · <%= link_to "Draw all lines on this photo (workbench)", workbench_admin_topo_path(@line.topo), class: "text-granite hover:underline" %>
 </div>
 
 <div data-controller="topo-editor">
