@@ -11,7 +11,7 @@
     <h1 class="text-3xl font-bold"><%= @area.name %></h1>
     <p class="text-sm text-gray-500 mt-1">
       Topo sheet · <%= pluralize(@numbers.size + @without_topo.size, "problem") %> ·
-      printed <%= l(Date.current, format: :long) %> from <%= area_url(@area) %>
+      printed <%= Date.current.strftime("%-d %B %Y") %> from <%= area_url(@area) %>
     </p>
     <% if @area.warning_en.present? %>
       <div class="mt-4 p-3 border-2 border-gray-800 rounded text-sm">
@@ -24,8 +24,10 @@
     <% end %>
   </header>
 
+  <%# Two photos to a row in print (and on wider screens), so a sheet isn't a page per photo %>
+  <div class="grid md:grid-cols-2 print:grid-cols-2 gap-x-6">
   <% @topos.each do |topo, lines| %>
-    <section class="topo-block mb-8">
+    <section class="topo-block mb-6">
       <div class="relative">
         <%= image_tag topo_proxy_path(topo), alt: "Topo photo", class: "w-full rounded border border-gray-200" %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" class="absolute inset-0 w-full h-full">
@@ -35,14 +37,14 @@
           <% end %>
           <% lines.each do |line| %>
             <% x, y = topo_line_start(line.coordinates) %>
-            <circle cx="<%= x %>" cy="<%= y %>" r="8" fill="<%= grade_color(line.problem.grade) %>" stroke="#000" stroke-opacity="0.6" stroke-width="1.5" />
-            <text x="<%= x %>" y="<%= y %>" dy="3.3" text-anchor="middle" font-size="9.5" font-weight="700" font-family="sans-serif"
+            <circle cx="<%= x %>" cy="<%= y %>" r="10" fill="<%= grade_color(line.problem.grade) %>" stroke="#000" stroke-opacity="0.6" stroke-width="1.5" />
+            <text x="<%= x %>" y="<%= y %>" dy="4" text-anchor="middle" font-size="12" font-weight="700" font-family="sans-serif"
                   fill="<%= grade_text_color(line.problem.grade) %>"><%= @numbers[line.problem_id] %></text>
           <% end %>
         </svg>
       </div>
 
-      <ol class="mt-2 text-sm divide-y divide-gray-100">
+      <ol class="mt-2 text-sm print:text-xs divide-y divide-gray-100">
         <% lines.uniq(&:problem_id).each do |line| %>
           <% problem = line.problem %>
           <li class="flex gap-3 py-1">
@@ -60,6 +62,7 @@
       </ol>
     </section>
   <% end %>
+  </div>
 
   <% if @without_topo.any? %>
     <section class="topo-block">
