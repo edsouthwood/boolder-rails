@@ -15,6 +15,7 @@
       <li><a href="#permission-levels" class="hover:underline">Permission Levels</a></li>
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
+      <li><a href="#photo-inbox" class="hover:underline">Photo Inbox (Upload Many Photos)</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
       <li><a href="#adding-boulders" class="hover:underline">Adding Boulders (GeoJSON)</a></li>
@@ -281,6 +282,20 @@ Unnamed Slab,,slab,false,,,,</pre>
         <p>Upload image files alongside the CSV. Each image creates a topo — draw line coordinates on it afterwards in the topo editor.</p>
 
         <%= link_to "Go to Bulk Upload →", new_admin_bulk_upload_path, class: "inline-block mt-2 text-blue-600 hover:underline text-sm" %>
+      </div>
+    </section>
+
+    <%# Photo inbox %>
+    <section id="photo-inbox">
+      <%= render "admin/docs/section_header", title: "Photo Inbox (Upload Many Photos)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Open the area and choose <strong>⋯ → Upload photos</strong>. Drop in as many photos as you like (JPEG, PNG or WebP, up to 25&nbsp;MB each). They upload one at a time; keep the tab open until they're done.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Each photo becomes a topo in the area straight away, so area admins can see it before any lines exist</li>
+          <li>Photos with GPS are matched to the nearest boulder within 15&nbsp;m, shown as <strong>near boulder #N</strong>. That's only a hint for drawing</li>
+          <li><strong>Photos to draw</strong> on the area's Topos page lists photos with no lines, or with a line still to draw</li>
+          <li>To draw on one: open the problem, choose <strong>New line</strong>, and pick the photo from the area's photos</li>
+        </ul>
       </div>
     </section>
 

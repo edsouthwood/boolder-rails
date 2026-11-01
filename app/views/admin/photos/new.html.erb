@@ -1,0 +1,33 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
+<% add_breadcrumb "Upload photos", nil, class: "active" %>
+
+<h1 class="my-3">Upload photos to <%= @area.name %></h1>
+
+<div class="max-w-3xl space-y-4"
+     data-controller="admin-photo-inbox"
+     data-admin-photo-inbox-url-value="<%= admin_area_photos_path(area_slug: @area.slug) %>">
+  <p class="text-sm text-gray-600">
+    Drop as many topo photos as you like. Each becomes a photo in this area, ready for lines to be drawn.
+    If a photo has GPS, it's matched to the nearest boulder within <%= Admin::PhotosController::BOULDER_MATCH_METRES %>&nbsp;m.
+    JPEG, PNG or WebP, up to <%= Admin::PhotosController::MAX_SIZE / 1.megabyte %>&nbsp;MB each.
+  </p>
+
+  <label data-admin-photo-inbox-target="dropzone"
+         data-action="dragover->admin-photo-inbox#dragOver dragleave->admin-photo-inbox#dragLeave drop->admin-photo-inbox#drop"
+         class="flex flex-col items-center justify-center gap-2 p-10 border-2 border-dashed border-gray-300 rounded-md bg-white text-gray-500 cursor-pointer hover:border-granite transition-colors">
+    <span class="text-base font-medium text-gray-700">Drop photos here, or click to choose</span>
+    <span class="text-xs">Uploads one at a time, so you can keep this tab open while it works</span>
+    <input type="file" multiple accept="image/jpeg,image/png,image/webp" class="sr-only"
+           data-action="change->admin-photo-inbox#choose">
+  </label>
+
+  <p data-admin-photo-inbox-target="summary" class="text-sm text-gray-600" aria-live="polite"></p>
+
+  <ul data-admin-photo-inbox-target="list" class="divide-y divide-gray-200 bg-white shadow sm:rounded-md"></ul>
+
+  <p class="text-sm">
+    <%= link_to "Photos to draw (#{@undrawn_count}) →", admin_area_topos_path(area_slug: @area.slug, undrawn: 1),
+          data: { admin_photo_inbox_target: "queueLink" }, class: "text-granite hover:underline font-medium" %>
+  </p>
+</div>

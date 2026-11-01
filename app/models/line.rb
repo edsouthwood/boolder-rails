@@ -8,6 +8,8 @@ class Line < ApplicationRecord
   after_save -> { problem.update_has_line }
   after_destroy -> { problem.update_has_line }
   after_save    -> { Boulder.recompute_topos_later(points: [ problem.location ]) }
+  # Photos uploaded before the inbox existed get their area from their first line
+  after_save    -> { topo.update_column(:area_id, problem.area_id) if topo[:area_id].nil? }
   after_destroy -> { Boulder.recompute_topos_later(points: [ problem&.location ]) }
 
   MAX_START_HOLDS = StartHoldsValidator::MAX_HOLDS

@@ -111,7 +111,7 @@ class Contribution < ApplicationRecord
 
     # reorder(nil) drops the ORDER BY inherited from Line's default scope,
     # which Postgres rejects in a SELECT DISTINCT on a different column
-    topo_area_ids = existing_topo.problems.reorder(nil).distinct.pluck(:area_id)
+    topo_area_ids = (existing_topo.problems.reorder(nil).distinct.pluck(:area_id) + [ existing_topo[:area_id] ]).compact.uniq
     return if topo_area_ids.empty? || topo_area_ids.include?(problem.area_id)
 
     errors.add(:existing_topo_id, "must belong to the same area as the problem")

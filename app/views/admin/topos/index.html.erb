@@ -2,7 +2,16 @@
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Topos", nil, class: "active" %>
 
-<p class="text-sm text-gray-500 my-4"><%= pluralize(@topos.size, "topo") %></p>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2 my-4 text-sm">
+  <p class="text-gray-500"><%= pluralize(@topos.size, "topo") %></p>
+  <% if params[:undrawn] == "1" %>
+    <%= link_to "Show all", admin_area_topos_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+  <% else %>
+    <%= link_to "Photos to draw (#{@undrawn_count})", admin_area_topos_path(area_slug: @area.slug, undrawn: 1), class: "text-granite hover:underline" %>
+  <% end %>
+  <%= link_to "Upload photos", new_admin_area_photo_path(area_slug: @area.slug),
+        class: "ml-auto px-3 py-1.5 rounded bg-granite text-white hover:bg-granite-dark" %>
+</div>
 
 <% if @topos.any? %>
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -12,7 +21,15 @@
           <%= cdn_image_tag topo.photo.variant(:thumb), class: "w-full h-36 object-cover block" %>
         <% end %>
         <div class="p-2">
-          <p class="text-xs font-medium text-gray-500 mb-1">Topo #<%= topo.id %></p>
+          <p class="text-xs font-medium text-gray-500 mb-1">
+            Topo #<%= topo.id %>
+            <% if topo.suggested_boulder_id && topo.lines.empty? %>
+              <span class="font-normal">· near boulder #<%= topo.suggested_boulder_id %></span>
+            <% end %>
+          </p>
+          <% if topo.lines.empty? %>
+            <p class="text-xs text-amber-700 mb-1">No lines yet</p>
+          <% end %>
           <% topo.problems.each do |problem| %>
             <div class="flex items-center gap-1 mb-1">
               <%= problem_circle_view(problem) %>
