@@ -1,8 +1,8 @@
-// This file is getting too complex and will eventually need some refactoring
-// Note: we could buy some time by removing/refactoring the "circuit 7a" code introduced here: https://github.com/nmondollot/boolder/pull/26
-// (lots of complexity for such a small feature)
+// The public map: set-up, popups, clicks, grade filters and search hooks.
+// Sources and layers live in map_layers.js.
 
 import { Controller } from '@hotwired/stimulus'
+import { addMapLayers } from 'map_layers'
 
 // Base map style. Keep in sync with MAP_STYLE_URL in offline_download_controller.js,
 // which pre-downloads this style's tiles/glyphs/sprites for offline use.
@@ -27,37 +27,9 @@ export default class extends Controller {
     // ProblemsHelper#grade_colors_json so the map, the problem lists, the topo
     // circles and the search results all share one grade palette.
     gradeColors: Object,
-  }
-
-  // MapLibre ["match", ["get","grade"], grades, color, ..., fallback]
-  gradeColorExpression() {
-    const palette = this.gradeColorsValue || {}
-    const pairs = palette.colors || []
-    if (!pairs.length) return palette.unknown || "#878A8D"
-    return ["match", ["get", "grade"],
-      ...pairs.flatMap(([color, grades]) => [grades, color]),
-      palette.unknown || "#878A8D"]
-  }
-
-  // Circuit-number labels sit on the grade-coloured dot, so they take the same
-  // dark-on-pale treatment as ProblemsHelper#grade_text_color.
-  gradeTextColorExpression() {
-    const palette = this.gradeColorsValue || {}
-    const pale = (palette.colors || [])
-      .filter(([color]) => color.toUpperCase() === "#FFFFFF")
-      .flatMap(([, grades]) => grades)
-    if (!pale.length) return "#fff"
-    return ["match", ["get", "grade"], pale, "#333", "#fff"]
-  }
-
-  // Pale dots get an outline so they stay visible against the base map.
-  gradeStrokeExpression() {
-    const palette = this.gradeColorsValue || {}
-    const pale = (palette.colors || [])
-      .filter(([color]) => color.toUpperCase() === "#FFFFFF")
-      .flatMap(([, grades]) => grades)
-    if (!pale.length) return "rgba(0,0,0,0)"
-    return ["match", ["get", "grade"], pale, palette.outline || "#888", "rgba(0,0,0,0)"]
+    // [[display grade, [stored grades it covers]], ...] in grade order, from
+    // Problem.grades_matching — so filters catch both "4+" and legacy "4b+"
+    gradeGroups: Array,
   }
 
   connect() {
@@ -115,8 +87,8 @@ export default class extends Controller {
 
     this.setupClickEvents()
 
-    // FIXME: make this DRY (see Problem::GRADE_VALUES)
-    this.allGrades = ["1","1+","2","2+","3","3+","4","4+","5","5+","1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+","4a","4a+","4b","4b+","4c","4c+","5a","5a+","5b","5b+","5c","5c+","6a","6a+","6b","6b+","6c","6c+","7a","7a+","7b","7b+","7c","7c+","8a","8a+","8b","8b+","8c","8c+","9a","9a+","9b","9b+","9c","9c+",]
+    this.displayGrades = this.gradeGroupsValue.map(([grade]) => grade)
+    this.allGrades = this.gradeGroupsValue.flatMap(([, grades]) => grades)
   }
 
   disconnect() {
@@ -148,294 +120,13 @@ export default class extends Controller {
   }
 
   addLayers() {
-    if(this.hasMapDataSourceValue) {
-      this.map.addSource('problems', {
-        type: 'geojson',
-        data: this.mapDataSourceValue,
-        promoteId: "id"
-      });
-    }
-
-    // BOULDER OUTLINES (added before problems so circles appear on top)
-    if(this.hasMapDataSourceValue) {
-      this.map.addLayer({
-        'id': 'boulders',
-        'type': 'fill',
-        'source': 'problems',
-        'minzoom': 16,
-        'paint': {
-          'fill-color': '#888',
-          'fill-opacity': 1,
-        },
-        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
-      });
-
-      this.map.addLayer({
-        'id': 'boulders-outline',
-        'type': 'line',
-        'source': 'problems',
-        'minzoom': 16,
-        'paint': {
-          'line-color': '#555',
-          'line-width': 1.5,
-        },
-        filter: ['match', ['geometry-type'], ['Polygon'], true, false],
-      });
-    }
-
-    if(true) {
-    this.map.addLayer({
-      'id': 'problems',
-      'type': 'circle',
-      'source': 'problems',
-      'minzoom': 15,
-      'layout': {
-        'visibility': 'visible',
-        'circle-sort-key': 
-          [
-            "case",
-            ["has", "circuitId"],
-            2,
-            1
-          ]
-      },
-      'paint': {
-        'circle-radius': 
-          [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            15,
-            2,
-            18,
-            4,
-            22,
-            [
-              "case",
-              ["has", "circuitNumber"],
-              16,
-              10
-            ]
-          ]
-        ,
-        'circle-color': this.gradeColorExpression(),
-        'circle-stroke-width': 1,
-        'circle-stroke-color': this.gradeStrokeExpression(),
-        'circle-opacity': 
-        [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          14.5,
-          0,
-          15,
-          1
-        ]
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-    });
-
-    this.map.addLayer({
-      'id': 'problems-texts',
-      'type': 'symbol',
-      'source': 'problems',
-      'minzoom': 19,
-      'layout': {
-        'visibility': 'visible',
-        'text-allow-overlap': true,
-        // OpenFreeMap only serves Noto Sans glyphs; the MapLibre default
-        // ("Open Sans Regular,Arial Unicode MS Regular") 404s and renders nothing.
-        'text-font': ['Noto Sans Regular'],
-        'text-field': [
-          "to-string",
-          ["get", "circuitNumber"]
-        ],
-        'text-size': [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          19,
-          10,
-          22,
-          20
-        ],
-      },
-      'paint': {
-        'text-color': this.gradeTextColorExpression(),
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-    });
-    } // end problems block
-
-    // AREA LABELS
-    if (this.hasAreaLabelsSourceValue) {
-      this.map.addSource('areas', {
-        type: 'geojson',
-        data: this.areaLabelsSourceValue,
-      });
-
-      this.map.addLayer({
-        'id': 'areas-circles',
-        'type': 'circle',
-        'source': 'areas',
-        'minzoom': 8,
-        'maxzoom': 16,
-        'paint': {
-          'circle-color': '#6F767A',
-          'circle-opacity': 0.25,
-          'circle-stroke-color': '#6F767A',
-          'circle-stroke-width': 1,
-          'circle-stroke-opacity': 0.5,
-          'circle-radius': [
-            'interpolate', ['linear'], ['zoom'],
-            8,  ['interpolate', ['linear'], ['get', 'problemCount'], 0, 4,  50, 10, 250, 18],
-            12, ['interpolate', ['linear'], ['get', 'problemCount'], 0, 7,  50, 18, 250, 32],
-          ],
-        },
-      });
-
-      this.map.addLayer({
-        'id': 'areas',
-        'type': 'symbol',
-        'source': 'areas',
-        'minzoom': 8,
-        'maxzoom': 16,
-        'filter': [
-          'any',
-          ['>=', ['zoom'], 10],
-          ['==', ['get', 'priority'], 1],
-        ],
-        'layout': {
-          'symbol-sort-key': ['get', 'priority'],
-          'text-field': ['get', 'name'],
-          'text-size': [
-            'interpolate', ['linear'], ['zoom'],
-            10, 12,
-            14, 16,
-          ],
-          'text-font': ['Noto Sans Bold'],
-          'text-anchor': 'center',
-        },
-        'paint': {
-          'text-color': '#333',
-          'text-halo-color': '#fff',
-          'text-halo-width': 1.5,
-        },
-      });
-    }
-
-    // CONTRIBUTE LAYERS
-
-    if(this.contributeValue) {
-
-      this.map.addSource('contribute', {
-        type: 'geojson',
-        data: this.contributeSourceValue,
-      });
-  
-      this.map.addLayer({
-      'id': 'contribute-problems',
-      'type': 'circle',
-      'source': 'contribute',
-      // 'source-layer': 'problems-ayes3a',
-      // 'minzoom': 12,
-      'layout': {
-        'visibility': 'visible',
-        'circle-sort-key': 
-          [
-            "case",
-            ["has", "circuitId"],
-            2,
-            1
-          ]
-      },
-      'paint': {
-        'circle-radius': 
-          [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            12,
-            6,
-            17,
-            20,
-            18,
-            25,
-            19,
-            50,
-            20,
-            50,
-            21,
-            50,
-            22,
-            20,
-          ]
-        ,
-        'circle-color': "#FFCC02",
-        'circle-opacity': 0.25,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': 'white'
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-      });
-  
-      this.map.addLayer({
-      'id': 'contribute-problems-texts',
-      'type': 'symbol',
-      'source': 'contribute',
-      // 'source-layer': 'problems-ayes3a',
-      'minzoom': 16,
-      'layout': {
-        'visibility': 'visible',
-        'text-allow-overlap': true,
-        'text-font': ['Noto Sans Regular'],
-        'text-field': [
-          "to-string",
-          ["get", "name"]
-        ],
-        'text-size': [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          19,
-          10,
-          22,
-          20
-        ],
-      },
-      'paint': {
-        'text-color': "#333",
-        'text-halo-color': "hsl(0, 0%, 100%)",
-        'text-halo-width': 1,
-      },
-      filter: [
-        "match",
-          ["geometry-type"],
-          ["Point"],
-          true,
-          false
-      ],
-      });
-    }
-
+    addMapLayers(this.map, {
+      mapDataSource: this.hasMapDataSourceValue ? this.mapDataSourceValue : null,
+      areaLabelsSource: this.hasAreaLabelsSourceValue ? this.areaLabelsSourceValue : null,
+      contributeSource: this.contributeSourceValue,
+      contribute: this.contributeValue,
+      gradeColors: this.gradeColorsValue,
+    })
   }
 
   centerMap() {
@@ -509,19 +200,14 @@ export default class extends Controller {
 
     if(!this.contributeValue) {
 
-      // FIXME: make it DRY
       const coordinates = [problem.lon, problem.lat];
-      var name = problem.name
-      if(this.localeValue == 'en' && problem.nameEn) {
-        name = problem.nameEn
-      }
+      const name = this.displayName(problem)
       // HTML is built by the 'moveend' handler above, not here: the flyTo hasn't run
       // yet, so viewportHash() would capture the pre-flight view.
       this.pendingPopup = { problem, name }
 
       // will be displayed thanks to the 'moveend' event code above
-      this.popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-        .setLngLat(coordinates)
+      this.popup = this.newPopup().setLngLat(coordinates)
     }
   }
 
@@ -565,166 +251,63 @@ export default class extends Controller {
   }
 
   setupClickEvents() {
-
-    this.map.on('mouseenter', 'problems', () => {
-      this.map.getCanvas().style.cursor = 'pointer';
-    });
-    this.map.on('mouseleave', 'problems', () => {
-      this.map.getCanvas().style.cursor = '';
-    });
-
+    this.pointerOn('problems')
     this.map.on('click', 'problems', (e) => {
+      const problem = e.features[0].properties
+      const popup = this.openPopup(e.features[0].geometry.coordinates.slice(),
+        this.problemPopupHtml(problem, this.displayName(problem)))
+      this.stampReturnView(popup)
+    })
 
-      let problem = e.features[0].properties
-
-      // FIXME: make it DRY
-      const coordinates = e.features[0].geometry.coordinates.slice();
-      var name = problem.name
-      if(this.localeValue == 'en' && problem.nameEn) {
-        name = problem.nameEn
-      }
-      const popup = new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-      .setLngLat(coordinates)
-      .setHTML(this.problemPopupHtml(problem, name))
-      .addTo(this.map);
-
-      this.stampReturnView(popup);
-    });
-
-    this.map.on('mouseenter', ['contribute-problems','contribute-problems-texts'], () => {
-      this.map.getCanvas().style.cursor = 'pointer';
-    });
-    this.map.on('mouseleave', ['contribute-problems','contribute-problems-texts'], () => {
-      this.map.getCanvas().style.cursor = '';
-    });
-
-    // FIXME: make DRY
-    this.map.on('click', ['contribute-problems','contribute-problems-texts'], (e) => {
-
-      let group = e.features[0].properties
-
-      // FIXME: make it DRY
-      const coordinates = e.features[0].geometry.coordinates.slice();
-      var name = group.name
-      if(this.localeValue == 'en' && group.nameEn) {
-        name = group.nameEn
-      }        
-
-      let problems = JSON.parse(group.problems)
-      const html = problems.map(
-        problem => `<div>
+    // Contribute mode: a dot per group of problems that need mapping
+    const contributeLayers = ['contribute-problems', 'contribute-problems-texts']
+    this.pointerOn(contributeLayers)
+    this.map.on('click', contributeLayers, (e) => {
+      const problems = JSON.parse(e.features[0].properties.problems)
+      const html = problems.map(problem => `<div>
         <a href="/${this.localeValue}/mapping/problems/${problem.id}" target="_blank">${problem.name || ""}</a>
         <span class="text-gray-400 ml-1">${problem.grade}</span>
-</div>`
-      ).join("");
-       
-      new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-      .setLngLat(coordinates)
-      .setHTML(html)
-      .addTo(this.map);
-    });
+</div>`).join("")
+      this.openPopup(e.features[0].geometry.coordinates.slice(), html)
+    })
 
-    // FIXME: make DRY
-    this.map.on('mouseenter', 'pois', () => {
-      if(this.map.getZoom() >= 12) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      }
-    });
-    this.map.on('mouseleave', 'pois', () => {
-      if(this.map.getZoom() >= 12) {
-        this.map.getCanvas().style.cursor = '';
-      }
-    });
-
+    const poisVisible = () => this.map.getZoom() >= 12
+    this.pointerOn('pois', poisVisible)
     this.map.on('click', 'pois', (e) => {
-      if(this.map.getZoom() >= 12) {
+      if (!poisVisible()) return
+      this.openPopup(e.features[0].geometry.coordinates.slice(),
+        `<a href="${e.features[0].properties.googleUrl}" target="_blank">See on Google</a>`)
+    })
 
-        // FIXME: make it DRY
-        const coordinates = e.features[0].geometry.coordinates.slice();
-        const html = `<a href="${e.features[0].properties.googleUrl}" target="_blank">${this.localeValue == 'fr' ? 'Voir sur Google' : 'See on Google'}</a>`;
-         
-        new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]})
-        .setLngLat(coordinates)
-        .setHTML(html)
-        .addTo(this.map);
-      }
-    });
+    // Zoomed out, clicking an area (or a cluster of them) flies to it
+    const areasClickable = () => this.map.getZoom() < 15
+    const clustersClickable = () => this.map.getZoom() <= 12
+    const flyToArea = (e) => {
+      const props = e.features[0].properties
+      this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
+    }
+    for (const [layer, when] of [['areas', areasClickable], ['areas-circles', areasClickable], ['areas-hulls', areasClickable], ['clusters', clustersClickable]]) {
+      this.pointerOn(layer, when)
+      this.map.on('click', layer, (e) => { if (when()) flyToArea(e) })
+    }
+  }
 
-    // FIXME: make DRY
-    this.map.on('mouseenter', 'areas', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      }
-    });
-    this.map.on('mouseleave', 'areas', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = '';
-      }
-    });
+  // Pointer cursor over a layer (or layers), only while `when()` holds
+  pointerOn(layers, when = () => true) {
+    this.map.on('mouseenter', layers, () => { if (when()) this.map.getCanvas().style.cursor = 'pointer' })
+    this.map.on('mouseleave', layers, () => { if (when()) this.map.getCanvas().style.cursor = '' })
+  }
 
-    this.map.on('click', 'areas', (e) => {
-      if(this.map.getZoom() < 15) {
-        let props = e.features[0].properties
-        this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
-      }
-    });
+  newPopup() {
+    return new maplibregl.Popup({ closeButton: false, focusAfterOpen: false, offset: [0, -8] })
+  }
 
-    this.map.on('mouseenter', 'areas-circles', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      }
-    });
-    this.map.on('mouseleave', 'areas-circles', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = '';
-      }
-    });
+  openPopup(coordinates, html) {
+    return this.newPopup().setLngLat(coordinates).setHTML(html).addTo(this.map)
+  }
 
-    this.map.on('click', 'areas-circles', (e) => {
-      if(this.map.getZoom() < 15) {
-        let props = e.features[0].properties
-        this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
-      }
-    });
-
-     // FIXME: make DRY
-    this.map.on('mouseenter', 'areas-hulls', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      }
-    });
-    this.map.on('mouseleave', 'areas-hulls', () => {
-      if(this.map.getZoom() < 15) {
-        this.map.getCanvas().style.cursor = '';
-      }
-    });
-
-    this.map.on('click', 'areas-hulls', (e) => {
-      if(this.map.getZoom() < 15) {
-        let props = e.features[0].properties
-        // console.log(props)
-        this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
-      }
-    });
-
-    // FIXME: make DRY
-    this.map.on('mouseenter', 'clusters', () => {
-      if(this.map.getZoom() <= 12) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      }
-    });
-    this.map.on('mouseleave', 'clusters', () => {
-      if(this.map.getZoom() <= 12) {
-        this.map.getCanvas().style.cursor = '';
-      }
-    });
-
-    this.map.on('click', 'clusters', (e) => {
-      if(this.map.getZoom() <= 12) {
-        let props = e.features[0].properties
-        this.flyToBounds([[props.southWestLon, props.southWestLat], [props.northEastLon, props.northEastLat]])
-      }
-    });
+  displayName(problem) {
+    return (this.localeValue == 'en' && problem.nameEn) ? problem.nameEn : problem.name
   }
 
   flyToBounds(bounds) {
@@ -762,31 +345,17 @@ export default class extends Controller {
     this.filterCounterTarget.classList.remove("hidden")
     this.filterIconTarget.classList.add("hidden")
 
-    var grades = []
-    if(this.gradeRadioButton == "beginner") {
-      grades = ["1","1+","2","2+","3","3+","1a","1a+","1b","1b+","1c","1c+","2a","2a+","2b","2b+","2c","2c+","3a","3a+","3b","3b+","3c","3c+",]
-    }
-    else if(this.gradeRadioButton == "level4") {
-      grades = ["4","4+","4a","4a+","4b","4b+","4c","4c+"]
-    }
-    else if(this.gradeRadioButton == "level5") {
-      grades = ["5","5+","5a","5a+","5b","5b+","5c","5c+"]
-    } 
-    else if(this.gradeRadioButton == "level6") {
-      grades = ["6a","6a+","6b","6b+","6c","6c+"]
-    } 
-    else if(this.gradeRadioButton == "level7") {
-      grades = ["7a","7a+","7b","7b+","7c","7c+"]
-    } 
-    else if(this.gradeRadioButton == "level8") {
-      grades = ["8a","8a+","8b","8b+","8c","8c+"]
-    } 
-    else if(this.gradeRadioButton == "custom") {
-      let gradeMin = this.gradeMinTarget.value
-      let gradeMax = this.gradeMaxTarget.value
-      grades = this.allGrades.slice(this.allGrades.indexOf(gradeMin), this.allGrades.indexOf(gradeMax) + 2)
-    } 
-    else {
+    let grades
+    const level = this.gradeRadioButton
+    if (level == "beginner") {
+      grades = this.gradesWhere(grade => parseInt(grade) <= 3)
+    } else if (/^level\d$/.test(level || "")) {
+      grades = this.gradesWhere(grade => grade[0] == level.slice(-1))
+    } else if (level == "custom") {
+      const min = this.displayGrades.indexOf(this.gradeMinTarget.value)
+      const max = this.displayGrades.indexOf(this.gradeMaxTarget.value)
+      grades = this.gradeGroupsValue.slice(min, max + 1).flatMap(([, grades]) => grades)
+    } else {
       grades = this.allGrades
     }
 
@@ -794,8 +363,13 @@ export default class extends Controller {
     this.applyLayerFilter('problems-texts', grades)
   }
 
+  // Stored grades of every display grade passing the test
+  gradesWhere(test) {
+    return this.gradeGroupsValue.filter(([grade]) => test(grade)).flatMap(([, grades]) => grades)
+  }
+
   clearFilters() {
-    this.gradeRadioButton == null
+    this.gradeRadioButton = null
 
     this.filterCounterTarget.classList.add("hidden")
     this.filterIconTarget.classList.remove("hidden")
@@ -820,15 +394,15 @@ export default class extends Controller {
   }
 
   didSelectGradeMin() {
-    let indexMin = this.allGrades.indexOf(this.gradeMinTarget.value)
-    let indexMax = this.allGrades.indexOf(this.gradeMaxTarget.value)
-    this.gradeMaxTarget.value = this.allGrades[Math.max(indexMin, indexMax)]
+    const indexMin = this.displayGrades.indexOf(this.gradeMinTarget.value)
+    const indexMax = this.displayGrades.indexOf(this.gradeMaxTarget.value)
+    this.gradeMaxTarget.value = this.displayGrades[Math.max(indexMin, indexMax)]
   }
 
   didSelectGradeMax() {
-    let indexMin = this.allGrades.indexOf(this.gradeMinTarget.value)
-    let indexMax = this.allGrades.indexOf(this.gradeMaxTarget.value)
-    this.gradeMinTarget.value = this.allGrades[Math.min(indexMin, indexMax)]
+    const indexMin = this.displayGrades.indexOf(this.gradeMinTarget.value)
+    const indexMax = this.displayGrades.indexOf(this.gradeMaxTarget.value)
+    this.gradeMinTarget.value = this.displayGrades[Math.min(indexMin, indexMax)]
   }
 
   // =========================================================
@@ -845,7 +419,6 @@ export default class extends Controller {
       speed: 2
     });
 
-    // FIXME: make it DRY
     const coordinates = [event.detail.lon, event.detail.lat];
     // The result's own path (when present) opens offline too; the redirect needs the server.
     const href = event.detail.path || `/${this.localeValue}/redirects/new?problem_id=${event.detail.id}`;
@@ -858,10 +431,7 @@ export default class extends Controller {
     grade.textContent = event.detail.grade || "";
     const html = link.outerHTML + grade.outerHTML;
      
-    new maplibregl.Popup({closeButton:false, focusAfterOpen: false, offset: [0, -8]}) 
-    .setLngLat(coordinates)
-    .setHTML(html)
-    .addTo(this.map);
+    this.openPopup(coordinates, html)
   }
 
   gotoarea(event) {

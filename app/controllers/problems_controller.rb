@@ -4,47 +4,19 @@ class ProblemsController < ApplicationController
     @line = @problem.lines.published.first
   end
 
+  # Browse every published problem of one grade, those with a topo photo first
   def index
-    @grades = {
-      "3a"  => %w[3a 3a+],
-      "3b"  => %w[3b 3b+],
-      "3c"  => %w[3c 3c+],
-      "4a"  => %w[4a 4a+],
-      "4b"  => %w[4b 4b+],
-      "4c"  => %w[4c 4c+],
-      "5a"  => %w[5a 5a+],
-      "5b"  => %w[5b 5b+],
-      "5c"  => %w[5c 5c+],
-      "6a"  => %w[6a],
-      "6a+" => %w[6a+],
-      "6b"  => %w[6b],
-      "6b+" => %w[6b+],
-      "6c"  => %w[6c],
-      "6c+" => %w[6c+],
-      "7a"  => %w[7a],
-      "7a+" => %w[7a+],
-      "7b"  => %w[7b],
-      "7b+" => %w[7b+],
-      "7c"  => %w[7c],
-      "7c+" => %w[7c+],
-      "8a"  => %w[8a],
-      "8a+" => %w[8a+],
-      "8b"  => %w[8b],
-      "8b+" => %w[8b+],
-      "8c"  => %w[8c],
-      "8c+" => %w[8c+]
-    }
+    published = Problem.joins(:area).where(areas: { published: true }).with_location
+    counts = published.group(:grade).count
+    @grades = Problem::DISPLAY_GRADE_VALUES.
+      map { |grade| [ grade, Problem.grades_matching(grade).sum { |g| counts[g].to_i } ] }.
+      select { |_, count| count.positive? }
 
-    if params[:grade].in?(@grades.keys)
-      @grade = params[:grade]
-    else
-      @grade = "6a"
-    end
+    available = @grades.map(&:first)
+    @grade = params[:grade].presence_in(available) || ("6a" if available.include?("6a")) || available.first
 
-    @problems = Problem.joins(:area).where(area: { published: true }).
-      significant_ascents.
-      where(grade: @grades[@grade]).
-      order(popularity: :desc).
-      limit(100)
+    @problems = published.where(grade: Problem.grades_matching(@grade)).
+      preload(:area, :circuit).
+      order(has_line: :desc).order("areas.name", "problems.name")
   end
 end

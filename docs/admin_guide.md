@@ -25,6 +25,7 @@
 22. [Language Support](#language-support)
 23. [Open Data Export](#open-data-export)
 24. [Offline Use (Map & Photos)](#offline-use)
+25. [Problems by Grade and Map Grade Filters](#problems-by-grade)
 
 ---
 
@@ -1168,3 +1169,11 @@ unchanged: there is no back control and the link under the photo still reads
 **Known limitation:** only an area's *own* problem pages are cached. Following a link to a
 problem in a different (un-downloaded) area still needs a connection — it shows the offline
 fallback page rather than erroring.
+
+---
+
+## Problems by Grade and Map Grade Filters {#problems-by-grade}
+
+**Problems by grade** (`/en/dartmoor/problems`, linked from a card on the Dartmoor areas page) lists every published problem of one grade across all areas. Problems with a topo photo come first, then by area and name. The menu only offers grades that have problems, with a count for each. Problems need a location on the map to appear.
+
+Grades below 6a are entered in simplified form (`4`, `4+`). Older detailed grades still match: `4` covers 4a to 4b, and `4+` covers 4b+ to 4c+. The same grouping drives the map's grade filters (level buttons and the custom min–max range), so no problems are left out.

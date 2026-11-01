@@ -1,13 +1,10 @@
 class ReportsController < ApplicationController
+  include RemembersContributor
+
   invisible_captcha only: [ :create ], on_spam: :handle_spam, on_timestamp_spam: :handle_timestamp_spam
 
   def new
-    @contribution = Contribution.new(
-      # TODO: make DRY
-      contributor_name: session[:contribution_name],
-      contributor_email: session[:contribution_email],
-      problem: Problem.find_by(id: params[:problem_id])
-    )
+    @contribution = Contribution.new(**remembered_contributor, problem: Problem.find_by(id: params[:problem_id]))
   end
 
   # HTML for a plain form post; JSON for report_form_controller.js / offline_reports.js,
@@ -16,9 +13,7 @@ class ReportsController < ApplicationController
     @contribution = Contribution.new(contribution_params)
     @contribution.problem = Problem.find_by(id: params.dig(:contribution, :problem_id))
 
-    # TODO: make DRY
-    session[:contribution_name] = @contribution.contributor_name
-    session[:contribution_email] = @contribution.contributor_email
+    remember_contributor(@contribution)
 
     if @contribution.save
       flash[:notice] = t("views.reports.new.flash_success")

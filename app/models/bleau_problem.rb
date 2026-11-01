@@ -10,6 +10,11 @@ class BleauProblem < ApplicationRecord
 
   normalizes :name, with: ->(s) { s.strip.gsub(/\A-\z/, "").presence }
 
+  # On bleau.info, in an area we map, not ignored, and not yet a Problem here
+  scope :unpromoted, -> {
+    joins(bleau_area: :area).where(ignore: false).left_outer_joins(:problem).where(problems: { id: nil })
+  }
+
   def name_with_fallback
     if name.present?
       name

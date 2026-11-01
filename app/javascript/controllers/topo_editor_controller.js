@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { LINE_RED, pointFromClick, drawDot, drawHold, drawExcludedArea } from 'topo_drawing'
 
 export default class extends Controller {
   static targets = [ "textarea", "holdsTextarea", "excludedTextarea", "canvas", "container", "image", "form", "viewport", "zoomLabel" ]
@@ -92,17 +93,7 @@ export default class extends Controller {
   }
 
   createPoint(event) {
-    var canvas = this.canvasTarget
-    var textarea = this.textareaTarget
-
-    var rect = canvas.getBoundingClientRect()
-    var x = event.clientX - rect.left
-    var y = event.clientY - rect.top
-
-    var percentX = this.limitPrecision(x / rect.width)
-    var percentY = this.limitPrecision(y / rect.height)
-
-    var point = {'x': percentX, 'y': percentY }
+    var point = pointFromClick(event, this.canvasTarget)
 
     if (this.mode == "excluded") {
       if (this.startNewArea) {
@@ -123,65 +114,32 @@ export default class extends Controller {
     }
 
     this.points.push(point)
-    textarea.value = JSON.stringify(this.points)
+    this.textareaTarget.value = JSON.stringify(this.points)
 
-    this.draw(point, "#ff2626")
-  }
-
-  limitPrecision(value) {
-    return parseFloat(value.toFixed(4))
+    this.draw(point, LINE_RED)
   }
 
   draw(point, color) {
-    // console.log(point.x + ";" + point.y)
-    var canvas = this.canvasTarget
-
-    var canvasWidth = canvas.width
-    var canvasHeight = canvas.height
-    var ctx = canvas.getContext("2d")
-
-    ctx.fillStyle = color
-    var pointSize = 8
-
-    ctx.beginPath() //Start path
-    ctx.arc(point.x * canvasWidth, point.y * canvasHeight, pointSize, 0, Math.PI * 2, true) // Draw a point using the arc function of the canvas with a point structure.
-    ctx.fill() // Close the path and fill.
+    drawDot(this.canvasContext(), point, color, 8)
   }
 
   drawHold(point) {
-    var canvas = this.canvasTarget
-    var ctx = canvas.getContext("2d")
-
-    ctx.strokeStyle = "#10b981"
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.arc(point.x * canvas.width, point.y * canvas.height, 12, 0, Math.PI * 2, true)
-    ctx.stroke()
+    drawHold(this.canvasContext(), point)
   }
 
   drawExcludedArea(area) {
-    var canvas = this.canvasTarget
-    var ctx = canvas.getContext("2d")
+    drawExcludedArea(this.canvasContext(), area)
+  }
 
-    ctx.strokeStyle = "#dc2626"
-    ctx.fillStyle = "rgba(220, 38, 38, 0.3)"
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    area.forEach((point, index) => {
-      var x = point.x * canvas.width
-      var y = point.y * canvas.height
-      index == 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-    })
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
+  canvasContext() {
+    return this.canvasTarget.getContext("2d")
   }
 
   redraw() {
     var canvas = this.canvasTarget
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height)
     this.drawOriginalPoints()
-    this.points.forEach(point => this.draw(point, "#ff2626"))
+    this.points.forEach(point => this.draw(point, LINE_RED))
   }
 
   parsePoints(json) {

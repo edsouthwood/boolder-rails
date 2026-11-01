@@ -69,7 +69,7 @@ class Admin::AreasController < Admin::BaseController
 
   def area_params
     params.require(:area).
-      permit(:name, :slug, :published, :priority, :short_name, :description_fr, :description_en, :warning_fr, :warning_en, tags: [])
+      permit(:name, :slug, :published, :priority, :short_name, :description_en, :warning_en, tags: [])
   end
 
   def set_area
