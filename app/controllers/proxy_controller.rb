@@ -7,6 +7,10 @@ class ProxyController < ActiveStorage::BaseController
 
   def show
     topo = Topo.find(params[:id])
+    # Public and cached by browsers/CDN, so only published photos in published areas;
+    # admin pages load photos through signed Active Storage URLs instead
+    return head(:not_found) unless topo.publicly_visible?
+
     representation = topo.photo.variant(:medium)
 
     http_cache_forever public: true do

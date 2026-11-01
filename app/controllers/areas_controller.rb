@@ -15,6 +15,7 @@ class AreasController < ApplicationController
 
   def show
     @area = Area.find_by!(slug: params[:slug])
+    return if hide_unpublished_area(@area)
 
     @circuits = @area.main_circuits
 
@@ -23,7 +24,8 @@ class AreasController < ApplicationController
   end
 
   def problems
-    @area = Area.find_by(slug: params[:slug])
+    @area = Area.find_by!(slug: params[:slug])
+    return if hide_unpublished_area(@area)
 
     @problems = @area.problems.with_location.order(popularity: :desc).group_by { |p| p.grade }.sort_by { |grade, _| grade }.reverse
   end

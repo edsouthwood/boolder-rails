@@ -22,6 +22,8 @@ class WelcomeController < ApplicationController
 
   def problem_permalink
     problem = Problem.find(params[:id])
+    return if hide_unpublished_area(problem.area)
+
     redirect_to helpers.problem_friendly_path(problem)
   end
 

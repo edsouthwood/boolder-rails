@@ -27,6 +27,15 @@ class ApplicationController < ActionController::Base
       session[:admin_signed_in_at].to_i > ADMIN_SESSION_LIFETIME.ago.to_i
   end
 
+  # Pages of an unpublished area (and its problems) are for signed-in admins only;
+  # everyone else gets a plain 404, as if it didn't exist. Returns true when it rendered.
+  def hide_unpublished_area(area)
+    return false if area.nil? || area.published || admin_session?
+
+    render_404
+    true
+  end
+
   def end_admin_session
     session.delete(:admin_user_name)
     session.delete(:admin_signed_in_at)
