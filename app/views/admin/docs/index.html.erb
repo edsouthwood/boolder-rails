@@ -190,6 +190,9 @@ systemctl --user status boolder-backup.timer</pre>
         <p class="font-medium text-gray-800">Login lockout</p>
         <p>After 10 wrong passwords from one IP address, admin login (including <code>/jobs</code>) is refused with "429 Too Many Requests" for 15 minutes from the first failure. To unlock early, in a Rails console on the server:</p>
         <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">Rails.cache.delete("admin_login_failures/&lt;ip address&gt;")</pre>
+
+        <p class="font-medium text-gray-800">Signing in and out</p>
+        <p>An admin login lasts 14 days, then the password is asked for again. <strong>Sign out</strong> (top right of the admin header) ends it at once; because browsers re-send a saved password by themselves, the next admin page deliberately asks for it once more.</p>
       </div>
     </section>
 

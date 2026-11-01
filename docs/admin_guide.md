@@ -332,6 +332,13 @@ this in `RAILS_ENV=production bin/rails console` on the server:
 Rails.cache.delete("admin_login_failures/<ip address>")
 ```
 
+### Signing in and out
+An admin login lasts 14 days, after which the browser asks for the password again.
+**Sign out** (top right of the admin header) ends it straight away. Browsers keep the
+password saved and re-send it by themselves, so after signing out the next admin page
+asks for it once more on purpose. Admin-only extras on public pages (the cog link on a
+problem, unpublished search results) also disappear when the login ends.
+
 ---
 
 ## Permission Levels

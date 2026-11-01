@@ -141,7 +141,7 @@
           </div>
         <% end %>
 
-        <% if session[:admin] %>
+        <% if admin_session? %>
           <%= link_to admin_problem_path(@problem), rel: "nofollow", target: "_blank" do %>
             <div class="flex items-center space-x-2 text-granite mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
