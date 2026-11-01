@@ -157,6 +157,11 @@
           Suggest boulders in this view
         </button>
         <p data-admin-boulder-editor-target="suggestStatus" class="mt-1 text-xs text-gray-500" aria-live="polite"></p>
+        <button data-action="click->admin-boulder-editor#addAllUnmapped"
+                data-admin-boulder-editor-target="addAllBtn"
+                class="hidden mt-1 w-full px-2 py-1 text-xs rounded bg-granite text-white hover:bg-granite-dark disabled:opacity-50 transition-colors">
+          Add all unmapped as boulders
+        </button>
       </div>
 
       <div class="flex-1 overflow-y-auto">

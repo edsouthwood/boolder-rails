@@ -588,6 +588,7 @@ Limitations:
 - Touching boulders often merge into one shape. When a suggestion covers several mapped boulders, the popup and status line warn you — trim it to one rock before saving, or keep it if your separate outlines were really one boulder.
 - Outlines are only good to about ±0.5 m (1 m data), and boulders under 1 m high are missed.
 - Walls, banks and parked cars (on the survey day) can show up as rock.
+- **Add all N unmapped as boulders** (appears under the suggest button) saves every amber suggestion in one go, after a confirmation. Look over the amber shapes first, because walls and parked cars can show up as rock. It stops at the first error; any it didn't add stay on the map.
 - The view must be under about 750 m across; zoom in if asked. Click **Suggest again for this view** after panning, or after editing boulders so the green/amber colouring is up to date.
 
 Background: a spike at Bonehill (Oct 2026) found LiDAR rock for all 32 mapped boulders, and that mapped outlines sat a median of ~1.9 m south of the rock — probably from tracing the sunlit side and leaving out the shadowed north side.
