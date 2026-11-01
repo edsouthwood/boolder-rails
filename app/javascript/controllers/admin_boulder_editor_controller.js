@@ -7,7 +7,7 @@ export default class extends Controller {
     'mapContainer', 'drawBtn', 'drawingActions', 'selectedActions',
     'status', 'count', 'countSuffix', 'boulderList', 'basemapBtn', 'attribution',
     'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
-    'suggestBtn', 'suggestStatus', 'useLidarBtn',
+    'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
   ]
   static values = {
     geojsonUrl: String,
@@ -666,6 +666,7 @@ export default class extends Controller {
       if (this.selectedBoulderId != null) {
         this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(this.selectedBoulderId))
       }
+      this.updateAddAllButton()
     } catch (error) {
       this.suggestStatusTarget.textContent = ''
       this.showToast(error.message || 'Could not fetch LiDAR', true)
@@ -733,8 +734,48 @@ export default class extends Controller {
     if (id == null) return
     this.suggestions[index] = null
     this.renderSuggestions()
+    this.updateAddAllButton()
     this.selectBoulder(id)
     this.setStatus(`Boulder #${id} added from LiDAR. Tidy the corners, then Save changes.`)
+  }
+
+  // Indexes of the amber suggestions (nothing mapped there yet)
+  unmappedSuggestions() {
+    return (this.suggestions || []).flatMap((s, index) => (s && s.overlaps.length === 0) ? [index] : [])
+  }
+
+  updateAddAllButton() {
+    const count = this.unmappedSuggestions().length
+    this.addAllBtnTarget.classList.toggle('hidden', count === 0)
+    this.addAllBtnTarget.textContent = `Add all ${count} unmapped as boulders`
+  }
+
+  // Saves every amber suggestion as a new boulder, one at a time, stopping at the first failure
+  async addAllUnmapped() {
+    const indexes = this.unmappedSuggestions()
+    if (!indexes.length) return
+    if (!confirm(`Add ${indexes.length} new boulder${indexes.length === 1 ? '' : 's'} from LiDAR? Check the amber shapes first: walls and parked cars can show up as rock.`)) return
+
+    this.addAllBtnTarget.disabled = true
+    this.suggestBtnTarget.disabled = true
+    let added = 0
+    try {
+      for (const index of indexes) {
+        this.suggestStatusTarget.textContent = `Adding ${added + 1}/${indexes.length}…`
+        const id = await this.createBoulder(this.suggestions[index].coordinates)
+        if (id == null) break
+        this.suggestions[index] = null
+        added++
+      }
+    } finally {
+      this.renderSuggestions()
+      this.addAllBtnTarget.disabled = false
+      this.suggestBtnTarget.disabled = false
+      this.updateAddAllButton()
+      this.suggestStatusTarget.textContent = added === indexes.length
+        ? `Added ${added} boulder${added === 1 ? '' : 's'}. Tidy any corners, then Save changes.`
+        : `Added ${added} of ${indexes.length}; stopped after an error.`
+    }
   }
 
   replaceWithSuggestion(boulderId, suggestion) {
