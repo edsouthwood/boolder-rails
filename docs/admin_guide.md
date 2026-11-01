@@ -23,6 +23,7 @@
 20. [Contributions](#contributions)
 21. [Email Setup](#email-setup)
 22. [Language Support](#language-support)
+    - [Boolder Credit in the Footer](#boolder-credit)
 23. [Open Data Export](#open-data-export)
 24. [Offline Use (Map & Photos)](#offline-use)
 25. [Problems by Grade and Map Grade Filters](#problems-by-grade)
@@ -979,6 +980,18 @@ removed because its translations described Fontainebleau, not Dartmoor. Old `/fr
 301-redirect to their `/en/...` equivalents. URLs keep the `/en/` prefix so existing links
 stay valid. The Fontainebleau "circuit 7a" feature and the upstream mobile-app page were
 removed at the same time (`/en/app` now redirects to the map).
+
+### Boolder Credit in the Footer {#boolder-credit}
+
+The site footer (`app/views/layouts/_footer.html.erb`) ends with a credit strip below the
+main links:
+
+> Built on **Boolder**, the open-source bouldering guide created for Fontainebleau.
+> Thank you to the original Boolder team ♥
+
+"Boolder" links to https://www.boolder.com (new tab); the thank-you links to the
+"Thank you, Boolder" section of the About page (`/en/about#thanks`). To change the wording,
+edit `views.layout.footer.boolder_credit_html` and `boolder_thanks` in `config/locales/en.yml`.
 
 ---
 

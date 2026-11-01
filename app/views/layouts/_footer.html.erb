@@ -18,4 +18,12 @@
       <% end %>
     </nav>
   </div>
+
+  <div class="border-t border-white/10">
+    <p class="max-w-site mx-auto px-6 py-4 text-sm text-on-dark-muted">
+      <%= t("views.layout.footer.boolder_credit_html",
+            boolder: link_to("Boolder", "https://www.boolder.com", class: "underline hover:text-white", target: "_blank", rel: "noopener")) %>
+      <%= link_to t("views.layout.footer.boolder_thanks"), about_path(anchor: "thanks"), class: "underline hover:text-white" %>
+    </p>
+  </div>
 </footer>

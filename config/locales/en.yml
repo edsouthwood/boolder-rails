@@ -265,6 +265,8 @@ en:
         about: About
         open_data: Open data
         contribute: Contribute
+        boolder_credit_html: "Built on %{boolder}, the open-source bouldering guide created for Fontainebleau."
+        boolder_thanks: "Thank you to the original Boolder team ♥"
     pagination:
       first: "First"
       last: "Last"
