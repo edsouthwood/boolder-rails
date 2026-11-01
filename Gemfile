@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby "3.3.5"
+ruby "3.4.12"
 
 gem "rails", "~> 8.1.0"
 # Security-patched 7.2 line; move to 8.x as its own upgrade
@@ -28,6 +28,11 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 gem "bugsnag"
+
+# Leaving Ruby's default gems: csv went in 3.4 (the bulk upload, imports and
+# open-data export use it directly); benchmark goes in 4.0 (mini_magick loads it).
+gem "csv"
+gem "benchmark"
 gem "kaminari"
 gem "httparty"
 gem "colorize"

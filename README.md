@@ -24,7 +24,7 @@ The app manages areas, boulder formations, climbing problems, circuits (colour-c
 
 ```bash
 # Ruby (via rbenv)
-rbenv install 3.3.5
+rbenv install 3.4.12
 
 # PostgreSQL with PostGIS
 sudo apt install postgresql postgis
