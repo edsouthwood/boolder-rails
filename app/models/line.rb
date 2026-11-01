@@ -7,6 +7,8 @@ class Line < ApplicationRecord
 
   after_save -> { problem.update_has_line }
   after_destroy -> { problem.update_has_line }
+  after_save    -> { Boulder.recompute_topos_later(points: [ problem.location ]) }
+  after_destroy -> { Boulder.recompute_topos_later(points: [ problem&.location ]) }
 
   MAX_START_HOLDS = StartHoldsValidator::MAX_HOLDS
   MAX_EXCLUDED_AREAS = ExcludedAreasValidator::MAX_AREAS

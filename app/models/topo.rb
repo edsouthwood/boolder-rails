@@ -9,6 +9,9 @@ class Topo < ApplicationRecord
 
   audited
 
+  # Unpublished topos don't count when linking topos to boulders
+  after_save -> { Boulder.recompute_topos_later(points: problems.map(&:location)) }, if: :saved_change_to_published?
+
   scope :published, -> { where(published: true) }
   scope :near_location, ->(point, distance_m = 10) {
     where(id:

@@ -16,6 +16,10 @@ class Problem < ApplicationRecord
   audited except: [ :has_line, :ascents, :ratings, :ratings_average, :popularity, :featured ], associated_with: :import
   attr_accessor :import # used by audited associated_with: :import
 
+  # Keep topos.boulder_id / position in step with where problems sit (old and new spot)
+  after_save -> { Boulder.recompute_topos_later(points: saved_change_to_location) }, if: :saved_change_to_location?
+  after_destroy -> { Boulder.recompute_topos_later(points: [ location ]) }
+
   def lat
     location&.lat
   end

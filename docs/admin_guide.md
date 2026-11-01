@@ -599,6 +599,17 @@ Background: a spike at Bonehill (Oct 2026) found LiDAR rock for all 32 mapped bo
 - On a phone the sidebar sits above the map; scroll the sidebar to reach Basemap and LiDAR
 - The count in the sidebar updates as you add or delete boulders
 
+### Topo order on a boulder (automatic)
+
+Each boulder's photos are linked to it and put in order: anti-clockwise round the boulder, starting after the biggest gap between problems. The app uses this order when it steps through a boulder's photos. It's kept up to date automatically, within a few seconds, whenever you:
+
+- draw or change a boulder outline, or delete a boulder
+- place, move or clear a problem's location
+- add, redraw or delete a line
+- publish or unpublish a photo
+
+Only published photos count, and only problems that sit on (or right at the edge of) an outline. A full rebuild is still available from the command line if ever needed: `bin/rails geo:compute`.
+
 ---
 
 ## GeoJSON Import Workflow
