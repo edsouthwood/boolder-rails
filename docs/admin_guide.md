@@ -311,9 +311,20 @@ SSH key auth is required — the key is at `~/.ssh/boolder_backup`. The timer fi
 To restore after a machine failure:
 
 1. Clone the repo from GitHub
-2. Restore `.env` and `config/master.key` from the webspace
-3. Restore the database: `gunzip -c dartmoor-dev-YYYYMMDD.sql.gz | psql dartmoor-dev`
+2. Restore `.env`, `.env.backup` and `config/master.key` from the webspace (then `chmod 600 .env .env.backup`)
+3. Restore the database (the dump recreates PostGIS and every table):
+   ```bash
+   rsync -az u79222@edsouthwood.com:bowda-backup/db/dartmoor-production-YYYYMMDD.sql.gz .
+   createdb dartmoor-production
+   gunzip -c dartmoor-production-YYYYMMDD.sql.gz | psql dartmoor-production
+   ```
 4. Restore storage files: `rsync -az u79222@edsouthwood.com:bowda-backup/storage/ storage/`
+5. The cache, queue and cable databases need no restore: `RAILS_ENV=production bin/rails db:prepare` creates them empty
+
+**Last restore test: 1 Nov 2026.** That night's dump, fetched back from the webspace, restored
+into a scratch database with no errors. Every table count matched production (12 areas,
+1,163 problems, 156 boulders, 79 topos, 390 photo blobs), PostGIS geometry was intact,
+and sampled photo files were byte-identical off-site. Worth repeating every few months.
 
 ---
 
