@@ -1,4 +1,13 @@
 module ApplicationHelper
+  # Icons in public/ are served with a one-year cache at fixed URLs, so browsers keep
+  # whatever they fetched first (the old green Boolder icon until 31 Oct 2026). Bump this
+  # whenever the icon files change, so every browser fetches the new ones.
+  ICON_VERSION = "2".freeze
+
+  def site_icon_path(file)
+    "/#{file}?v=#{ICON_VERSION}"
+  end
+
   LOGO_POINTS = "40.35,112.36 21.90,30.93 36.34,18.36 71.58,34.59 72.17,64.70 94.60,82.02 98.95,112.36".freeze
 
   # Top-nav link classes, highlighting the section the visitor is currently in.
