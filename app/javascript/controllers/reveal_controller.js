@@ -8,7 +8,8 @@ export default class extends Controller {
     this.class = this.hasHiddenClass ? this.hiddenClass : 'hidden'
   }
 
-  toggle () {
+  toggle (event) {
+    event?.preventDefault() // the trigger may be an href="#" link
     this.itemTargets.forEach(item => {
       item.classList.toggle(this.class)
     })

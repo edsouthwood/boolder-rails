@@ -1,0 +1,12 @@
+<%# MapLibre from the CDN, then announce 'maplibre-ready' for the map controllers to
+    wait on (they can't assume load order: see mapbox_controller.js). Done with a nonce'd
+    script rather than an onload="" attribute so a Content-Security-Policy allows it.
+    local: defer (default false) %>
+<script <%= "defer" if local_assigns[:defer] %> src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js" data-turbo-track="reload" id="maplibre-script"></script>
+<%= javascript_tag nonce: true do %>
+  (function () {
+    var ready = function () { window.dispatchEvent(new Event('maplibre-ready')) }
+    if (window.maplibregl) { ready(); return }
+    document.getElementById('maplibre-script').addEventListener('load', ready, { once: true })
+  })()
+<% end %>

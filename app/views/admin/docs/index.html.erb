@@ -156,6 +156,9 @@ systemctl --user status boolder-backup.timer</pre>
           <li><strong>Server</strong> (Rails exceptions and background jobs): <code class="bg-gray-100 px-1 rounded">config/initializers/bugsnag.rb</code>, using <code class="bg-gray-100 px-1 rounded">bugsnag: api_key</code> from the production credentials. Without it, startup logs "No valid API key has been set".</li>
           <li>Visitor IP addresses are kept out of both, and nothing is stored on visitors' devices. The privacy policy describes this — update it if the setup changes.</li>
         </ul>
+
+        <p class="font-medium text-gray-800">Content-Security-Policy</p>
+        <p>Pages send a Content-Security-Policy in <strong>report-only</strong> mode: nothing is blocked, but anything that would be is logged as a <code>[CSP]</code> line in the production log (<code>journalctl --user -u boolder-rails | grep "\[CSP\]"</code>). Once real traffic reports nothing unexpected it can be enforced. Page code needs nonce'd inline scripts and no inline <code>onclick=</code>-style handlers; see the admin guide.</p>
       </div>
     </section>
 

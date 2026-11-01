@@ -17,7 +17,8 @@ export default class extends Controller {
     }
   }
 
-  copy() {
+  copy(event) {
+    event?.preventDefault() // the trigger is an href="#" link
     navigator.clipboard.writeText([this.latitudeTarget.value, this.longitudeTarget.value].join(","))
     this.linkTarget.innerHTML = "copied!"
   }

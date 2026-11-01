@@ -7,10 +7,10 @@
   <% end %>
 </div>
 
-<%= form_with url: admin_contributions_path, method: :get, class: "my-4" do |form| %>
+<%= form_with url: admin_contributions_path, method: :get, class: "my-4", data: { controller: "auto-submit" } do |form| %>
   <div class="w-1/2">
     <label for="state" class="block text-sm font-medium text-gray-700">State</label>
-    <%= form.select :state, Contribution::STATES, { selected: @state, include_blank: "All" }, { onchange: 'this.form.submit()', class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
+    <%= form.select :state, Contribution::STATES, { selected: @state, include_blank: "All" }, { data: { action: "change->auto-submit#submit" }, class: "mt-1 block w-full md:w-1/3 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
   </div>
 <% end %>
 

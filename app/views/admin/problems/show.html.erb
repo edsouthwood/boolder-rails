@@ -102,7 +102,7 @@
 
       <% if @problem.lines.unpublished.any? %>
         <div class="mt-8 pb-4" data-controller="reveal">
-          <a href="javascript:void(0)" class="text-yellow-500 font-medium" data-action="reveal#toggle"><%= "See unpublished lines (#{@problem.lines.unpublished.count})" %></a>
+          <a href="#" class="text-yellow-500 font-medium" data-action="reveal#toggle"><%= "See unpublished lines (#{@problem.lines.unpublished.count})" %></a>
           <div class="hidden" data-reveal-target="item">
             <% @problem.lines.unpublished.each do |line| %>
               <%= link_to edit_admin_line_path(line) do %>
