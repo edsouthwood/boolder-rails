@@ -161,7 +161,7 @@ en:
             title: New contribution
       map:
         metas:
-          title: Contribute to Boolder
+          title: Contribute to Bowda
           description: Help us map all problems in Dartmoor
     reports:
       new:
@@ -199,14 +199,14 @@ en:
       metas:
         title: Privacy
     contribute:
-      title: Contribute to Boolder
+      title: Contribute to Bowda
       mapping_title: Mapping
       mapping_description: Go to an area and take pictures of the missing boulders with your phone.
       report_title: Report a mistake
       report_description: Report a mistake on an existing problem or circuit.
       metas:
         title: Contribute
-        description: Map areas, take photos of boudlers, report mistakes, or contribute to the open source project
+        description: Map areas, take photos of boulders, report mistakes, or contribute to the open source project
     about:
       web_dev:
         title: Know how to code?
