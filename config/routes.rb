@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   scope "/:locale", locale: /#{I18n.available_locales.join('|')}/ do
     namespace :admin do
       get "map", to: "maps#show"
+      delete "session", to: "sessions#destroy", as: :session
       resources :areas, param: :slug do
         resources :problems, only: :index
         resources :topos,    only: :index

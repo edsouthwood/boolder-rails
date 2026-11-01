@@ -13,7 +13,24 @@ class ApplicationController < ActionController::Base
     I18n.with_locale(locale, &action)
   end
 
+  # Admin logins (HTTP basic, remembered in the session) last this long, then ask again
+  ADMIN_SESSION_LIFETIME = 14.days
+
+  helper_method :admin_session?
+
   private
+
+  # Signed in to admin within the last ADMIN_SESSION_LIFETIME. Public pages use this to
+  # show admin-only extras (edit links, unpublished search results).
+  def admin_session?
+    session[:admin_user_name].present? &&
+      session[:admin_signed_in_at].to_i > ADMIN_SESSION_LIFETIME.ago.to_i
+  end
+
+  def end_admin_session
+    session.delete(:admin_user_name)
+    session.delete(:admin_signed_in_at)
+  end
 
   def render_404
     render file: "#{Rails.root}/public/404.html", status: :not_found, layout: false

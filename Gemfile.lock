@@ -78,30 +78,34 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
-    addressable (2.8.7)
-      public_suffix (>= 2.0.2, < 7.0)
+    addressable (2.9.2)
+      public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.2)
     audited (5.8.0)
       activerecord (>= 5.2, < 8.2)
       activesupport (>= 5.2, < 8.2)
-    aws-eventstream (1.3.0)
+    aws-eventstream (1.4.1)
     aws-partitions (1.1031.0)
-    aws-sdk-core (3.214.1)
-      aws-eventstream (~> 1, >= 1.3.0)
+    aws-sdk-core (3.263.0)
+      aws-eventstream (~> 1, >= 1.4.1)
       aws-partitions (~> 1, >= 1.992.0)
       aws-sigv4 (~> 1.9)
+      base64
+      bigdecimal
       jmespath (~> 1, >= 1.6.1)
+      logger
+      rexml (~> 3.4, >= 3.4.2)
     aws-sdk-kms (1.96.0)
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.5)
-    aws-sdk-s3 (1.177.0)
-      aws-sdk-core (~> 3, >= 3.210.0)
+    aws-sdk-s3 (1.237.0)
+      aws-sdk-core (~> 3, >= 3.263.0)
       aws-sdk-kms (~> 1)
       aws-sigv4 (~> 1.5)
     aws-sigv4 (1.10.1)
       aws-eventstream (~> 1, >= 1.0.2)
     base64 (0.2.0)
-    bcrypt (3.1.20)
+    bcrypt (3.1.22)
     bcrypt_pbkdf (1.1.1)
     bigdecimal (3.1.9)
     bindex (0.8.1)
@@ -114,6 +118,9 @@ GEM
     bugsnag (6.27.1)
       concurrent-ruby (~> 1.0)
     builder (3.3.0)
+    bundler-audit (0.9.3)
+      bundler (>= 1.2.0)
+      thor (~> 1.0)
     capybara (3.40.0)
       addressable
       matrix
@@ -125,9 +132,9 @@ GEM
       xpath (~> 3.2)
     coderay (1.1.3)
     colorize (1.1.0)
-    concurrent-ruby (1.3.4)
+    concurrent-ruby (1.3.8)
     connection_pool (2.4.1)
-    crass (1.0.6)
+    crass (1.0.8)
     csv (3.3.0)
     date (3.4.1)
     debug (1.10.0)
@@ -149,7 +156,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    httparty (0.22.0)
+    httparty (0.24.3)
       csv
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
@@ -169,7 +176,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jmespath (1.6.2)
-    json (2.9.0)
+    json (2.21.2)
     kamal (2.4.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -194,8 +201,9 @@ GEM
       kaminari-core (= 1.2.2)
     kaminari-core (1.2.2)
     language_server-protocol (3.17.0.3)
+    lint_roller (1.1.0)
     logger (1.6.4)
-    loofah (2.23.1)
+    loofah (2.25.2)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.9.1)
@@ -223,7 +231,7 @@ GEM
       railties (>= 7.1)
       stimulus-rails
       turbo-rails
-    msgpack (1.7.5)
+    msgpack (1.8.7)
     multi_xml (0.7.1)
       bigdecimal (~> 3.1)
     net-imap (0.6.7)
@@ -239,20 +247,22 @@ GEM
       net-ssh (>= 5.0.0, < 8.0.0)
     net-smtp (0.5.2)
       net-protocol
-    net-ssh (7.3.0)
+    net-ssh (7.3.8)
+      logger
     nio4r (2.7.4)
-    nokogiri (1.18.1)
+    nokogiri (1.19.4)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     ostruct (0.6.1)
     parallel (1.26.3)
-    parser (3.3.6.0)
+    parser (3.3.13.0)
       ast (~> 2.4.1)
       racc
     pg (1.5.9)
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
+    prism (1.9.0)
     propshaft (1.1.0)
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -265,16 +275,15 @@ GEM
       date
       stringio
     public_suffix (6.0.1)
-    puma (6.5.0)
+    puma (7.2.1)
       nio4r (~> 2.0)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (3.1.8)
+    rack (3.2.8)
     rack-attack (6.8.0)
       rack (>= 1.0, < 4)
-    rack-cors (2.0.2)
-      rack (>= 2.0.0)
-    rack-session (2.0.0)
+    rack-session (2.1.2)
+      base64 (>= 0.1.0)
       rack (>= 3.0.0)
     rack-test (2.2.0)
       rack (>= 1.3)
@@ -298,8 +307,8 @@ GEM
       activesupport (>= 5.0.0)
       minitest
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.6.2)
-      loofah (~> 2.21)
+    rails-html-sanitizer (1.7.1)
+      loofah (~> 2.25, >= 2.25.2)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
     railties (8.1.4)
       actionpack (= 8.1.4)
@@ -317,24 +326,27 @@ GEM
     regexp_parser (2.9.3)
     reline (0.6.0)
       io-console (~> 0.5)
+    rexml (3.4.4)
     rgeo (3.0.1)
     rgeo-activerecord (8.1.0)
       activerecord (>= 8.1, < 8.2)
       rgeo (>= 3.0)
     rgeo-geojson (2.1.1)
       rgeo (>= 1.0.0)
-    rubocop (1.69.2)
-      json (~> 2.3)
-      language_server-protocol (>= 3.17.0)
-      parallel (~> 1.10)
+    rubocop (1.91.0)
+      json (>= 2.3)
+      language_server-protocol (~> 3.17.0.2)
+      lint_roller (~> 1.1.0)
+      parallel (>= 1.10)
       parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 2.9.3, < 3.0)
-      rubocop-ast (>= 1.36.2, < 2.0)
+      rubocop-ast (>= 1.49.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.37.0)
-      parser (>= 3.3.1.0)
+    rubocop-ast (1.50.0)
+      parser (>= 3.3.7.2)
+      prism (~> 1.7)
     rubocop-minitest (0.36.0)
       rubocop (>= 1.61, < 2.0)
       rubocop-ast (>= 1.31.1, < 2.0)
@@ -374,7 +386,7 @@ GEM
       fugit (~> 1.11.0)
       railties (>= 7.1)
       thor (~> 1.3.1)
-    sqlite3 (2.6.0)
+    sqlite3 (2.10.2)
       mini_portile2 (~> 2.8.0)
     sshkit (1.23.2)
       base64
@@ -401,14 +413,15 @@ GEM
     unicode-display_width (3.1.2)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
-    uri (1.0.2)
+    uri (1.1.2)
     useragent (0.16.11)
     web-console (4.2.1)
       actionview (>= 6.0.0)
       activemodel (>= 6.0.0)
       bindex (>= 0.4.0)
       railties (>= 6.0.0)
-    websocket-driver (0.7.6)
+    websocket-driver (0.8.2)
+      base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     xpath (3.2.0)
@@ -427,6 +440,7 @@ DEPENDENCIES
   brakeman
   breadcrumbs_on_rails
   bugsnag
+  bundler-audit
   capybara
   colorize
   debug
@@ -436,6 +450,7 @@ DEPENDENCIES
   image_processing (~> 1.2)
   importmap-rails
   invisible_captcha
+  json (~> 2.19, >= 2.19.9)
   kamal
   kaminari
   meta-tags
@@ -446,9 +461,8 @@ DEPENDENCIES
   pg_search
   propshaft
   pry
-  puma (>= 5.0)
+  puma (~> 7.2, >= 7.2.1)
   rack-attack
-  rack-cors
   rails (~> 8.1.0)
   rgeo-geojson (~> 2.1.1)
   rubocop-rails-omakase

@@ -2,7 +2,6 @@ class Admin::BaseController < ApplicationController
   default_form_builder DefaultFormBuilder
   layout "admin"
   before_action :authenticate
-  before_action :set_cookie
   helper_method :current_admin_user
 
   # Wrong passwords allowed per IP before logins are refused for the rest of the window.
@@ -12,14 +11,22 @@ class Admin::BaseController < ApplicationController
   private
 
   def authenticate
-    return true if session[:admin_user_name].present? && accounts[session[:admin_user_name]].present?
+    return true if admin_session? && accounts[session[:admin_user_name]].present?
+
+    end_admin_session # expired, or the account was removed
     return head(:too_many_requests) if login_failures >= MAX_LOGIN_FAILURES
+
+    # Just signed out: browsers re-send saved basic-auth details by themselves, so
+    # ignore them once and ask afresh (a 401 also makes the browser forget them)
+    return request_http_basic_authentication("admin") if session.delete(:admin_signed_out)
 
     authenticate_or_request_with_http_basic("admin") do |id, password|
       account = accounts[id.to_s]
       expected = account.is_a?(String) ? account : account&.with_indifferent_access&.dig(:password)
       if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password, expected)
+        reset_session # a fresh session id on login
         session[:admin_user_name] = id
+        session[:admin_signed_in_at] = Time.current.to_i
         true
       else
         record_login_failure
@@ -66,10 +73,6 @@ class Admin::BaseController < ApplicationController
   # used by audited gem (see config/initializers/audited.rb)
   def authenticated_user
     session[:admin_user_name]
-  end
-
-  def set_cookie
-    session[:admin] = true
   end
 
   def require_super_admin

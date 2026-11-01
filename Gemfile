@@ -4,7 +4,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby "3.3.5"
 
 gem "rails", "~> 8.1.0"
-gem "puma", ">= 5.0"
+# Security-patched 7.2 line; move to 8.x as its own upgrade
+gem "puma", "~> 7.2", ">= 7.2.1"
 gem "pg"
 gem "pg_search"
 gem "activerecord-postgis-adapter", "~> 11.1"
@@ -26,7 +27,6 @@ gem "bootsnap", require: false
 gem "kamal", require: false
 gem "thruster", require: false
 
-gem "rack-cors"
 gem "bugsnag"
 gem "kaminari"
 gem "httparty"
@@ -39,11 +39,14 @@ gem "breadcrumbs_on_rails"
 gem "meta-tags"
 gem "sitemap_generator"
 gem "rack-attack"
+# Patched 2.x; json 3 is a major upgrade to take separately
+gem "json", "~> 2.19", ">= 2.19.9"
 gem "invisible_captcha"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false
+  gem "bundler-audit", require: false
   gem "rubocop-rails-omakase", require: false
   gem "pry"
   gem "dotenv-rails"
