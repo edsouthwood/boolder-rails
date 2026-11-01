@@ -29,6 +29,14 @@ class Line < ApplicationRecord
   scope :with_coordinates, -> { where.not(coordinates: nil) }
   default_scope { order(created_at: :asc) } # TODO: use a dedicated order column for multi-topos problems (e.g. traverses)
 
+  # What the topo workbench needs to show and edit this line
+  def workbench_json
+    {
+      id: id, problem_id: problem_id, name: problem.name_with_fallback, grade: problem.grade,
+      coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas
+    }
+  end
+
   def secondary_lines
     (topo.lines.reject { |l| l.problem.parent_id.present? } - [ self ]).
       select { |l| l.problem.lines.published.first&.topo_id == self.topo_id } # TODO: simplify once we handle ordering of multiple lines

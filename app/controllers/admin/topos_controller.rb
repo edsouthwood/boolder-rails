@@ -1,6 +1,6 @@
 class Admin::ToposController < Admin::BaseController
   before_action :require_super_admin,      only: [ :new, :create ]
-  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy ]
+  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy, :workbench, :quick_problem ]
   before_action :set_area_and_check_access, only: [ :index ]
 
   def index
@@ -43,6 +43,39 @@ class Admin::ToposController < Admin::BaseController
       flash[:notice] = "Topo created"
       redirect_to edit_admin_topo_path(topo)
     end
+  end
+
+  # One page to draw every line on a photo: pick or create problems, draw, save, next
+  def workbench
+    set_topo
+    @area = Area.find_by(id: @topo.area_id)
+    unless @area
+      flash[:error] = "This photo isn't in an area yet. Draw a line on it from a problem first."
+      return redirect_to edit_admin_topo_path(@topo)
+    end
+
+    @lines = @topo.lines.includes(problem: :circuit).to_a
+    @boulder_id = @topo.boulder_id || @topo.suggested_boulder_id
+    @candidates = workbench_candidates
+    undrawn = Topo.in_area(@area).undrawn.where.not(id: @topo.id).reorder(:id)
+    @next_topo = undrawn.where("topos.id > ?", @topo.id).first || undrawn.first
+    @undrawn_count = undrawn.count
+  end
+
+  # Workbench: create a problem in the photo's area and a line for it on this photo
+  def quick_problem
+    set_topo
+    area = Area.find(@topo.area_id)
+    problem = area.problems.new(name: params[:name], grade: params[:grade].presence, steepness: "other")
+    problem.location = quick_problem_location
+
+    line = Problem.transaction do
+      problem.save!
+      Line.create!(problem: problem, topo: @topo)
+    end
+    render json: line.workbench_json, status: :created
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.record.errors.full_messages.join("; ") }, status: :unprocessable_entity
   end
 
   def show
@@ -97,6 +130,32 @@ class Admin::ToposController < Admin::BaseController
     slug = area_id && Area.find(area_id).slug
     # A topo with no lines belongs to no area, so only super admins may touch it.
     slug ? require_area_access(slug) : require_super_admin
+  end
+
+  # Area problems not yet on this photo: those on (or near) its boulder first, then
+  # ones still missing a line, then the rest
+  def workbench_candidates
+    problems = @area.problems.where.not(id: @lines.map(&:problem_id)).includes(:circuit).to_a
+    near_ids = []
+    if (polygon = Boulder.where(id: @boulder_id).pick(:polygon))
+      near_ids = @area.problems.where("ST_DWithin(problems.location, ST_GeogFromText(?), 5)", polygon.as_text).pluck(:id)
+    end
+
+    problems.
+      sort_by { |p| [ near_ids.include?(p.id) ? 0 : 1, p.has_line ? 1 : 0, p.name_with_fallback.to_s.downcase ] }.
+      map { |p| { id: p.id, name: p.name_with_fallback, grade: p.grade, near: near_ids.include?(p.id), has_line: p.has_line } }
+  end
+
+  # Where the photographer stood, snapped onto the matched boulder's outline, so the new
+  # problem lands on the boulder (and the photo gets linked to it). Nil without both.
+  def quick_problem_location
+    lat, lon = @topo.metadata_latitude, @topo.metadata_longitude
+    boulder_id = @topo.boulder_id || @topo.suggested_boulder_id
+    return unless lat && lon && boulder_id
+
+    sql = Boulder.sanitize_sql_array([ "ST_AsText(ST_ClosestPoint(polygon::geometry, ST_SetSRID(ST_MakePoint(?, ?), 4326)))", lon.to_f, lat.to_f ])
+    wkt = Boulder.where(id: boulder_id).pick(Arel.sql(sql))
+    wkt && FACTORY.parse_wkt(wkt)
   end
 
   def topo_params

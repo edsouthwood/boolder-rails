@@ -1,8 +1,12 @@
 <% add_breadcrumb "Dartmoor", admin_areas_path %>
-<% if area = @topo.problems.first&.area %>
+<% if area = @topo.area_id && Area.find_by(id: @topo.area_id) %>
   <% add_breadcrumb area.name, admin_area_problems_path(area_slug: area.slug, circuit_id: "first") %>
 <% end %>
 <% add_breadcrumb "Topo ##{@topo.id}", nil, class: "active" %>
+
+<% if area %>
+  <p class="my-3"><%= link_to "Draw lines on this photo (workbench) →", workbench_admin_topo_path(@topo), class: "text-granite font-medium hover:underline" %></p>
+<% end %>
 
 <div class="my-3">
   <% @topo.problems.each do |problem| %>

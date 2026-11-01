@@ -294,7 +294,7 @@ Unnamed Slab,,slab,false,,,,</pre>
           <li>Each photo becomes a topo in the area straight away, so area admins can see it before any lines exist</li>
           <li>Photos with GPS are matched to the nearest boulder within 15&nbsp;m, shown as <strong>near boulder #N</strong>. That's only a hint for drawing</li>
           <li><strong>Photos to draw</strong> on the area's Topos page lists photos with no lines, or with a line still to draw</li>
-          <li>To draw on one: open the problem, choose <strong>New line</strong>, and pick the photo from the area's photos</li>
+          <li>Click a photo there (or <strong>Photo #N →</strong> after uploading) to draw its lines in the <a href="#topos" class="text-blue-600 hover:underline">topo workbench</a></li>
         </ul>
       </div>
     </section>
@@ -523,7 +523,16 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p class="font-medium text-gray-800">Uploading a topo</p>
         <p>Go to <strong>Admin → Topos → New</strong>. Upload the photo. Optionally upload a metadata JSON file (from the iOS app) to auto-link to problems.</p>
 
-        <p class="font-medium text-gray-800">Drawing lines</p>
+        <p class="font-medium text-gray-800">Topo workbench (quickest)</p>
+        <p>One page per photo to add every problem on it and draw all their lines without reloading. Open it from the area's <strong>Topos</strong> page (click a photo, or <strong>Photos to draw</strong>), straight after a photo upload, or from a topo or line page.</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Pick a problem on the right, or add one: filter the area's problems (ones <strong>on boulder</strong> first), or type a name and grade and <strong>Create and draw</strong>. New problems are placed on the matched boulder when the photo has GPS</li>
+          <li>Click along the line from bottom to top, then press <strong>Enter</strong>. The next problem without a line is picked for you</li>
+          <li>When they're all drawn, click <strong>Next photo to draw →</strong></li>
+        </ol>
+        <p class="text-xs text-gray-500">Keys: Enter save · Esc undo changes · Z undo point · N next undrawn problem · 1/2/3 line, start holds, not-in. On an already-drawn line the first click starts it afresh. ✕ removes a problem from the photo.</p>
+
+        <p class="font-medium text-gray-800">Drawing lines (one problem at a time)</p>
         <ol class="list-decimal list-inside space-y-1">
           <li>Open a problem's show page</li>
           <li>Click <strong>New line</strong> or edit an existing one</li>
