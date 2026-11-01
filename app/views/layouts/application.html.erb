@@ -2,8 +2,7 @@
 <!doctype html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= render "layouts/icons" %>
     <%= render "layouts/pwa_head" %>
 
     <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
