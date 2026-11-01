@@ -1,4 +1,6 @@
 <div class="w-full aspect-w-4 aspect-h-3 <%= klass %>">
   <div class="bg-gray-300 animate-pulse <%= klass %>"></div>
-  <%= image_tag topo_proxy_path(topo), class: "w-full object-cover #{klass}", data: { 'topo-line-target': 'image' } %>
+  <%# Admins may be looking at a photo the public proxy won't serve (unpublished) %>
+  <% src = admin_session? ? cdn_image_url(topo.photo.variant(:medium)) : topo_proxy_path(topo) %>
+  <%= image_tag src, class: "w-full object-cover #{klass}", data: { 'topo-line-target': 'image' } %>
 </div>

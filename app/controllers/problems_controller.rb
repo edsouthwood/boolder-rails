@@ -1,6 +1,8 @@
 class ProblemsController < ApplicationController
   def show
     @problem = Problem.find(params[:id])
+    return if hide_unpublished_area(@problem.area)
+
     @line = @problem.lines.published.first
   end
 

@@ -41,11 +41,13 @@ class Mapping::ContributionsController < ApplicationController
   def area_topos_for_problem(problem_id)
     problem = Problem.find_by(id: problem_id)
     return [] unless problem
+    return [] unless problem.area.published
+
     topo_ids = Line.joins(:problem)
                    .where(problems: { area_id: problem.area_id })
                    .pluck(:topo_id)
                    .uniq
-    Topo.where(id: topo_ids).order(id: :desc)
+    Topo.published.where(id: topo_ids).order(id: :desc)
   end
 
   def contribution_params

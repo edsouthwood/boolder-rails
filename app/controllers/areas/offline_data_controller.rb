@@ -2,6 +2,7 @@ module Areas
   class OfflineDataController < ApplicationController
     def show
       area = Area.find_by!(slug: params[:slug])
+      return if hide_unpublished_area(area)
 
       topo_ids = Topo.published
         .joins(lines: :problem)

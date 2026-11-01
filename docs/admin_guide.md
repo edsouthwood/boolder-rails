@@ -373,7 +373,7 @@ Areas are the top-level geographical groupings. Each area has problems, boulders
 - **Delete** — permanently removes the area and all its problems, boulders, topos, and circuits (super admin only)
 
 ### Publishing
-Toggle the `published` checkbox on the edit screen. Unpublished areas are hidden from the public map and API.
+Toggle the `published` checkbox on the edit screen. Unpublished areas are hidden from the public map and API, and their pages, problem pages, mapping pages and offline download return "not found" to the public, even to someone who guesses the address. Signed-in admins still see them. Photos are only served publicly when the photo is published *and* its area is; admin pages load photos another way, so you can still work on an unpublished area.
 
 ### Tags
 Available tags: `popular`, `beginner_friendly`, `family_friendly`, `dry_fast`

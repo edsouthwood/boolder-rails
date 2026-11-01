@@ -43,6 +43,14 @@ class Topo < ApplicationRecord
     self[:area_id] || problems.first&.area_id
   end
 
+  # Published, and in a published area (by its own area, or any of its problems')
+  def publicly_visible?
+    return false unless published
+
+    area_ids = ([ self[:area_id] ] + problems.reorder(nil).distinct.pluck(:area_id)).compact.uniq
+    area_ids.any? && Area.where(id: area_ids, published: true).exists?
+  end
+
   # Boulder nearest the photo's GPS position when it was uploaded to the inbox
   def suggested_boulder_id
     metadata&.dig("suggested_boulder_id")
