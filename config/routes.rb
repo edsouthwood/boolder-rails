@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       resources :areas, param: :slug do
         resources :problems, only: :index
         resources :topos,    only: :index
+        resources :photos,   only: [ :new, :create ]
         get  "map-editor",     to: "problems#map_editor",   as: :map_editor
         get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
         post "boulders",       to: "boulders#create",       as: :boulders

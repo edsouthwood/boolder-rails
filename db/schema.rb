@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -257,6 +257,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_140000) do
     t.json "metadata"
     t.integer "boulder_id"
     t.integer "position"
+    t.bigint "area_id"
+    t.index ["area_id"], name: "index_topos_on_area_id"
     t.index ["boulder_id", "position"], name: "index_topos_on_boulder_id_and_position", unique: true
     t.index ["boulder_id"], name: "index_topos_on_boulder_id"
   end
@@ -265,4 +267,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_140000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "boulders", "areas"
   add_foreign_key "problems", "areas"
+  add_foreign_key "topos", "areas"
 end

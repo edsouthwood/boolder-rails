@@ -9,21 +9,22 @@
 6. [Permission Levels](#permission-levels)
 7. [Managing Areas](#managing-areas)
 8. [Bulk Upload (Problems)](#bulk-upload-problems)
-9. [Importing Problems from Photos](#importing-from-photos)
-10. [Location Editor (Drag-and-Drop)](#location-editor)
-11. [Adding Boulders (Polygon Map Data)](#adding-boulders)
-12. [Boulder Editor (In-Browser)](#boulder-editor)
-13. [GeoJSON Import Workflow](#geojson-import-workflow)
-14. [Individual Problem Editing](#individual-problem-editing)
-15. [Problem Description](#problem-description)
-16. [Topos and Line Drawing](#topos-and-line-drawing)
-17. [Circuits](#circuits)
-18. [POIs and Routes](#pois-and-routes)
-19. [Contributions](#contributions)
-20. [Email Setup](#email-setup)
-21. [Language Support](#language-support)
-22. [Open Data Export](#open-data-export)
-23. [Offline Use (Map & Photos)](#offline-use)
+9. [Photo Inbox (Upload Many Photos)](#photo-inbox)
+10. [Importing Problems from Photos](#importing-from-photos)
+11. [Location Editor (Drag-and-Drop)](#location-editor)
+12. [Adding Boulders (Polygon Map Data)](#adding-boulders)
+13. [Boulder Editor (In-Browser)](#boulder-editor)
+14. [GeoJSON Import Workflow](#geojson-import-workflow)
+15. [Individual Problem Editing](#individual-problem-editing)
+16. [Problem Description](#problem-description)
+17. [Topos and Line Drawing](#topos-and-line-drawing)
+18. [Circuits](#circuits)
+19. [POIs and Routes](#pois-and-routes)
+20. [Contributions](#contributions)
+21. [Email Setup](#email-setup)
+22. [Language Support](#language-support)
+23. [Open Data Export](#open-data-export)
+24. [Offline Use (Map & Photos)](#offline-use)
 
 ---
 
@@ -410,6 +411,24 @@ If your CSV references images in `image_filename`, upload those image files in t
 - Each row creates one `Problem` record
 - If `image_filename` is provided, a `Topo` is created and attached — but with no line coordinates yet
 - Go to each problem's show page to draw lines on topos
+
+---
+
+## Photo Inbox (Upload Many Photos) {#photo-inbox}
+
+The quickest way to get a batch of topo photos onto the site. Any admin for the area can use it.
+
+1. Open the area, then **⋯ → Upload photos** (or **Upload photos** on the area's Topos page)
+2. Drop in as many photos as you like, or click to choose them. JPEG, PNG or WebP, up to 25 MB each
+3. They upload one at a time, each with a status line: whether it had GPS, and the boulder it was matched to. Keep the tab open until they finish; the browser warns you if you try to leave early
+
+What happens to each photo:
+
+- It becomes a topo in the area, even before any lines are drawn on it, so area admins can see and edit it
+- If it has GPS, the nearest boulder within 15 m is noted as **near boulder #N**. This is only a hint for you when drawing; the real link to a boulder is made once lines are drawn
+- The GPS position and compass heading are kept with the photo
+
+**Photos to draw** on the area's Topos page lists photos with no lines yet, plus any with a line still to draw (for example from a bulk upload). To draw a line on an inbox photo, open the problem, choose **New line**, and pick the photo from the area's existing photos.
 
 ---
 

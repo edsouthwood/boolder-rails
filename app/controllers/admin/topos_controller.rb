@@ -4,8 +4,9 @@ class Admin::ToposController < Admin::BaseController
   before_action :set_area_and_check_access, only: [ :index ]
 
   def index
-    topo_ids = Topo.joins(:problems).where(problems: { area_id: @area.id }).select(:id)
-    @topos = Topo.where(id: topo_ids).includes(lines: :problem)
+    @topos = Topo.in_area(@area).includes(lines: :problem).order(id: :desc)
+    @undrawn_count = @topos.undrawn.count
+    @topos = @topos.undrawn if params[:undrawn] == "1"
   end
 
   def new
@@ -69,7 +70,7 @@ class Admin::ToposController < Admin::BaseController
   def destroy
     set_topo
     # Read before destroying: the lines (and so the problems) go with the topo.
-    area = @topo.problems.first&.area
+    area = @topo.area_id && Area.find_by(id: @topo.area_id)
 
     if @topo.destroy
       flash[:notice] = "Topo destroyed"
@@ -92,7 +93,8 @@ class Admin::ToposController < Admin::BaseController
   end
 
   def require_topo_area_access
-    slug = Topo.find(params[:id]).problems.first&.area&.slug
+    area_id = Topo.find(params[:id]).area_id
+    slug = area_id && Area.find(area_id).slug
     # A topo with no lines belongs to no area, so only super admins may touch it.
     slug ? require_area_access(slug) : require_super_admin
   end

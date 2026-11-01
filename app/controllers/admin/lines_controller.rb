@@ -95,10 +95,6 @@ class Admin::LinesController < Admin::BaseController
 
   def area_topos_for(problem)
     return [] unless problem
-    topo_ids = Line.joins(:problem)
-                   .where(problems: { area_id: problem.area_id })
-                   .pluck(:topo_id)
-                   .uniq
-    Topo.where(id: topo_ids).order(id: :desc)
+    Topo.in_area(problem.area).order(id: :desc)
   end
 end
