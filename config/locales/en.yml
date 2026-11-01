@@ -125,7 +125,7 @@ en:
           how_to: Read the instructions
           warning_horizontal_html: 'Important: photos must be <span class=" underline">horizontal</span>.'
           problem: Problem
-          problem_url_label: Link (bleau.info or Boolder)
+          problem_url_label: Link to the problem (optional)
           ukc_url_label: UKC link (optional)
           boulder: Boulder photo
           boulder_description: Take a picture of the boulder with your phone.
