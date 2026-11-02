@@ -4,8 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby "3.4.12"
 
 gem "rails", "~> 8.1.0"
-# Security-patched 7.2 line; move to 8.x as its own upgrade
-gem "puma", "~> 7.2", ">= 7.2.1"
+gem "puma", "~> 8.0", ">= 8.0.2"
 gem "pg"
 gem "pg_search"
 gem "activerecord-postgis-adapter", "~> 11.1"
