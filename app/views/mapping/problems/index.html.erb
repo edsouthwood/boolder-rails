@@ -44,7 +44,7 @@
       </div>
 
       <div class="mt-8 px-4 sm:px-0">
-        <%= link_to t("views.mapping.problems.index.other_problem"), new_mapping_contribution_path, class: "text-granite" %>
+        <%= link_to t("views.mapping.problems.index.other_problem"), new_mapping_contribution_path(area_id: @area.id), class: "text-granite" %>
       </div>
     </div>
   </div>

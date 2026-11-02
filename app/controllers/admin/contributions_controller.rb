@@ -7,7 +7,7 @@ class Admin::ContributionsController < Admin::BaseController
     # Default to the pending queue on first visit; an explicit blank state means "all".
     @state = params.key?(:state) ? params[:state] : "pending"
 
-    arel = Contribution.includes(problem: :area).order(id: :desc)
+    arel = Contribution.includes(:area, problem: :area).order(id: :desc)
     if @state.in?(Contribution::STATES)
       session[:contributions_filter] = @state
       arel = arel.where(state: @state)
@@ -71,15 +71,29 @@ class Admin::ContributionsController < Admin::BaseController
       return redirect_to edit_admin_contribution_path(@contribution)
     end
 
+    new_area_name = params[:new_area_name].to_s.strip
     problem = Problem.new(new_problem_params)
     problem.location = @contribution.location if @contribution.location.present?
+    new_area = nil
 
-    if problem.save
+    ActiveRecord::Base.transaction do
+      if new_area_name.present?
+        # A crag that isn't on the site yet: kept unpublished until it's been reviewed.
+        new_area = Area.create!(name: new_area_name, slug: Area.unique_slug_for(new_area_name),
+                                published: false, priority: 3)
+        problem.area = new_area
+      end
+      problem.save!
       @contribution.update!(problem: problem)
-      flash[:notice] = "Problem ##{problem.id} created and linked. Accept the contribution to import the photo and line."
-    else
-      flash[:error] = "Could not create problem: #{problem.errors.full_messages.join(', ')}"
     end
+
+    flash[:notice] = [
+      ("New area \"#{new_area.name}\" created, unpublished: publish it from Areas once it's checked." if new_area),
+      "Problem ##{problem.id} created and linked. Accept the contribution to import the photo and line."
+    ].compact.join(" ")
+    redirect_to edit_admin_contribution_path(@contribution)
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:error] = "Could not create problem: #{e.record.errors.full_messages.join(', ')}"
     redirect_to edit_admin_contribution_path(@contribution)
   end
 
@@ -110,12 +124,25 @@ class Admin::ContributionsController < Admin::BaseController
 
   def load_edit_context
     @existing_topo = Topo.find_by(id: @contribution.existing_topo_id)
+    load_unlisted_context unless @contribution.problem
+
     @nearby_topos = []
     if (loc = @contribution.location)
       @nearby_topos = Topo.near_location(loc, 10)
                           .where.not(id: @contribution.existing_topo_id.to_i)
                           .includes(lines: :problem)
     end
+  end
+
+  # For an unlisted problem: which area it probably belongs to (the one the contributor
+  # chose, else the nearest within 1 km) and other waiting submissions from the same spot.
+  def load_unlisted_context
+    if @contribution.area
+      @suggested_area = @contribution.area
+    elsif (nearest = Area.nearest_to(@contribution.location))
+      @suggested_area, @suggested_area_distance = nearest
+    end
+    @nearby_unlisted = @contribution.nearby_unlisted.includes(:area)
   end
 
   # The transaction rolled back, so reload: the page must show the contribution as stored
@@ -125,13 +152,18 @@ class Admin::ContributionsController < Admin::BaseController
     flash.now[:error] = "Import failed, no changes were applied: #{error.message}"
   end
 
-  # Unlisted-problem contributions have no area yet, so only super admins may review them.
+  # An unlisted problem's area is the one the contributor chose, if any; with no area at
+  # all, only super admins may review it.
   def require_contribution_area_access
-    area = Contribution.find(params[:id]).problem&.area
+    contribution = Contribution.find(params[:id])
+    area = contribution.problem&.area || contribution.area
     area ? require_area_access(area.slug) : require_super_admin
   end
 
+  # Only super admins may add an area.
   def require_new_problem_area_access
+    return require_super_admin if params[:new_area_name].present?
+
     area = Area.find_by(id: params.dig(:problem, :area_id))
     require_area_access(area.slug) if area
   end

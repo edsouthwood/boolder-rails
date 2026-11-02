@@ -56,6 +56,35 @@ class Area < ApplicationRecord
     north_east: { lat: 50.65, lon: -3.75 }
   }.freeze
 
+  # The area closest to a point (an RGeo point, e.g. a contribution's GPS), measured to its
+  # nearest located problem or placed boulder outline. Returns [area, metres] or nil when
+  # nothing is within `within` metres.
+  def self.nearest_to(point, within: 1000)
+    return if point.blank?
+
+    geog = sanitize_sql_array([ "ST_GeogFromText(?)", point.as_text ])
+    sql = <<~SQL
+      SELECT area_id, MIN(d) AS d FROM (
+        SELECT area_id, ST_Distance(location, #{geog}) AS d FROM problems
+          WHERE location IS NOT NULL AND ST_DWithin(location, #{geog}, #{within.to_f})
+        UNION ALL
+        SELECT area_id, ST_Distance(polygon, #{geog}) AS d FROM boulders
+          WHERE polygon IS NOT NULL AND ST_DWithin(polygon, #{geog}, #{within.to_f})
+      ) near GROUP BY area_id ORDER BY d LIMIT 1
+    SQL
+    row = connection.select_one(sql)
+    row && [ find(row["area_id"]), row["d"].to_f ]
+  end
+
+  # A slug for a new area that doesn't clash with an existing one ("new-crag", "new-crag-2", …).
+  def self.unique_slug_for(name)
+    base = name.to_s.parameterize.presence || "area"
+    taken = where("LOWER(slug) LIKE ?", "#{sanitize_sql_like(base.downcase)}%").pluck(:slug).map(&:downcase)
+    return base unless taken.include?(base)
+
+    (2..).each { |n| return "#{base}-#{n}" unless taken.include?("#{base}-#{n}") }
+  end
+
   def bounds
     @bounds ||=
       bounds_from(boulders.placed.where(ignore_for_area_hull: false), :polygon) ||

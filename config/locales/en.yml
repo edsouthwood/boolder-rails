@@ -85,6 +85,8 @@ en:
           top_contributors_title: Top contributors
           top_contributors_subtitle: Ranked by accepted contributions
           no_contributors: No accepted contributions yet — be the first!
+          new_crag: Found a problem at a crag that isn't listed?
+          new_crag_link: Tell us about it
           contribution_count:
             one: "1 contribution"
             other: "%{count} contributions"
@@ -127,6 +129,9 @@ en:
           problem: Problem
           problem_url_label: Link to the problem (optional)
           ukc_url_label: UKC link (optional)
+          area_label: Crag / area (optional)
+          area_hint: If it's somewhere not on the site yet, tell us its name or where it is.
+          area_fixed: Area
           boulder: Boulder photo
           boulder_description: Take a picture of the boulder with your phone.
           boulder_description_existing: "We may already have a picture of that boulder. If we do please draw the line on the existing photo, otherwise please upload an image."

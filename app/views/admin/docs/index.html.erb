@@ -671,6 +671,12 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p>Accepting or closing returns you to the contributions list, with a banner summarising what was applied (e.g. "line added to Topo #74", with the topo linked) and how many contributions are still pending. Updates that don't change the state stay on the edit page.</p>
         <p class="font-medium text-gray-800">Unlisted problems</p>
         <p>Submissions for a problem that isn't on the map yet arrive with a name/URL but no linked problem. The edit page shows a <strong>Create &amp; link problem</strong> form — pick the area and set name/grade/steepness to create a real problem (it inherits the submitted GPS), then accept to import the photo and line.</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Area hint</strong> — a submission started from an area's mapping list carries that area (pre-selected; that area's admins can review it). Otherwise the contributor may type a crag name, shown on the edit page and marked <em>new?</em> in the list.</li>
+          <li><strong>Nearest area</strong> — with GPS, the closest area within 1 km is pre-selected and its distance shown; with nothing nearby the page says it may be a new crag.</li>
+          <li><strong>New crag</strong> (super admins) — fill in <strong>…or create a new area</strong> (pre-filled with the contributor's crag name when nothing is nearby). The area is created <strong>unpublished</strong> together with the problem; publish it from Areas once boulders are in.</li>
+          <li><strong>Nearby submissions</strong> — other pending unlisted submissions within 300 m are listed; after the first creates the area, the rest suggest it.</li>
+        </ul>
         <p class="font-medium text-gray-800">Bulk close</p>
         <p>On the list, tick rows and use <strong>Close selected</strong> to decline several at once, with an optional shared note for the decline emails. The edit page also records when each contribution was accepted/closed and by whom.</p>
         <p class="font-medium text-gray-800">Open data export</p>

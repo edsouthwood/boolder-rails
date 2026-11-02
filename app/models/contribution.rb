@@ -7,6 +7,18 @@ class Contribution < ApplicationRecord
   has_many_attached :location_drawings
   belongs_to :problem, optional: true
   belongs_to :existing_topo, class_name: "Topo", optional: true
+  # Which crag an unlisted problem is at: an existing area, or `area_name` free text for one
+  # that isn't on the site yet. Neither counts as content on its own.
+  belongs_to :area, optional: true
+
+  # Other unlisted submissions still waiting, near this one: likely the same new crag.
+  def nearby_unlisted(within: 300)
+    return Contribution.none if location.blank?
+
+    Contribution.pending.where(problem_id: nil).where.not(id: id)
+                .where("ST_DWithin(location, ST_GeogFromText(?), ?)", location.as_text, within)
+                .order(:id)
+  end
 
   audited
 
@@ -20,6 +32,7 @@ class Contribution < ApplicationRecord
   scope :closed, -> { where(state: "closed") }
 
   validates :state, inclusion: { in: STATES }
+  validates :area_name, length: { maximum: 200 }
   validates :contributor_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validate :must_have_some_content
   validate :existing_topo_in_problem_area

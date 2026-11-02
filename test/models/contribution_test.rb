@@ -197,4 +197,21 @@ class ContributionTest < ActiveSupport::TestCase
       excluded_areas: [ [ { "x" => 0.1, "y" => 0.1 } ] * 3, [ { "x" => 0.2, "y" => 0.2 } ] * 3 ])
     assert_equal [ "line", "1 start hold", "2 not-in areas" ], contribution.drawing_parts
   end
+
+  test "an area name on its own is not enough content" do
+    contribution = Contribution.new(state: "pending", area_name: "Some Crag")
+
+    assert_not contribution.valid?
+    assert_includes contribution.errors[:base].join, "must include"
+  end
+
+  test "nearby_unlisted finds other waiting unlisted submissions close by" do
+    f = RGeo::Geographic.spherical_factory(srid: 4326)
+    here = Contribution.create!(state: "pending", problem_name: "A", location: f.point(-3.9, 50.58))
+    near = Contribution.create!(state: "pending", problem_name: "B", location: f.point(-3.9010, 50.58))
+    Contribution.create!(state: "pending", problem_name: "Far", location: f.point(-3.95, 50.58))
+    Contribution.create!(state: "closed", problem_name: "Done", location: f.point(-3.9, 50.58))
+
+    assert_equal [ near ], here.nearby_unlisted.to_a
+  end
 end

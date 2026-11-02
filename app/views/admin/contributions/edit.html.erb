@@ -43,6 +43,11 @@
           <p class="text-sm font-semibold text-gray-800 mb-1">Unlisted problem</p>
           <% if @contribution.problem_name.present? %><p class="text-sm">Name: <%= @contribution.problem_name %></p><% end %>
           <% if @contribution.problem_url.present? %><p class="text-sm break-all">URL: <%= @contribution.problem_url %></p><% end %>
+          <% if @contribution.area %>
+            <p class="text-sm">Sent from the <%= @contribution.area.name %> mapping list</p>
+          <% elsif @contribution.area_name.present? %>
+            <p class="text-sm">Crag given by the contributor: <span class="font-medium"><%= @contribution.area_name %></span></p>
+          <% end %>
 
           <%= form_with url: create_problem_admin_contribution_path(@contribution), method: :post, class: "mt-4 space-y-3" do %>
             <p class="text-xs text-gray-500">Create a real problem from this submission, then accept the contribution to import the photo, line and GPS.</p>
@@ -50,9 +55,23 @@
             <div>
               <label class="block text-xs font-medium text-gray-700">Area</label>
               <%= select_tag "problem[area_id]",
-                    options_from_collection_for_select(Area.order(:name), :id, :name),
+                    options_from_collection_for_select(Area.order(:name), :id, :name, @suggested_area&.id),
                     include_blank: "Select an area…", class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+              <% if @suggested_area_distance %>
+                <p class="mt-1 text-xs text-gray-500">Suggested: <%= @suggested_area.name %>, nearest area to the GPS point (<%= number_with_delimiter(@suggested_area_distance.round) %> m away)</p>
+              <% elsif @contribution.location && !@suggested_area %>
+                <p class="mt-1 text-xs text-amber-700">No area within 1 km of the GPS point: this may be a new crag.</p>
+              <% end %>
             </div>
+
+            <% if current_admin_user.super_admin? %>
+              <div>
+                <label class="block text-xs font-medium text-gray-700">…or create a new area</label>
+                <%= text_field_tag "new_area_name", (@contribution.area_name unless @suggested_area),
+                      placeholder: "New area name", class: "mt-1 block w-full rounded-md border-gray-300 text-sm" %>
+                <p class="mt-1 text-xs text-gray-500">If filled in, this wins over the list. The area is created unpublished.</p>
+              </div>
+            <% end %>
 
             <div>
               <label class="block text-xs font-medium text-gray-700">Name</label>
@@ -75,6 +94,17 @@
             </div>
 
             <button type="submit" class="btn">Create &amp; link problem</button>
+          <% end %>
+
+          <% if @nearby_unlisted.present? %>
+            <div class="mt-4 border-t border-gray-200 pt-3">
+              <p class="text-xs font-medium text-gray-700"><%= pluralize(@nearby_unlisted.size, "other unlisted submission") %> within 300 m, probably the same crag:</p>
+              <ul class="mt-1 text-sm list-disc pl-5">
+                <% @nearby_unlisted.each do |other| %>
+                  <li><%= link_to "##{other.id} #{other.problem_name.presence || '(no name)'}", edit_admin_contribution_path(other) %></li>
+                <% end %>
+              </ul>
+            </div>
           <% end %>
         </div>
       <% end %>

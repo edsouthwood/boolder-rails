@@ -70,7 +70,17 @@
                     </span>
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap">
-                    <span class="text-sm text-gray-600"><%= contribution.problem&.area&.name || "-" %></span>
+                    <span class="text-sm text-gray-600">
+                      <% if contribution.problem %>
+                        <%= contribution.problem.area&.name || "-" %>
+                      <% elsif contribution.area %>
+                        <%= contribution.area.name %>
+                      <% elsif contribution.area_name.present? %>
+                        <span class="italic" title="Crag named by the contributor (not on the site yet)"><%= truncate(contribution.area_name, length: 40) %> <span class="text-xs text-amber-700">new?</span></span>
+                      <% else %>
+                        -
+                      <% end %>
+                    </span>
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <span class="text-sm text-gray-500" title="<%= contribution.created_at %>"><%= contribution.created_at.to_date.to_fs(:long) %></span>
