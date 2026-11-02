@@ -2,10 +2,18 @@ import { contours } from 'd3-contour'
 
 // Suggests boulder outlines from Environment Agency 1 m LiDAR (England only).
 //
-// Rock is anything standing MIN_HEIGHT above the ground model (DTM) whose first and
-// last laser returns agree: on rock both hit the same hard surface, in gorse or trees
-// the first return comes off the leaves and the last from deeper in. Tuned at Bonehill
-// (see docs/admin_guide.md). The EA's WCS reprojects to Web Mercator for us, using the
+// Two kinds of rock are found:
+// - Freestanding: anything standing MIN_HEIGHT above the ground model (DTM) whose first
+//   and last laser returns agree. On rock both hit the same hard surface; in gorse or
+//   trees the first return comes off the leaves and the last from deeper in. Tuned at
+//   Bonehill.
+// - Outcrops that rise out of the hillside: where the EA's ground model has kept the rock
+//   as ground (Saddle Tor), it sits 0 m "above ground", so instead we look for a face.
+//   The ground model itself is steeper than FACE_SLOPE and the surface drops FACE_DROP
+//   within 2 m. A bush can't do that, because bushes are stripped out of the ground model.
+//   The face is then widened FACE_STRIP uphill to stand for the top of the rock.
+//   Tuned at Saddle Tor: found 13 of 14 mapped boulders, against 2 for the first rule.
+// See docs/admin_guide.md. The EA's WCS reprojects to Web Mercator for us, using the
 // OSTN15 grid, so no British National Grid maths happens here.
 
 const WCS = 'https://environment.data.gov.uk/spatialdata/'
@@ -22,6 +30,9 @@ const PIXEL = 0.5           // m of ground per pixel requested
 const SMOOTHING = 0.4       // px, Gaussian sigma before tracing
 const SIMPLIFY = 0.25       // m, Douglas–Peucker tolerance
 const MIN_OVERLAP = 0.2     // share of a suggestion or boulder that counts as overlapping
+const FACE_SLOPE = 45       // degrees; ground model at least this steep
+const FACE_DROP = 1.5       // m; surface drop within a 2 m square
+const FACE_STRIP = 1.5      // m of rock top added uphill of a face
 export const MAX_SIZE = 1500 // px per side, so at most ~750 m across
 
 const R = 20037508.342789244
@@ -55,7 +66,13 @@ export async function suggestBoulders(bounds, boulders) {
   }
   const vegetation = median3x3(gap, w, h)
   for (let i = 0; i < n; i++) if (vegetation[i] > MAX_RETURN_GAP) above[i] = 0
-  const smooth = gaussian(above, w, h, SMOOTHING)
+  const freestanding = gaussian(above, w, h, SMOOTHING)
+
+  // Outcrops: faces in the ground model plus a strip uphill, on the same scale as heights
+  // so one contour at MIN_HEIGHT traces both kinds of rock
+  const { mask: outcrop, drop } = outcropFaces(first.data, ground.data, w, h, a / k)
+  const outcropGrid = gaussian(outcrop.map(v => v * 2 * MIN_HEIGHT), w, h, SMOOTHING)
+  const smooth = freestanding.map((v, i) => Math.max(v, outcropGrid[i]))
 
   const boulderIds = rasteriseBoulders(boulders, w, h, ([lng, lat]) => {
     const [x, y] = toMerc([lng, lat])
@@ -78,7 +95,7 @@ export async function suggestBoulders(bounds, boulders) {
     const overlapCounts = new Map()
     let top = 0
     for (const i of comp.pixels) {
-      top = Math.max(top, smooth[i])
+      top = Math.max(top, freestanding[i], drop[i])
       const id = boulderIds[i]
       if (id) overlapCounts.set(id, (overlapCounts.get(id) || 0) + 1)
     }
@@ -167,6 +184,56 @@ export async function readGeoTiff(buffer) {
     transform = [sx, t[3] - t[0] * sx, -sy, t[4] + t[1] * sy]
   }
   return { width, height, data, transform }
+}
+
+// ─── Outcrop faces ─────────────────────────────────────────────────────────────
+
+// Marks faces (ground model steeper than FACE_SLOPE with FACE_DROP of surface relief in
+// a 2 m square) and a FACE_STRIP band uphill of each. Also returns the drop at each face
+// pixel, used as the suggestion's height. metres = ground metres per pixel.
+export function outcropFaces(surface, ground, w, h, metres) {
+  const mask = new Float32Array(w * h)
+  const drop = new Float32Array(w * h)
+  const tanSlope = Math.tan(FACE_SLOPE * Math.PI / 180)
+  const radius = Math.max(1, Math.round(1 / metres)) // 2 m square
+  const steps = Math.round(FACE_STRIP / metres)
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x
+      const gx = (ground[i + 1] - ground[i - 1]) / (2 * metres)
+      const gy = (ground[i + w] - ground[i - w]) / (2 * metres)
+      const steepness = Math.hypot(gx, gy)
+      if (!(steepness > tanSlope)) continue // also skips NaN
+      let lo = Infinity, hi = -Infinity
+      for (let dy = -radius; dy <= radius; dy++) {
+        const yy = y + dy
+        if (yy < 0 || yy >= h) continue
+        for (let dx = -radius; dx <= radius; dx++) {
+          const xx = x + dx
+          if (xx < 0 || xx >= w) continue
+          const v = surface[yy * w + xx]
+          if (v < lo) lo = v
+          if (v > hi) hi = v
+        }
+      }
+      if (!(hi - lo > FACE_DROP)) continue
+      mask[i] = 1
+      drop[i] = hi - lo
+      // Walk uphill (the ground gradient's direction) onto the top of the rock,
+      // stopping if the ground starts falling again (we've gone over the top)
+      const ux = gx / steepness, uy = gy / steepness
+      let previous = ground[i]
+      for (let s = 1; s <= steps; s++) {
+        const sx = Math.round(x + ux * s), sy = Math.round(y + uy * s)
+        if (sx < 0 || sy < 0 || sx >= w || sy >= h) break
+        const j = sy * w + sx
+        if (!(ground[j] >= previous - 0.3)) break
+        mask[j] = 1
+        previous = ground[j]
+      }
+    }
+  }
+  return { mask, drop }
 }
 
 // ─── Raster helpers ────────────────────────────────────────────────────────────

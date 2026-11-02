@@ -451,6 +451,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
 
         <p class="font-medium text-gray-800">LiDAR boulder suggestions</p>
         <p>Click <strong>Suggest boulders in this view</strong>. The editor analyses the Environment Agency's LiDAR heights for the current view and outlines anything that looks like rock: <strong>amber</strong> where nothing is mapped, <strong>green</strong> where it overlaps a mapped boulder (the LiDAR is often the more accurate outline).</p>
+        <p>It finds both freestanding boulders and <strong>outcrops that rise out of the hillside</strong> (one vertical face, the back melting into the slope, as at Saddle Tor). For outcrops it looks for a vertical face and adds a 1.5&nbsp;m strip uphill for the top, so drag that uphill edge to where the rock really ends. A tor whose faces join up can come out as one big shape covering several boulders: trim it before using it. Earth banks and track cuttings can also look like faces.</p>
         <ul class="list-disc list-inside space-y-1">
           <li>Click a suggestion for its size and height, then <strong>Add as new boulder</strong> (saved and selected for tidying) or <strong>Replace outline of #N</strong> (not saved until you click <strong>Save changes</strong>)</li>
           <li>A selected boulder with an overlapping suggestion shows a <strong>Use LiDAR outline</strong> button</li>
