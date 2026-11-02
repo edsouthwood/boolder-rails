@@ -130,7 +130,7 @@ class Area < ApplicationRecord
   # that offline features rely on): every saved copy then shows "Update available".
   # 2: map-data problems carry areaName, area-labels carry path (offline search).
   # 3: problem pages link "Report a mistake"; the report form is saved too.
-  OFFLINE_FORMAT = 3
+  OFFLINE_FORMAT = 4
 
   # Literal (non-interpolated) "latest change + row count" expressions per table.
   OFFLINE_VERSION_LATEST = {
