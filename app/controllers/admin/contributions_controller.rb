@@ -21,13 +21,7 @@ class Admin::ContributionsController < Admin::BaseController
 
   def edit
     set_contribution
-    @existing_topo = Topo.find_by(id: @contribution.existing_topo_id)
-    @nearby_topos = []
-    if (loc = @contribution.location)
-      @nearby_topos = Topo.near_location(loc, 10)
-                          .where.not(id: @contribution.existing_topo_id.to_i)
-                          .includes(lines: :problem)
-    end
+    load_edit_context
   end
 
   def update
@@ -54,10 +48,16 @@ class Admin::ContributionsController < Admin::BaseController
       redirect_to edit_admin_contribution_path(@contribution)
     end
   rescue ActiveRecord::RecordInvalid => e
-    flash.now[:error] = @contribution.errors.full_messages.join("; ").presence || e.message
+    if e.record == @contribution
+      flash.now[:error] = @contribution.errors.full_messages.join("; ")
+    else
+      import_failed(e)
+    end
+    load_edit_context
     render "edit", status: :unprocessable_entity
   rescue => e
-    flash.now[:error] = "Import failed, no changes were applied: #{e.message}"
+    import_failed(e)
+    load_edit_context
     render "edit", status: :unprocessable_entity
   end
 
@@ -107,6 +107,23 @@ class Admin::ContributionsController < Admin::BaseController
   end
 
   private
+
+  def load_edit_context
+    @existing_topo = Topo.find_by(id: @contribution.existing_topo_id)
+    @nearby_topos = []
+    if (loc = @contribution.location)
+      @nearby_topos = Topo.near_location(loc, 10)
+                          .where.not(id: @contribution.existing_topo_id.to_i)
+                          .includes(lines: :problem)
+    end
+  end
+
+  # The transaction rolled back, so reload: the page must show the contribution as stored
+  # (still pending), not with the rejected state change still applied in memory.
+  def import_failed(error)
+    @contribution.reload
+    flash.now[:error] = "Import failed, no changes were applied: #{error.message}"
+  end
 
   # Unlisted-problem contributions have no area yet, so only super admins may review them.
   def require_contribution_area_access

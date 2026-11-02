@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 
 class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   # Bypass HTTP-basic admin auth without depending on credentials (so it works in CI too).
@@ -109,6 +110,25 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Contribution ##{contribution.id} accepted", response.body
     assert_select "a[href=?]", edit_admin_topo_path(topo), text: "line added to Topo ##{topo.id}"
     assert_match "pending remaining", response.body
+  end
+
+  test "a failed import re-renders the edit page with the error and leaves the contribution pending" do
+    topo = Topo.new(published: true)
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    point = RGeo::Geographic.spherical_factory(srid: 4326).point(-3.9, 50.58)
+    contribution = Contribution.create!(state: "pending", problem: @problem, existing_topo_id: topo.id,
+      location: point, line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
+
+    Line.stub(:create!, ->(*) { raise ActiveRecord::RecordInvalid.new(Line.new) }) do
+      patch admin_contribution_url(contribution, locale: :en),
+            params: { contribution: { state: "accepted", apply_photo: "1", apply_gps: "1" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match "Import failed, no changes were applied", response.body
+    assert_equal "pending", contribution.reload.state
+    assert_nil @problem.reload.location
   end
 
   test "closing redirects to the contributions list" do
