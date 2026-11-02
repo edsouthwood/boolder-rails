@@ -933,6 +933,15 @@ Like start holds, not-in areas belong to the line's photo, and contributors can 
 
 **Zoom:** to place holds or area corners precisely, use the **Zoom − / +** controls (1× or 2×) in the line editor's toolbar, then scroll to pan. The contribution form has the same − / + buttons next to Undo and Clear. Zoom only changes the view. Points are saved the same way at any zoom level.
 
+### Photo to the left / right (public problem pages) {#topo-neighbours}
+
+A problem page's photo has **‹ ›** buttons that step to the nearest photo to the left or right, as if you turned and walked along the rocks. The **← / →** keys do the same on a computer. Each button goes to the most climbed problem on that photo. `TopoNeighbours` (`app/services/topo_neighbours.rb`) works it out on the fly:
+
+- **Where each photo is:** the middle of its located problems, otherwise where the photo was taken (inbox photos).
+- **Which way it faces:** the compass heading saved with an inbox photo. Otherwise it's worked out from the boulder: you stand outside the outline looking in, so the facing direction runs from the nearest point on the outline to the boulder's middle.
+- **Left and right:** the nearest photo 20°–160° to that side, within 150 m, in the same area. Photos taken from the same spot (under 2 m apart) are skipped. Where possible, right then left comes straight back.
+- **No arrows** when a photo's facing direction can't be worked out, i.e. no heading and no boulder outline at its problems. Locating its problems on a drawn boulder makes the arrows appear. Hidden problems, unpublished photos and unpublished areas are never linked.
+
 ### Deleting a topo
 Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 

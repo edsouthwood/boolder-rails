@@ -30,6 +30,7 @@
       <li><a href="#contributions" class="hover:underline">Contributions</a></li>
       <li><a href="#offline-use" class="hover:underline">Offline Use (Map &amp; Photos)</a></li>
       <li><a href="#problems-by-grade" class="hover:underline">Problems by Grade and Map Grade Filters</a></li>
+      <li><a href="#topo-neighbours" class="hover:underline">Photo to the Left / Right</a></li>
       <li><a href="#topo-sheets" class="hover:underline">Printable Topo Sheets</a></li>
     </ol>
   </nav>
@@ -685,6 +686,19 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p>Every public page's footer ends with a credit line: "Built on Boolder, the open-source bouldering guide created for Fontainebleau. Thank you to the original Boolder team ♥". "Boolder" links to boolder.com; the thank-you links to the "Thank you, Boolder" section of the About page (<code>/en/about#thanks</code>). Wording lives in <code>config/locales/en.yml</code> under <code>views.layout.footer.boolder_credit_html</code> / <code>boolder_thanks</code>; markup in <code>app/views/layouts/_footer.html.erb</code>.</p>
         <p class="font-medium text-gray-800">Email delivery</p>
         <p>Contributor emails are skipped when the contribution has no email address (the field is optional on the public form). In <strong>development</strong> nothing is actually sent — emails are written to <code>tmp/mails/</code> for inspection. In <strong>production</strong>, sending uses the SMTP server configured under the <code>smtp</code> key in Rails credentials (address, port, username, password, from). See the "Email Setup" section of <code>docs/admin_guide.md</code> for the full checklist and how to test from the console.</p>
+      </div>
+    </section>
+
+    <%# Photo to the left / right %>
+    <section id="topo-neighbours">
+      <%= render "admin/docs/section_header", title: "Photo to the Left / Right" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>On a public problem page, <strong>‹ ›</strong> buttons on the photo (and the <strong>← / →</strong> keys) step to the nearest photo to the left or right, as if you walked along the rocks. Each goes to the most climbed problem on that photo.</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>A photo's position is the middle of its located problems (or where it was taken). Its facing direction is the inbox photo's compass heading, or is worked out from its boulder outline (you stand outside looking in).</li>
+          <li>The neighbour is the nearest photo 20°–160° to that side, within 150 m, in the same area; photos from the same spot are skipped.</li>
+          <li>No arrows show when the direction can't be worked out (no heading and no boulder outline). Locating the problems on a drawn boulder fixes that.</li>
+        </ul>
       </div>
     </section>
 

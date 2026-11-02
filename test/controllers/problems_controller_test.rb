@@ -81,4 +81,28 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "option[selected][value='5']"
   end
+
+  test "the topo has arrows to the photos to its left and right" do
+    d = 0.0002
+    ring = [ [ -d, -d ], [ d, -d ], [ d, d ], [ -d, d ], [ -d, -d ] ].map { |x, y| FACTORY.point(-3.9 + x, 50.6 + y) }
+    @area.boulders.create!(polygon: FACTORY.polygon(FACTORY.linear_ring(ring)))
+    @problem.update!(lat: 50.6 - d, lon: -3.9) # south face, looking north
+    east = @area.problems.create!(name: "East Face", steepness: "wall", lat: 50.6, lon: -3.9 + d)
+    topo = Topo.new
+    topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    Line.create!(problem: east, topo: topo, coordinates: @line.coordinates)
+
+    get area_problem_url(@area.slug, @problem, locale: :en)
+
+    assert_select "a[data-topo-nav-target=right][href=?][title=?]",
+                  area_problem_path(@area, east, locale: :en), "Photo to the right: East Face"
+    assert_select "a[data-topo-nav-target=left]", count: 0
+  end
+
+  test "no arrows when the photo's direction can't be worked out" do
+    get area_problem_url(@area.slug, @problem, locale: :en)
+    assert_response :success
+    assert_select "a[data-topo-nav-target]", count: 0
+  end
 end
