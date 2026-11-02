@@ -11,6 +11,12 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # script/uptime_check.sh treats the site as down without this text; change both together.
+  test "home page has the text the uptime check looks for" do
+    get root_localized_url(locale: :en)
+    assert_includes response.body, "Bouldering on Dartmoor"
+  end
+
   test "footer credits Boolder and links to the About page thanks" do
     get root_localized_url(locale: :en)
     assert_select "footer a[href='https://www.boolder.com']", text: "Boolder"

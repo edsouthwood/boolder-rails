@@ -215,6 +215,32 @@ it by pointing curl straight at Caddy:
 curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com/en
 ```
 
+### Uptime monitoring {#uptime-monitoring}
+
+A GitHub Actions workflow, `.github/workflows/uptime.yml`, checks the live site every
+15 minutes (at :07, :22, :37 and :52) from GitHub's servers. It still works when this machine
+or its internet connection is down. It runs `script/uptime_check.sh`, which checks that:
+
+- `https://bowda.edsouthwood.com/up` returns 200
+- `/en` returns 200 and contains "Bouldering on Dartmoor", so a Caddy error page or a parked
+  domain doesn't count as up
+- the HTTPS certificate has at least 14 days left (Caddy normally renews at 30)
+
+Each check is tried 3 times, a minute apart, before it counts as a failure. When a run fails,
+GitHub emails the account that last changed the workflow's `cron` line, and keeps doing so
+every 15 minutes until the site is back. If the emails don't arrive, check GitHub → Settings →
+Notifications → Actions ("Send notifications for failed workflows only" should be on, with
+email selected).
+
+- **History and on-demand checks:** the repository's Actions → Uptime page lists every run
+  with a summary; **Run workflow** checks straight away.
+- **From the server:** `UPTIME_RESOLVE=127.0.0.1 script/uptime_check.sh` (this skips the router
+  hairpin described above).
+- **Pausing it** (planned downtime): Actions → Uptime → ⋯ → Disable workflow, then enable it again.
+- **Caveats:** GitHub can run scheduled jobs a few minutes late when busy, and it pauses
+  schedules in a public repository after 60 days without commits, emailing a warning first.
+  Re-enable it from the Actions page if that happens.
+
 ### Error monitoring (Bugsnag)
 
 Errors are reported to [Bugsnag](https://app.bugsnag.com), production only, tagged
