@@ -43,8 +43,7 @@ gem "breadcrumbs_on_rails"
 gem "meta-tags"
 gem "sitemap_generator"
 gem "rack-attack"
-# Patched 2.x; json 3 is a major upgrade to take separately
-gem "json", "~> 2.19", ">= 2.19.9"
+gem "json", "~> 3.1"
 gem "invisible_captcha"
 
 group :development, :test do

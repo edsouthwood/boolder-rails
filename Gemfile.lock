@@ -177,7 +177,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jmespath (1.6.2)
-    json (2.21.2)
+    json (3.1.0)
     kamal (2.4.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -453,7 +453,7 @@ DEPENDENCIES
   image_processing (~> 1.2)
   importmap-rails
   invisible_captcha
-  json (~> 2.19, >= 2.19.9)
+  json (~> 3.1)
   kamal
   kaminari
   meta-tags

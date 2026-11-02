@@ -45,6 +45,38 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
     assert_response :no_content
   end
 
+  test "Reporting API reports are logged" do
+    reports = [ { "type" => "csp-violation", "body" => { "documentURL" => "https://example.test/en", "effectiveDirective" => "img-src",
+                                                         "blockedURL" => "https://evil.test/x.png", "sourceFile" => "https://example.test/en", "lineNumber" => 3 } } ]
+    logged = capture_log { post "/csp-violations", params: reports.to_json, headers: { "Content-Type" => "application/reports+json" } }
+
+    assert_response :no_content
+    assert_match "[CSP] img-src blocked https://evil.test/x.png on https://example.test/en (https://example.test/en:3)", logged
+  end
+
+  test "reports with non-ASCII URLs are logged" do
+    report = { "csp-report" => { "document-uri" => "https://example.test/en/dartmoor/café", "effective-directive" => "script-src", "blocked-uri" => "inline" } }
+    logged = capture_log { post "/csp-violations", params: report.to_json, headers: { "Content-Type" => "application/csp-report" } }
+
+    assert_response :no_content
+    assert_match "on https://example.test/en/dartmoor/café", logged
+  end
+
+  # json 3 rejects duplicate keys by default; such a body counts as malformed, not as an error.
+  test "reports with duplicate keys are ignored" do
+    body = '{"csp-report":{"blocked-uri":"inline"},"csp-report":{"blocked-uri":"eval"}}'
+    logged = capture_log { post "/csp-violations", params: body, headers: { "Content-Type" => "application/csp-report" } }
+
+    assert_response :no_content
+    assert_no_match "[CSP]", logged
+  end
+
+  test "oversized reports are cut off and ignored" do
+    body = { "csp-report" => { "blocked-uri" => "inline", "padding" => "x" * 20.kilobytes } }.to_json
+    post "/csp-violations", params: body, headers: { "Content-Type" => "application/csp-report" }
+    assert_response :no_content
+  end
+
   private
 
   def capture_log
