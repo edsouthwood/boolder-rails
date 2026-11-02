@@ -85,6 +85,13 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_nil other.reload.location, "a problem listed on another boulder isn't moved onto this one"
   end
 
+  test "the workbench links back to the area's topos" do
+    get workbench_admin_topo_path(@topo, locale: :en)
+
+    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", locale: :en), text: "← Topos at Mine"
+    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", undrawn: 1, locale: :en), text: "Photos to draw"
+  end
+
   test "area admins can't open another area's photo" do
     get workbench_admin_topo_path(topo(@theirs), locale: :en)
     assert_redirected_to admin_root_path(locale: :en)
