@@ -581,6 +581,11 @@ its edit form.
   **Show in boulder editor** zooms to an outline and selects it.
 - Deleting a named outline takes its problems off it (they're kept, on no boulder).
 
+On the public site, named outlines are labelled on the map when zoomed right in (from zoom 18;
+problem grades take priority where they overlap), and a problem page's breadcrumb ends with its
+boulder's name (Dartmoor › Bell Tor › Photo Arête). Offline downloads pick up new or changed
+names as "Update available".
+
 ## Photo Inbox (Upload Many Photos) {#photo-inbox}
 
 The quickest way to get a batch of topo photos onto the site. Any admin for the area can use it.

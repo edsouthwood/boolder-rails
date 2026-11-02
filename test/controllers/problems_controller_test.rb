@@ -11,6 +11,15 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
                          coordinates: [ { "x" => 0.2, "y" => 0.9 }, { "x" => 0.3, "y" => 0.5 }, { "x" => 0.4, "y" => 0.1 } ])
   end
 
+  test "the breadcrumb names the problem's boulder when it has one" do
+    get area_problem_url(@area.slug, @problem, locale: :en)
+    assert_select "div", text: "Photo Arête", count: 0
+
+    @problem.update!(boulder: @area.boulders.create!(name: "Photo Arête"))
+    get area_problem_url(@area.slug, @problem, locale: :en)
+    assert_select "div", text: "Photo Arête"
+  end
+
   test "shows start hold markers when the line has them" do
     @line.update!(start_holds: [ { "x" => 0.18, "y" => 0.86 }, { "x" => 0.25, "y" => 0.84 } ])
 

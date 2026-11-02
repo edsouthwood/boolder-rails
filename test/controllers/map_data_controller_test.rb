@@ -26,6 +26,15 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ @boulder_a.id ], features.filter_map { |f| f.dig("properties", "boulderId") }
   end
 
+  test "named boulders carry their name for the map labels" do
+    @boulder_a.update!(name: "Photo Arête")
+    get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
+
+    boulder = JSON.parse(response.body)["features"].find { |f| f.dig("properties", "boulderId") == @boulder_a.id }
+    assert_equal "Photo Arête", boulder.dig("properties", "boulderName")
+    assert_nil boulder.dig("properties", "name"), "not `name`, which offline search reads"
+  end
+
   test "scopes boulders to the requested area" do
     get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
     assert_response :success

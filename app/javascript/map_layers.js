@@ -68,6 +68,28 @@ export function addMapLayers(map, options) {
       },
       filter: ['match', ['geometry-type'], ['Polygon'], true, false],
     });
+
+    // Boulder names when zoomed right in. Added below the problem layers, so problem grade
+    // labels win any overlap and a name gives way rather than hiding a problem.
+    map.addLayer({
+      'id': 'boulder-names',
+      'type': 'symbol',
+      'source': 'problems',
+      'minzoom': 18,
+      'filter': ['all', ['match', ['geometry-type'], ['Polygon'], true, false], ['has', 'boulderName']],
+      'layout': {
+        'text-field': ['get', 'boulderName'],
+        'text-font': ['Noto Sans Bold'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 18, 11, 21, 14],
+        'text-max-width': 8,
+        'text-optional': true,
+      },
+      'paint': {
+        'text-color': '#222',
+        'text-halo-color': '#fff',
+        'text-halo-width': 1.5,
+      },
+    });
   }
 
   if(true) {

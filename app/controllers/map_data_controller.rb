@@ -41,8 +41,9 @@ class MapDataController < ApplicationController
       factory.feature(problem.location, problem.id, hash)
     end
 
+    # boulderName, not name: offline search reads `name` off every feature
     boulder_features = boulders.map do |boulder|
-      factory.feature(boulder.polygon, boulder.id, { boulderId: boulder.id })
+      factory.feature(boulder.polygon, boulder.id, { boulderId: boulder.id, boulderName: boulder.name }.compact)
     end
 
     feature_collection = factory.feature_collection(problem_features + boulder_features)
