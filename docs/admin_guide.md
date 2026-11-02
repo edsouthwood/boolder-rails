@@ -1029,6 +1029,27 @@ steepness. Creating it makes a real `Problem` (inheriting the contribution's GPS
 contribution to it, and then you accept the contribution as normal to import the photo and
 line.
 
+**Which area?** The form helps you place it:
+
+- If the contributor started from an area's mapping list ("Map a problem that isn't listed"),
+  that area comes with the submission and is pre-selected. Area admins can review these for
+  their own areas; unlisted submissions with no area stay super-admin only.
+- Otherwise the contributor can type a **Crag / area** name (optional). It's shown on the
+  edit page and in the contributions list (marked *new?*).
+- If the submission has GPS, the area nearest to it (by located problem or boulder outline,
+  within 1 km) is pre-selected, with the distance shown. If nothing is within 1 km, the page
+  says it may be a new crag.
+
+**New crags.** Super admins see an **…or create a new area** field, pre-filled with the
+contributor's crag name when no area is nearby. Filling it in creates the area **unpublished**
+(slug from the name, made unique) and puts the new problem in it, all in one step; if
+the problem can't be saved, the area isn't created either. Add boulders, check the details
+and publish it from **Areas** when it's ready.
+
+**Several submissions from one spot.** The page lists other pending unlisted submissions
+within 300 m. Once the first one has created the area, the others suggest it as the nearest
+area, so each is one click to link.
+
 ### Contributor emails and the moderator note
 
 Contributors who leave an email address are kept in the loop automatically:

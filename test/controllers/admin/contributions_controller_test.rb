@@ -168,6 +168,55 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil contribution.problem.location, "the new problem inherits the contribution's GPS"
   end
 
+  test "edit of an unlisted contribution suggests the nearest area and lists nearby submissions" do
+    f = RGeo::Geographic.spherical_factory(srid: 4326)
+    @problem.update!(location: f.point(-3.9, 50.58))
+    contribution = Contribution.create!(state: "pending", problem_name: "Secret Slab", location: f.point(-3.9001, 50.58))
+    other = Contribution.create!(state: "pending", problem_name: "Next Door", location: f.point(-3.9002, 50.58))
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+
+    assert_select "select[name='problem[area_id]'] option[selected][value=?]", @area.id.to_s
+    assert_match "nearest area to the GPS point", response.body
+    assert_select "a[href=?]", edit_admin_contribution_path(other)
+    assert_select "input[name=new_area_name]:not([value])"
+  end
+
+  test "edit of an unlisted contribution far from any area pre-fills the contributor's crag as a new area" do
+    point = RGeo::Geographic.spherical_factory(srid: 4326).point(-3.5, 50.3)
+    contribution = Contribution.create!(state: "pending", problem_name: "Far Out", area_name: "Lost Tor", location: point)
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+
+    assert_match "may be a new crag", response.body
+    assert_select "input[name=new_area_name][value=?]", "Lost Tor"
+  end
+
+  test "create_problem with a new area name creates the area unpublished and links the problem" do
+    contribution = Contribution.create!(state: "pending", problem_name: "Far Out", area_name: "Lost Tor")
+
+    assert_difference -> { Area.count } => 1, -> { Problem.count } => 1 do
+      post create_problem_admin_contribution_url(contribution, locale: :en),
+           params: { new_area_name: "Lost Tor", problem: { area_id: @area.id, name: "Far Out", steepness: "wall" } }
+    end
+
+    area = Area.find_by!(name: "Lost Tor")
+    assert_not area.published
+    assert_equal "lost-tor", area.slug
+    assert_equal area, contribution.reload.problem.area
+    assert_match "unpublished", flash[:notice]
+  end
+
+  test "create_problem rolls back the new area when the problem is invalid" do
+    contribution = Contribution.create!(state: "pending", problem_name: "Far Out")
+
+    assert_no_difference -> { Area.count } do
+      post create_problem_admin_contribution_url(contribution, locale: :en),
+           params: { new_area_name: "Lost Tor", problem: { name: "Far Out", steepness: "not-a-steepness" } }
+    end
+    assert_match "Could not create problem", flash[:error]
+  end
+
   test "create_problem refuses when a problem is already linked" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "x")
 

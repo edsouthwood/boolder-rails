@@ -1,5 +1,8 @@
 <p>
   <%= @contribution&.problem&.name || @contribution.problem_name %>
+  <% if @contribution.problem.nil? && (crag = @contribution.area&.name || @contribution.area_name).present? %>
+    (at <%= crag %>)
+  <% end %>
 </p>
 
 <p>

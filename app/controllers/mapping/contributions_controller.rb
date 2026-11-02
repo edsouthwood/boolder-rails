@@ -8,12 +8,15 @@ class Mapping::ContributionsController < ApplicationController
   end
 
   def new
-    @contribution = Contribution.new(**remembered_contributor, problem_id: params[:problem_id])
+    @contribution = Contribution.new(**remembered_contributor, problem_id: params[:problem_id],
+                                     area: published_area(params[:area_id]))
     @area_topos = area_topos_for_problem(params[:problem_id])
   end
 
   def create
     @contribution = Contribution.new(contribution_params)
+    # Only a published area can be named by id; an unknown crag goes in area_name.
+    @contribution.area = published_area(@contribution.area_id)
 
     remember_contributor(@contribution)
 
@@ -38,6 +41,10 @@ class Mapping::ContributionsController < ApplicationController
     redirect_to mapping_path
   end
 
+  def published_area(id)
+    Area.published.find_by(id: id) if id.present?
+  end
+
   def area_topos_for_problem(problem_id)
     problem = Problem.find_by(id: problem_id)
     return [] unless problem
@@ -54,7 +61,7 @@ class Mapping::ContributionsController < ApplicationController
     params.require(:contribution).permit(
       :location_lat, :location_lon, :comment, :problem_id, :contributor_name, :contributor_email,
       :problem_name, :problem_url, :ukc_url, :line_coordinates, :start_holds, :excluded_areas, :existing_topo_id,
-      photos: [], line_drawings: []
+      :area_id, :area_name, photos: [], line_drawings: []
     )
   end
 end

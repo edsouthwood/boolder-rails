@@ -74,4 +74,31 @@ class AreaTest < ActiveSupport::TestCase
     assert_equal({ one.id => one.offline_version, two.id => two.offline_version }, versions)
     assert_not_equal versions[one.id], versions[two.id]
   end
+
+  test "nearest_to finds the closest area by problem or boulder, within the limit" do
+    f = RGeo::Geographic.spherical_factory(srid: 4326)
+    near = Area.create!(name: "Near", slug: "near-test")
+    far = Area.create!(name: "Far", slug: "far-test")
+    near.problems.create!(steepness: "slab", location: f.point(-3.9000, 50.5800))
+    far.boulders.create!(polygon: f.polygon(f.linear_ring([ f.point(-3.9100, 50.5800), f.point(-3.9099, 50.5800),
+                                                            f.point(-3.9099, 50.5801), f.point(-3.9100, 50.5800) ])))
+
+    area, metres = Area.nearest_to(f.point(-3.9001, 50.5800))
+    assert_equal near, area
+    assert_in_delta 7, metres, 2
+
+    area, = Area.nearest_to(f.point(-3.9101, 50.5800))
+    assert_equal far, area
+
+    assert_nil Area.nearest_to(f.point(-3.5, 50.3))
+    assert_nil Area.nearest_to(nil)
+  end
+
+  test "unique_slug_for avoids existing slugs, ignoring case" do
+    Area.create!(name: "New Crag", slug: "New-Crag")
+    Area.create!(name: "New Crag 2", slug: "new-crag-2")
+
+    assert_equal "new-crag-3", Area.unique_slug_for("New Crag")
+    assert_equal "other-crag", Area.unique_slug_for("Other Crag")
+  end
 end

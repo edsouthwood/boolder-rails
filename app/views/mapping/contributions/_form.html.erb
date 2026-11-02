@@ -21,7 +21,8 @@
 <% end %>
 
 
-<% picker_bounds = @contribution.problem&.area&.serialized_bounds || {
+<% picker_area = @contribution.problem&.area || @contribution.area %>
+<% picker_bounds = picker_area&.serialized_bounds || {
      south_west: { lat: Area::DEFAULT_BOUNDS[:south_west][:lat], lng: Area::DEFAULT_BOUNDS[:south_west][:lon] },
      north_east: { lat: Area::DEFAULT_BOUNDS[:north_east][:lat], lng: Area::DEFAULT_BOUNDS[:north_east][:lon] }
    } %>
@@ -29,7 +30,7 @@
 <div class="space-y-10 divide-y divide-gray-900/10"
      data-controller="contribution-photo location-picker"
      data-location-picker-bounds-value="<%= picker_bounds.to_json %>"
-     <% if @contribution.problem&.area_id %>data-location-picker-map-data-url-value="<%= map_data_path(format: :geojson, area_id: @contribution.problem.area_id) %>"<% end %>>
+     <% if picker_area %>data-location-picker-map-data-url-value="<%= map_data_path(format: :geojson, area_id: picker_area.id) %>"<% end %>>
 
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
@@ -52,6 +53,20 @@
                 <div class="text-gray-500"><%= problem.area.name%></div>
             </div>
           <% else %>
+
+          <div class="sm:col-span-4 sm:col-start-1">
+            <% if @contribution.area %>
+              <p class="block text-sm font-medium leading-6 text-gray-900"><%= t("views.mapping.contributions.new.area_fixed") %></p>
+              <p class="mt-2 text-gray-700"><%= @contribution.area.name %></p>
+              <%= form.hidden_field :area_id %>
+            <% else %>
+              <%= form.label :area_name, t("views.mapping.contributions.new.area_label"), class: "block text-sm font-medium leading-6 text-gray-900" %>
+              <div class="mt-2">
+                <%= form.text_field :area_name, maxlength: 200, class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-granite sm:text-sm sm:leading-6" %>
+              </div>
+              <p class="mt-1 text-xs text-gray-500"><%= t("views.mapping.contributions.new.area_hint") %></p>
+            <% end %>
+          </div>
 
           <div class="sm:col-span-4 sm:col-start-1">
             <%= form.label :problem_name, class: "block text-sm font-medium leading-6 text-gray-900" %>

@@ -184,4 +184,31 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     delete admin_topo_url(topo, locale: :en)
     assert_redirected_to admin_area_problems_path(area_slug: @theirs.slug, circuit_id: "first")
   end
+
+  # --- unlisted contributions and new areas ---
+
+  test "area admin can review an unlisted contribution sent from their own area's list" do
+    contribution = Contribution.create!(state: "pending", problem_name: "New One", area: @mine)
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+    assert_response :success
+    assert_select "input[name=new_area_name]", count: 0
+  end
+
+  test "area admin cannot review an unlisted contribution with no area" do
+    contribution = Contribution.create!(state: "pending", problem_name: "Nowhere")
+
+    get edit_admin_contribution_url(contribution, locale: :en)
+    assert_redirected_to admin_root_path
+  end
+
+  test "area admin cannot create a new area from a contribution" do
+    contribution = Contribution.create!(state: "pending", problem_name: "New One", area: @mine)
+
+    assert_no_difference -> { Area.count } do
+      post create_problem_admin_contribution_url(contribution, locale: :en),
+           params: { new_area_name: "Sneaky Tor", problem: { area_id: @mine.id, name: "New One", steepness: "wall" } }
+    end
+    assert_redirected_to admin_root_path
+  end
 end

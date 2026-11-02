@@ -50,4 +50,37 @@ class Mapping::ContributionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal [ { "x" => 0.2, "y" => 0.8 } ], Contribution.last.start_holds
   end
+
+  test "starting from an area's list carries the published area into the unlisted form" do
+    @area.update!(published: true)
+    get new_mapping_contribution_url(locale: :en, area_id: @area.id)
+
+    assert_select "input[type=hidden][name='contribution[area_id]'][value=?]", @area.id.to_s
+    assert_select "input[name='contribution[area_name]']", count: 0
+  end
+
+  test "an unpublished or unknown area id is ignored and the crag name field shows instead" do
+    get new_mapping_contribution_url(locale: :en, area_id: @area.id)
+
+    assert_select "input[name='contribution[area_id]']", count: 0
+    assert_select "input[name='contribution[area_name]']"
+  end
+
+  test "saves the crag name of an unlisted problem and drops an unpublished area id" do
+    get new_mapping_contribution_url(locale: :en)
+    fields = css_select("form input[type=hidden][name]").to_h { |input| [ input["name"], input["value"].to_s ] }
+
+    travel 10.seconds do
+      assert_difference "Contribution.count", 1 do
+        post mapping_contributions_url(locale: :en), params: fields.merge(
+          "contribution[problem_name]" => "Hidden Arete", "contribution[area_name]" => "Secret Tor",
+          "contribution[area_id]" => @area.id.to_s
+        )
+      end
+    end
+
+    contribution = Contribution.last
+    assert_equal "Secret Tor", contribution.area_name
+    assert_nil contribution.area_id
+  end
 end

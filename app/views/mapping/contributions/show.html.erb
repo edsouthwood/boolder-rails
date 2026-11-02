@@ -29,6 +29,11 @@
         <p class="font-medium"><%= @contribution.problem_name %></p>
       <% end %>
 
+      <% if @contribution.problem.nil? && (crag = @contribution.area&.name || @contribution.area_name).present? %>
+        <%# Plain text: area_name is unmoderated, public, user-submitted input. %>
+        <p class="text-gray-700"><%= crag %></p>
+      <% end %>
+
       <% if @contribution.problem_url.present? %>
         <%# Rendered as plain text on purpose: this is unmoderated, public, user-submitted input. %>
         <p class="text-gray-700 break-all"><%= @contribution.problem_url %></p>
