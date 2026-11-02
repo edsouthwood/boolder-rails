@@ -1,0 +1,45 @@
+name: Uptime
+
+# Checks the live site every 15 minutes from GitHub's servers, so it still works when
+# the server (or its internet connection) is down. A failed run makes GitHub email the
+# account that last changed the schedule below (Settings → Notifications → Actions).
+# See "Uptime monitoring" in docs/admin_guide.md.
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: script/uptime_check.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Check https://bowda.edsouthwood.com
+        run: |
+          set -o pipefail
+          script/uptime_check.sh | tee result.txt
+        env:
+          UPTIME_RETRY_DELAY: "60"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '```'
+            cat result.txt 2>/dev/null || echo "No result: the check didn't run."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

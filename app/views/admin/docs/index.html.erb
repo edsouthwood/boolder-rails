@@ -10,7 +10,7 @@
       <li><a href="#project-structure" class="hover:underline">Project Structure</a></li>
       <li><a href="#development-server" class="hover:underline">Development Server</a></li>
       <li><a href="#backups" class="hover:underline">Backups</a></li>
-      <li><a href="#error-monitoring" class="hover:underline">Error Monitoring (Bugsnag)</a></li>
+      <li><a href="#error-monitoring" class="hover:underline">Uptime &amp; Error Monitoring</a></li>
       <li><a href="#admin-accounts" class="hover:underline">Admin Accounts</a></li>
       <li><a href="#permission-levels" class="hover:underline">Permission Levels</a></li>
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
@@ -149,8 +149,12 @@ systemctl --user status boolder-backup.timer</pre>
 
     <%# Error Monitoring %>
     <section id="error-monitoring">
-      <%= render "admin/docs/section_header", title: "Error Monitoring (Bugsnag)" %>
+      <%= render "admin/docs/section_header", title: "Uptime & Error Monitoring" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p class="font-medium text-gray-800">Uptime monitoring</p>
+        <p>Every 15 minutes a GitHub Actions workflow (<code class="bg-gray-100 px-1 rounded">.github/workflows/uptime.yml</code>) checks the live site from GitHub's servers: <code class="bg-gray-100 px-1 rounded">/up</code> returns 200, the home page loads with its "Bouldering on Dartmoor" heading, and the HTTPS certificate has at least 14 days left. Each check retries for about two minutes first, so a brief blip doesn't alert. When a run fails, GitHub emails the account that last changed the workflow's schedule, so you get an email every 15 minutes until the site is back. Runs and their results are on the repository's <strong>Actions → Uptime</strong> page, where <strong>Run workflow</strong> checks on demand. The same checks run from the server with <code class="bg-gray-100 px-1 rounded">UPTIME_RESOLVE=127.0.0.1 script/uptime_check.sh</code>.</p>
+
+        <p class="font-medium text-gray-800">Error monitoring</p>
         <p>Production errors are reported to <a href="https://app.bugsnag.com" class="text-granite-dark underline">Bugsnag</a>, tagged with the deployed git commit.</p>
         <ul class="list-disc list-inside space-y-1">
           <li><strong>Browser</strong> (JavaScript errors only; nothing is sent unless an error happens): <code class="bg-gray-100 px-1 rounded">app/views/layouts/_bugsnag.html.erb</code>, in every layout. Its API key is public by design. Offline pages skip it.</li>
