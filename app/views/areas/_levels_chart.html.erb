@@ -1,5 +1,5 @@
 <%
-counts    = 1.upto(8).map { |i| area.problems.with_location.level(i).count }
+counts    = 1.upto(8).map { |i| area.problems.shown.with_location.level(i).count }
 chart_max = [((counts.max.to_f / 5).ceil * 5), 5].max
 step_size = [chart_max / 5, 1].max
 

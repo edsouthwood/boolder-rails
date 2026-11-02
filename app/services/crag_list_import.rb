@@ -146,9 +146,12 @@ class CragListImport
   # choices: { row key => "new" | "skip" | "problem:<id>" } for :new and :possible_match rows
   #   (:new rows default to "new", :possible_match rows to "skip")
   # update_grades: ids of matched problems whose grade should become the list's
-  def apply!(choices: {}, update_grades: [])
+  # hide: row keys whose problems should be hidden; the rest are shown. nil leaves every
+  #   problem's hidden flag as it is.
+  def apply!(choices: {}, update_grades: [], hide: nil)
     choices = choices.to_h.transform_keys(&:to_s)
     update_grades = update_grades.map(&:to_i).to_set
+    hide = hide&.map(&:to_s)&.to_set
     summary = Hash.new(0)
 
     Boulder.transaction do
@@ -170,6 +173,10 @@ class CragListImport
           if row_plan.grade_differs? && update_grades.include?(problem.id)
             problem.grade = row_plan.row.grade
             summary[:grades_updated] += 1
+          end
+          if hide && problem.hidden != hide.include?(row_plan.row.key)
+            problem.hidden = !problem.hidden
+            summary[problem.hidden ? :hidden : :unhidden] += 1
           end
           problem.save! if problem.changed?
         end

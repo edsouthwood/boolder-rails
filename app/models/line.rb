@@ -38,7 +38,7 @@ class Line < ApplicationRecord
   end
 
   def secondary_lines
-    (topo.lines.reject { |l| l.problem.parent_id.present? } - [ self ]).
+    (topo.lines.reject { |l| l.problem.parent_id.present? || l.problem.hidden } - [ self ]).
       select { |l| l.problem.lines.published.first&.topo_id == self.topo_id } # TODO: simplify once we handle ordering of multiple lines
   end
 

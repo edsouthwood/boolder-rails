@@ -17,7 +17,7 @@ class PagesController < ApplicationController
   def downloads
     areas = Area.published.order(:name).to_a
     versions = Area.offline_versions(areas)
-    problem_counts = Problem.with_location.where(area_id: areas.map(&:id)).group(:area_id).count
+    problem_counts = Problem.shown.with_location.where(area_id: areas.map(&:id)).group(:area_id).count
 
     @offline_areas = areas.map do |area|
       {

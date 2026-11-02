@@ -143,4 +143,21 @@ class CragListImportTest < ActiveSupport::TestCase
     assert_equal outline, photo.reload.boulder
     assert_equal [ 1, 8, 0 ], summary.values_at(:outlines_named, :boulders_created, :moved)
   end
+  test "ticked rows are hidden, unticked ones shown, and no hide list leaves them alone" do
+    already = problem("Photo Wall", "4", hidden: true)
+    keep = problem("Photo Arête", "5")
+    list = "Block\n\t\tPhoto Wall\tf4\n\t\tPhoto Arête\tf5\n\t\tFresh\tf6A\n"
+    import = CragListImport.new(@area, list)
+    keys = import.preview.first.rows.to_h { [ _1.row.name, _1.row.key ] }
+
+    summary = import.apply!(hide: [ keys["Photo Arête"], keys["Fresh"] ])
+
+    assert_not already.reload.hidden, "unticked: shown again"
+    assert keep.reload.hidden
+    assert @area.problems.find_by!(name: "Fresh").hidden
+    assert_equal [ 2, 1 ], summary.values_at(:hidden, :unhidden)
+
+    CragListImport.new(@area, list).apply!
+    assert keep.reload.hidden, "without a hide list nothing changes"
+  end
 end

@@ -1,6 +1,14 @@
 class Admin::ProblemsController < Admin::BaseController
   before_action :require_index_area_access,   only: [ :index, :map_editor ]
-  before_action :require_problem_area_access, only: [ :new, :create, :show, :edit, :update, :destroy ]
+  before_action :require_problem_area_access, only: [ :new, :create, :show, :edit, :update, :destroy, :visibility ]
+
+  # Hide a problem from the public site and the to-do lists, or bring it back
+  def visibility
+    problem = Problem.find(params[:id])
+    problem.update!(hidden: params[:hidden] == "1")
+    flash[:notice] = "#{problem.name_with_fallback} #{problem.hidden ? "hidden" : "shown again"}"
+    redirect_to url_from(params[:return_to]) || admin_problem_path(problem)
+  end
 
   def index
     @area = Area.find_by(slug: params[:area_slug])

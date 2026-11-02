@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -246,11 +246,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.string "ukc_url"
     t.text "description"
     t.bigint "boulder_id"
+    t.boolean "hidden", default: false, null: false
     t.index ["area_id"], name: "index_problems_on_area_id"
     t.index ["boulder_id"], name: "index_problems_on_boulder_id"
     t.index ["circuit_id"], name: "index_problems_on_circuit_id"
     t.index ["grade"], name: "index_problems_on_grade"
     t.index ["has_line"], name: "index_problems_on_has_line"
+    t.index ["hidden"], name: "index_problems_on_hidden", where: "hidden"
     t.index ["location"], name: "index_problems_on_location", using: :gist
   end
 
