@@ -54,6 +54,37 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", workbench_admin_topo_path(next_topo, locale: :en), text: /Next photo/
   end
 
+  test "problems a list put on the photo's boulder come first, even without a location" do
+    @boulder.update!(name: "Photo Arête")
+    @mine.problems.create!(name: "Aardvark", steepness: "wall")
+    @mine.problems.create!(name: "Zebra", steepness: "wall", lat: 50.6, lon: -3.90014) # ~3 m off the outline
+    @mine.problems.create!(name: "Listed", steepness: "wall", boulder: @boulder)
+
+    get workbench_admin_topo_path(@topo, locale: :en)
+
+    candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
+    assert_equal [ "Listed", "Zebra", "Aardvark" ], candidates.map { |c| c["name"] }
+    assert_equal [ true, true, false ], candidates.map { |c| c["near"] }
+    assert_select "a", text: "Photo Arête"
+  end
+
+  test "an unnamed boulder offers a link to name it" do
+    get workbench_admin_topo_path(@topo, locale: :en)
+    assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: @boulder.id, locale: :en), text: "name it"
+  end
+
+  test "drawing a listed problem with no location places it on the photo's boulder" do
+    listed = @mine.problems.create!(name: "Listed", steepness: "wall", boulder: @boulder)
+    elsewhere = @mine.boulders.create!(name: "Elsewhere")
+    other = @mine.problems.create!(name: "Other", steepness: "wall", boulder: elsewhere)
+
+    post admin_lines_path(locale: :en), params: { line: { problem_id: listed.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path(locale: :en), params: { line: { problem_id: other.id, topo_id: @topo.id } }, as: :json
+
+    assert_in_delta 50.5999, listed.reload.lat, 1e-6
+    assert_nil other.reload.location, "a problem listed on another boulder isn't moved onto this one"
+  end
+
   test "area admins can't open another area's photo" do
     get workbench_admin_topo_path(topo(@theirs), locale: :en)
     assert_redirected_to admin_root_path(locale: :en)
@@ -73,6 +104,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_in_delta 50.5999, problem.lat, 1e-6
     assert_in_delta(-3.9, problem.lon, 1e-6)
     assert Boulder.containing(problem.location).exists?(@boulder.id)
+    assert_equal @boulder, problem.boulder
   end
 
   test "quick problem without GPS leaves the location for the location editor" do

@@ -26,6 +26,7 @@ class Admin::MapsController < Admin::BaseController
     boulder_features = Boulder.placed.where(area_id: area.id).map do |boulder|
       hash = {}.with_indifferent_access
       hash[:boulder_id] = boulder.id
+      hash[:name] = boulder.name
       hash[:updated_at] = boulder.updated_at
       hash.deep_transform_keys! { |key| key.camelize(:lower) }
 

@@ -563,7 +563,23 @@ inbox matched it there by GPS.
 How problems get a boulder: from an imported list, or when a located problem sits on an outline.
 That happens when the problem gets its location and when the outline is drawn. A boulder set by
 a list is never overwritten by location. (When this went live, existing located problems were
-linked to the outline they sit on.)
+linked to the outline they sit on.) To change one problem's boulder, use the **Boulder** menu on
+its edit form.
+
+### Naming outlines in the boulder editor
+
+- **Select an outline** and type in **Name** (the suggestions are your listed names that aren't
+  drawn yet), then press Enter or **Set**. Picking a listed name gives the outline that boulder's
+  problems, and the name leaves the "Not on the map yet" list. Typing any other name just renames
+  the outline; clearing the box removes the name. A name already used by another outline is
+  refused.
+- **Not on the map yet** (sidebar) lists listed names without an outline, with their number of
+  problems. Click one, then draw its outline as usual; it's saved onto that boulder.
+- **LiDAR suggestions**: a suggestion's popup also has **Add as a listed boulder…**, to turn it
+  straight into one of those names.
+- The Boulders list links straight in: **Draw it** opens the editor ready to draw that name, and
+  **Show in boulder editor** zooms to an outline and selects it.
+- Deleting a named outline takes its problems off it (they're kept, on no boulder).
 
 ## Photo Inbox (Upload Many Photos) {#photo-inbox}
 
@@ -859,8 +875,9 @@ One page per photo where you add every problem on it and draw all their lines, w
 
 How to use it:
 1. On the right, pick a problem that's already on the photo, or **add one**:
-   - type to filter the area's problems. Ones **on boulder** (near the photo's boulder) come first, then ones with **no line**
-   - or type a name and grade and click **Create and draw**. If the photo has GPS and was matched to a boulder, the new problem is placed on that boulder's edge nearest where you stood; otherwise place it later in the [Location Editor](#location-editor)
+   - type to filter the area's problems. Ones **on boulder** come first: those listed on the photo's boulder (from a problem list or set by hand), then ones located on or near it. Then ones with **no line**. The photo's boulder is named in the panel heading (an unnamed one has a **name it** link to the boulder editor)
+   - or type a name and grade and click **Create and draw**. The new problem is put on the photo's boulder. If the photo has GPS and was matched to a boulder, it's also placed on that boulder's edge nearest where you stood; otherwise place it later in the [Location Editor](#location-editor)
+   - adding a line for a problem that has no location yet places it the same way, unless a problem list put it on a different boulder
 2. Click along the line from bottom to top. Other lines on the photo show faintly with their names
 3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
 4. When every problem has a line, click **Next photo to draw →**
