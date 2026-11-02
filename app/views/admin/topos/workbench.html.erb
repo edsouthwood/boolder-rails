@@ -14,6 +14,9 @@
      data-topo-workbench-problem-url-value="<%= admin_problem_path(id: "__ID__") %>">
 
   <div class="min-w-0">
+    <p class="mb-2 text-sm">
+      <%= link_to "← Topos at #{@area.name}", admin_area_topos_path(area_slug: @area.slug), class: "text-granite hover:underline font-medium" %>
+    </p>
     <div class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
       <span class="font-semibold">Clicks add:</span>
       <label class="flex items-center gap-1">
@@ -103,7 +106,13 @@
       <% else %>
         <p class="text-xs text-gray-500 text-center">No other photos left to draw in <%= @area.name %>.</p>
       <% end %>
-      <p class="text-center"><%= link_to "Upload more photos", new_admin_area_photo_path(area_slug: @area.slug), class: "text-xs text-granite hover:underline" %></p>
+      <p class="text-center text-xs space-x-2">
+        <%= link_to "All topos", admin_area_topos_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+        <span class="text-gray-300" aria-hidden="true">·</span>
+        <%= link_to "Photos to draw", admin_area_topos_path(area_slug: @area.slug, undrawn: 1), class: "text-granite hover:underline" %>
+        <span class="text-gray-300" aria-hidden="true">·</span>
+        <%= link_to "Upload more photos", new_admin_area_photo_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+      </p>
     </div>
   </aside>
 </div>
