@@ -1,0 +1,107 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
+<% add_breadcrumb "Boulders", nil, class: "active" %>
+
+<% content_for :options do %>
+  <%= render "shared/dot_menu", items: [
+        { text: "Import problem list", link: admin_area_problem_list_path(area_slug: @area.slug) },
+        { text: "Upload photos", link: new_admin_area_photo_path(area_slug: @area.slug) },
+        { text: "Boulder editor", link: admin_area_boulder_editor_path(area_slug: @area.slug) },
+      ] %>
+<% end %>
+
+<% rows = @progress.rows %>
+<% shown = @show_all ? rows : rows.select(&:needs_topos?) %>
+<% counts = rows.group_by(&:status).transform_values(&:size) %>
+<% badge = "inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" %>
+<% colors = { not_on_map: "bg-gray-200 text-gray-800", needs_photos: "bg-amber-100 text-amber-800",
+              needs_lines: "bg-granite/10 text-granite-dark", done: "bg-green-100 text-green-800", no_problems: "bg-gray-100 text-gray-500" } %>
+<% tab = "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" %>
+
+<h1 class="my-3">Boulders at <%= @area.name %></h1>
+
+<p class="text-sm text-gray-600 mb-2">
+  <% parts = BoulderProgress::STATUSES.filter_map { |key, label| "#{counts[key]} #{label.downcase}" if counts[key] } %>
+  <%= pluralize(rows.size, "boulder") %><%= ": #{parts.join(", ")}" if parts.any? %>.
+  Names come from <%= link_to "importing a problem list", admin_area_problem_list_path(area_slug: @area.slug), class: "text-granite hover:underline" %>;
+  outlines without a name show as "Boulder #id".
+</p>
+
+<nav class="flex space-x-6 border-b border-gray-200 mb-4" aria-label="Filter">
+  <%= link_to "Needs topos (#{rows.count(&:needs_topos?)})", admin_area_boulders_path(area_slug: @area.slug),
+        class: "#{tab} #{@show_all ? "border-transparent text-gray-500 hover:text-gray-700" : "border-granite text-granite"}" %>
+  <%= link_to "All (#{rows.size})", admin_area_boulders_path(area_slug: @area.slug, show: "all"),
+        class: "#{tab} #{@show_all ? "border-granite text-granite" : "border-transparent text-gray-500 hover:text-gray-700"}" %>
+</nav>
+
+<% if shown.empty? %>
+  <p class="text-sm text-gray-600">
+    <%= rows.empty? ? "No boulders yet. Import a problem list, or draw outlines in the boulder editor." : "Nothing left to do here: every boulder with problems has photos and lines." %>
+  </p>
+<% else %>
+  <div class="bg-white shadow sm:rounded-md overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-2">Boulder</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Lines</th>
+          <th class="px-4 py-2">Photos</th>
+          <th class="px-4 py-2"><span class="sr-only">Next step</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <% shown.each do |row| %>
+          <% boulder = row.boulder %>
+          <tr class="align-top" id="boulder-<%= boulder.id %>">
+            <td class="px-4 py-2">
+              <details>
+                <summary class="cursor-pointer <%= boulder.name ? "font-medium text-gray-900" : "text-gray-500" %>"><%= boulder.display_name %></summary>
+                <ul class="mt-1 ml-4 text-gray-700">
+                  <% row.problems.each do |problem| %>
+                    <li>
+                      <%= problem.has_line ? "✓" : "·" %>
+                      <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %>
+                      <span class="text-gray-500"><%= problem.grade %></span>
+                    </li>
+                  <% end %>
+                  <% if row.problems.empty? %><li class="text-gray-500">No problems</li><% end %>
+                </ul>
+              </details>
+            </td>
+            <td class="px-4 py-2"><span class="<%= badge %> <%= colors[row.status] %>"><%= BoulderProgress::STATUSES[row.status] %></span></td>
+            <td class="px-4 py-2 whitespace-nowrap"><%= row.with_line %> of <%= row.problems.size %></td>
+            <td class="px-4 py-2"><%= row.photos.size %></td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <% case row.status %>
+              <% when :not_on_map %>
+                <%= link_to "Draw it →", admin_area_boulder_editor_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+              <% when :needs_photos %>
+                <%= link_to "Upload photos →", new_admin_area_photo_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+              <% when :needs_lines %>
+                <% if row.next_topo %>
+                  <%= link_to "Draw lines →", workbench_admin_topo_path(row.next_topo), class: "text-granite hover:underline" %>
+                <% else %>
+                  <%= link_to "Upload photos →", new_admin_area_photo_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% unassigned = @progress.unassigned_problems %>
+<% if unassigned.any? %>
+  <details class="mt-6 text-sm">
+    <summary class="cursor-pointer text-gray-700"><%= pluralize(unassigned.size, "problem") %> not on any boulder</summary>
+    <p class="mt-1 text-gray-600">Import a problem list that names their boulder, or give them a location on an outline.</p>
+    <ul class="mt-1 ml-4 text-gray-700">
+      <% unassigned.each do |problem| %>
+        <li><%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %> <span class="text-gray-500"><%= problem.grade %></span></li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

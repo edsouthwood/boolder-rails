@@ -1,0 +1,106 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
+<% add_breadcrumb "Import problem list", admin_area_problem_list_path(area_slug: @area.slug) %>
+<% add_breadcrumb "Preview", nil, class: "active" %>
+
+<% plans = @import.preview %>
+<% rows = plans.flat_map(&:rows) %>
+<% counts = rows.group_by(&:action).transform_values(&:size) %>
+<% new_boulders = plans.count { |plan| plan.boulder.nil? } %>
+<% named_outlines = plans.count(&:adopt) %>
+<% badge = "inline-block px-2 py-0.5 rounded-full text-xs font-medium" %>
+
+<h1 class="my-3">Preview: <%= @area.name %></h1>
+
+<p class="text-sm text-gray-700 mb-4">
+  <strong><%= pluralize(plans.size, "boulder") %></strong> (<%= new_boulders %> new<%= ", #{named_outlines} naming outlines already on the map" if named_outlines.positive? %>) and
+  <strong><%= pluralize(rows.size, "problem") %></strong>:
+  <%= counts[:match].to_i %> match existing problems,
+  <%= counts[:new].to_i %> new,
+  <%= counts[:possible_match].to_i %> to check.
+  <% if (differs = rows.count(&:grade_differs?)).positive? %>
+    <%= pluralize(differs, "grade differs", plural: "grades differ") %> from what's saved.
+  <% end %>
+  Nothing is saved until you click <strong>Import</strong>.
+</p>
+
+<% if @import.parsed.skipped.any? %>
+  <details class="mb-4 text-sm">
+    <summary class="cursor-pointer text-gray-600"><%= pluralize(@import.parsed.skipped.size, "line") %> ignored</summary>
+    <ul class="mt-2 ml-4 list-disc text-gray-600">
+      <% @import.parsed.skipped.each do |skipped| %>
+        <li>Line <%= skipped.line %>: <%= skipped.text %> (<%= skipped.reason %>)</li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>
+
+<%= form_with url: admin_area_problem_list_path(area_slug: @area.slug), method: :post, class: "space-y-6" do %>
+  <%= hidden_field_tag :text, @text %>
+
+  <% plans.each do |plan| %>
+    <section class="bg-white shadow sm:rounded-md">
+      <h2 class="px-4 py-3 border-b border-gray-200 text-base font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
+        <%= plan.name %>
+        <% if plan.boulder.nil? %>
+          <span class="<%= badge %> bg-granite/10 text-granite-dark">new boulder</span>
+        <% elsif plan.adopt %>
+          <span class="<%= badge %> bg-green-100 text-green-800">names outline #<%= plan.boulder.id %> (on the map)</span>
+        <% elsif plan.boulder.placed? %>
+          <span class="<%= badge %> bg-green-100 text-green-800">on the map</span>
+        <% else %>
+          <span class="<%= badge %> bg-gray-100 text-gray-700">already listed, not drawn</span>
+        <% end %>
+        <span class="text-sm font-normal text-gray-500"><%= pluralize(plan.rows.size, "problem") %></span>
+      </h2>
+      <% if plan.rows.any? %>
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+          <tbody class="divide-y divide-gray-100">
+            <% plan.rows.each do |row_plan| %>
+              <% row = row_plan.row %>
+              <tr class="align-top">
+                <td class="px-4 py-2 w-2/5"><%= row.name %></td>
+                <td class="px-2 py-2 w-16 text-gray-700"><%= row.grade %></td>
+                <td class="px-4 py-2">
+                  <% case row_plan.action %>
+                  <% when :match %>
+                    <span class="<%= badge %> bg-green-100 text-green-800">matches</span>
+                    <%= link_to "##{row_plan.problem.id}", admin_problem_path(row_plan.problem), class: "text-gray-500 hover:underline" %>
+                    <% if (from = plan.moved_from(row_plan)) %>
+                      <span class="<%= badge %> bg-amber-100 text-amber-800">moves from <%= from.display_name %></span>
+                    <% end %>
+                    <% if row_plan.grade_differs? %>
+                      <label class="block mt-1 text-gray-700">
+                        <%= check_box_tag "update_grades[]", row_plan.problem.id, false, id: "grade-#{row.key}" %>
+                        Change grade <%= row_plan.problem.grade.presence || "(none)" %> → <%= row.grade %>
+                      </label>
+                    <% end %>
+                  <% when :new %>
+                    <%= hidden_field_tag "choices[#{row.key}]", "skip", id: nil %>
+                    <label class="text-gray-700">
+                      <%= check_box_tag "choices[#{row.key}]", "new", true, id: "create-#{row.key}" %>
+                      <span class="<%= badge %> bg-granite/10 text-granite-dark">new</span> create it
+                    </label>
+                  <% when :possible_match %>
+                    <span class="<%= badge %> bg-amber-100 text-amber-800">check</span>
+                    <%= select_tag "choices[#{row.key}]",
+                          options_for_select(
+                            [ [ "Skip this row", "skip" ] ] +
+                            row_plan.similar.map { |problem| [ "Same as #{problem.name} (#{problem.grade.presence || "no grade"}, ##{problem.id})", "problem:#{problem.id}" ] } +
+                            [ [ "Create as a new problem", "new" ] ], "skip"),
+                          class: "ml-1 text-sm rounded-md border-gray-300" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </section>
+  <% end %>
+
+  <div class="flex items-center gap-4">
+    <button type="submit" class="btn">Import</button>
+    <%= link_to "Start again", admin_area_problem_list_path(area_slug: @area.slug), class: "text-sm text-gray-600 hover:underline" %>
+  </div>
+<% end %>

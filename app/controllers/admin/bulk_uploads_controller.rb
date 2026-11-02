@@ -43,7 +43,7 @@ class Admin::BulkUploadsController < Admin::BaseController
           end
 
           # Fuzzy match check
-          fuzzy_matches = existing_names.select { |n| levenshtein(n.downcase, name.downcase).between?(1, 2) }
+          fuzzy_matches = existing_names.select { |n| Levenshtein.distance(n.downcase, name.downcase).between?(1, 2) }
           if fuzzy_matches.any?
             fuzzy_warnings << "Row #{line_number} — #{name}: possible match with existing: #{fuzzy_matches.join(", ")}"
           end
@@ -115,23 +115,5 @@ class Admin::BulkUploadsController < Admin::BaseController
       flash[:fuzzy] = fuzzy_warnings.join(" | ") if fuzzy_warnings.any?
       redirect_to new_admin_bulk_upload_path
     end
-  end
-
-  private
-
-  def levenshtein(a, b)
-    return b.length if a.empty?
-    return a.length if b.empty?
-
-    matrix = Array.new(a.length + 1) { |i| Array.new(b.length + 1) { |j| i.zero? ? j : j.zero? ? i : 0 } }
-
-    (1..a.length).each do |i|
-      (1..b.length).each do |j|
-        cost = a[i - 1] == b[j - 1] ? 0 : 1
-        matrix[i][j] = [ matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost ].min
-      end
-    end
-
-    matrix[a.length][b.length]
   end
 end

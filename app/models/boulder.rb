@@ -1,5 +1,16 @@
 class Boulder < ApplicationRecord
   belongs_to :area
+  # Problems on this boulder: set by a problem-list import, by hand, or filled in when a
+  # located problem sits on the outline. Independent of location, so unlocated problems count.
+  has_many :problems, dependent: :nullify
+
+  normalizes :name, with: ->(s) { s.squish.presence }
+  validates :name, uniqueness: { scope: :area_id, case_sensitive: false }, allow_nil: true
+
+  # A boulder can exist before it's drawn (a name from a problem list); only placed ones
+  # have an outline to draw, match or measure.
+  scope :placed, -> { where.not(polygon: nil) }
+  scope :unplaced, -> { where(polygon: nil) }
 
   audited associated_with: :import
   attr_accessor :import # used by audited associated_with: :import
@@ -14,6 +25,31 @@ class Boulder < ApplicationRecord
   }
 
   after_save -> { Boulder.recompute_topos_later(boulder_ids: [ id ]) }, if: :saved_change_to_polygon?
+  after_save :claim_problems_on_outline, if: :saved_change_to_polygon?
+
+  def display_name
+    name.presence || "Boulder ##{id}"
+  end
+
+  def placed?
+    polygon.present?
+  end
+
+  # Takes over another boulder (usually an unplaced name from a problem list): its problems
+  # and name move onto this one, then it's deleted. Photos follow on the next recompute.
+  def absorb!(other)
+    raise ArgumentError, "can't absorb itself" if other.id == id
+    raise ArgumentError, "boulders are in different areas" if other.area_id != area_id
+
+    transaction do
+      other.problems.update_all(boulder_id: id)
+      new_name = other.name
+      other.destroy!
+      update!(name: new_name) if new_name.present?
+    end
+    Boulder.recompute_topos_later(boulder_ids: [ id ])
+    self
+  end
   after_destroy -> { Topo.where(boulder_id: id).update_all(boulder_id: nil, position: nil) }
 
   # Enqueue a topo recompute for the given boulders and for every boulder containing
@@ -26,6 +62,16 @@ class Boulder < ApplicationRecord
     return if ids.empty?
 
     ActiveRecord.after_all_transactions_commit { RecomputeBoulderToposJob.perform_later(ids) }
+  end
+
+  # Located problems on this outline that have no boulder yet now belong to it. Problems
+  # already assigned elsewhere (by a list or by hand) are left alone.
+  def claim_problems_on_outline
+    return if polygon.nil?
+
+    Problem.where(area_id: area_id, boulder_id: nil).
+      where("ST_DWithin(ST_GeomFromText(?, 4326), location::geometry, ?)", polygon.as_text, TOLERANCE).
+      update_all(boulder_id: id)
   end
 
   # Links this boulder's topos to it (topos.boulder_id) and orders them (topos.position)

@@ -1,0 +1,82 @@
+
+
+    Photo Arête
+    Little Roof
+    Main Roof
+    Beau Wall Area
+    Platform
+    Slab Block
+    Isolated Block
+    Summit Gully
+    Undercuts Wall
+
+		Name	Grade				
+Photo Arête
+		Traverse into Photo Arête 	f6B 				
+		Crack & Mantel 	f4 				
+		Photo Arête Eliminate 	f6B 				
+		Photo Arête 	f5 				
+		Photo Arête Sitter 	f5 				
+		Snider's Snatch 	f6B 				
+		Photo Wall 	f4 				
+		Kate Moss Rib 	f4+ 				
+		Kate Moss Slab 	f3+ 				
+Little Roof
+		Roof Jug 	f5 				
+		Roof Eliminate 	f6B 				
+		Wide Crack 	f4 				
+Main Roof
+Afternoon
+5 mins, Uphill
+		Craig's Sneaky Arête 	f6B 				
+		Crack Fox 	f5+ 				
+		Not Craig's Sneaky Arête 	f6A 				
+		Sneaky Pillar 	f4 				
+		Senile Ramblings 	f5+ 				
+		Ledge of the World 	f5+ 				
+		Widecombe Wanderer Low 	f4 				
+		Widecombe Wanderer Original 	f4 				
+		Dirty Crack 	f5 				
+		Hidden Jug 	f5+ 				
+		Bell End 	f6A 				
+		Flakey Roof 	f4+ 				
+		Bell Slab 	f4+ 				
+		Left Facing Groove 	f5 				
+		Groove 	f5+ 				
+Beau Wall Area
+		Bell Prow 	f6C 				
+		Bell Prow Eliminate 	f6C+ 				
+		Candy Floss 	f5+ 				
+		Hard Candy 	f6C+ 				
+		Hard Candy Stand 	f5 				
+		Famous Grouse 	f7A 				
+		Beau Wall 	f6B 				
+		Beauderline Arête 	f6B 				
+		Slab Wall 	f4 				
+Platform
+		Fine Arête 	f4 				
+		Chicken Head 	f5+ 				
+Slab Block
+		Narrow Front Face 	f6C 				
+		Left Crack 	f3 				
+		Slab Eliminate 	f4 				
+		Beginners Slab 	f3 				
+		Ding Dong 	f6A 				
+		Arête Sitter 	f6C 				
+Isolated Block
+		Block Arête 	f3+ 				
+		Rock Around the Block 	f4+ 				
+		Block Wall 	f4 				
+		Block Wall Right 	f3 				
+		Block Slab 	f3 				
+Summit Gully
+		Bell Tor Summit 	Summit 				
+		Martin's Arête 	f6A 				
+		Pasty Annihilator 	f6B 				
+		L'Offwidth 	f3 				
+		Rising Flakes 	f5 				
+		Crackity Crack 	f5 				
+Undercuts Wall
+		Wall Left of Undercuts 	f5 				
+		Undercut Wall 	f4 				
+		Traverse From Undercuts 	f6A 				
