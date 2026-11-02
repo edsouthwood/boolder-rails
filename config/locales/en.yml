@@ -32,6 +32,8 @@ en:
     beginner_friendly: This circuit is suited for beginners
   problem:
     no_name: No name
+    photo_left: "Photo to the left: %{problem}"
+    photo_right: "Photo to the right: %{problem}"
     start: Start
     see_on_bleau_info: See on bleau.info
     see_on_map: See on the map

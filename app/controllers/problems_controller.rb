@@ -5,6 +5,7 @@ class ProblemsController < ApplicationController
     return render_404 if @problem.hidden && !admin_session?
 
     @line = @problem.lines.published.first
+    @topo_neighbours = TopoNeighbours.new(@line.topo) if @line
   end
 
   # Browse every published problem of one grade, those with a topo photo first
