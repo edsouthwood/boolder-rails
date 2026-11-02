@@ -17,19 +17,26 @@
             <% @updates.each do |object, changes, audit| %>
               <tr class="place-content-start align-top">
                 <td class="px-6 py-2 whitespace-nowrap w-3/12">
-                  <div><%= [object.class.name, "##{object.id}"].join(' ') %></div>
+                  <% if object %>
+                    <div><%= [object.class.name, "##{object.id}"].join(' ') %></div>
+                  <% else %>
+                    <%# Applied imports list their audits; the record may have been deleted since. %>
+                    <div><%= audit.auditable_type %> #<%= audit.auditable_id %> <span class="text-gray-500">(since deleted)</span></div>
+                  <% end %>
                 </td>
                 <td class="px-6 py-2 whitespace-nowrap w-3/12">
-                  <div><%= problem_circle_view_with_name(object) if object.class.name == "Problem" %></div>
+                  <div><%= problem_circle_view_with_name(object) if object.is_a?(Problem) %></div>
                 </td>
                 <td class="px-6 py-2 whitespace-nowrap w-1/12">
-                  <% if object.conflicting_updated_at %>
+                  <% if object&.conflicting_updated_at %>
                     <span class="text-red-500">Conflict</span>
                   <% end %>
                 </td>
                 <td class="px-6 py-2 whitespace-nowrap w-8/12">
                   <% if audit&.action == "create" %>
                     <span class="text-granite">new</span>
+                  <% elsif audit&.action == "destroy" %>
+                    <span class="text-red-500">deleted</span>
                   <% else %>
                     <table>
                       <tbody>

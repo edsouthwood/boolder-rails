@@ -140,7 +140,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :topos, only: :show
-      resources :areas do
+      resources :areas, only: [] do # only the nested topos list exists
         resources :topos, only: :index
       end
     end
