@@ -1,10 +1,16 @@
 class Admin::BouldersController < Admin::BaseController
-  before_action :set_area_from_slug, only: [ :editor, :create ]
+  before_action :set_area_from_slug, only: [ :index, :editor, :create ]
   before_action :set_boulder,        only: [ :update, :destroy ]
   before_action -> { require_area_access((@area || @boulder.area).slug) }
 
+  # Which boulders still need photos or lines (most urgent first)
+  def index
+    @progress = BoulderProgress.new(@area)
+    @show_all = params[:show] == "all"
+  end
+
   def editor
-    @boulder_count = @area.boulders.count
+    @boulder_count = @area.boulders.placed.count
     @maptiler_key = Rails.application.credentials.dig(:maptiler, :api_key)
     @azure_maps_key = Rails.application.credentials.dig(:azure_maps, :subscription_key)
     @mapbox_key = ENV["MAPBOX_DEV_ACCESS_KEY"]

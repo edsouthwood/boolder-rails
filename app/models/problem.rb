@@ -10,11 +10,16 @@ class Problem < ApplicationRecord
   has_many :children, class_name: "Problem", foreign_key: "parent_id"
   belongs_to :parent, class_name: "Problem", optional: true
   belongs_to :bleau_problem, foreign_key: "bleau_info_id", optional: true
+  belongs_to :boulder, optional: true
   has_many :contribution_requests
   has_many :contributions
 
   audited except: [ :has_line, :ascents, :ratings, :ratings_average, :popularity, :featured ], associated_with: :import
   attr_accessor :import # used by audited associated_with: :import
+
+  # A newly located problem with no boulder belongs to the outline it sits on
+  before_save :fill_boulder_from_location, if: -> { boulder_id.nil? && location.present? && will_save_change_to_location? }
+  validate :boulder_in_same_area
 
   # Keep topos.boulder_id / position in step with where problems sit (old and new spot)
   after_save -> { Boulder.recompute_topos_later(points: saved_change_to_location) }, if: :saved_change_to_location?
@@ -235,6 +240,14 @@ class Problem < ApplicationRecord
   end
 
   private
+
+  def fill_boulder_from_location
+    self.boulder_id = Boulder.placed.where(area_id: area_id).containing(location).order(:id).pick(:id)
+  end
+
+  def boulder_in_same_area
+    errors.add(:boulder, "must be in the same area") if boulder && boulder.area_id != area_id
+  end
 
   def rebuild_location
     if @lat_input && @lon_input

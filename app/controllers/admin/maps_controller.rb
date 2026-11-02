@@ -23,7 +23,7 @@ class Admin::MapsController < Admin::BaseController
       factory.feature(problem.location, nil, hash)
     end
 
-    boulder_features = Boulder.where(area_id: area.id).map do |boulder|
+    boulder_features = Boulder.placed.where(area_id: area.id).map do |boulder|
       hash = {}.with_indifferent_access
       hash[:boulder_id] = boulder.id
       hash[:updated_at] = boulder.updated_at

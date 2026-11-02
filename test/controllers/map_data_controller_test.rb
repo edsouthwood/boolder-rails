@@ -16,6 +16,16 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
     @boulder_b = @area_b.boulders.create!(polygon: square(-3.8, 50.6))
   end
 
+  test "boulders that aren't drawn yet are left out" do
+    @area_a.boulders.create!(name: "Not drawn")
+    get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
+
+    assert_response :success
+    features = JSON.parse(response.body)["features"]
+    assert features.all? { |f| f["geometry"] }
+    assert_equal [ @boulder_a.id ], features.filter_map { |f| f.dig("properties", "boulderId") }
+  end
+
   test "scopes boulders to the requested area" do
     get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
     assert_response :success

@@ -15,6 +15,10 @@ Rails.application.routes.draw do
         get  "map-editor",     to: "problems#map_editor",   as: :map_editor
         get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
         post "boulders",       to: "boulders#create",       as: :boulders
+        get  "boulders",       to: "boulders#index"
+        get  "problem-list",         to: "problem_lists#new",     as: :problem_list
+        post "problem-list/preview", to: "problem_lists#preview", as: :problem_list_preview
+        post "problem-list",         to: "problem_lists#create"
       end
       resources :problems, except: :index
       resources :boulders, only: [ :update, :destroy ]

@@ -58,7 +58,7 @@ class Area < ApplicationRecord
 
   def bounds
     @bounds ||=
-      bounds_from(boulders.where(ignore_for_area_hull: false), :polygon) ||
+      bounds_from(boulders.placed.where(ignore_for_area_hull: false), :polygon) ||
       bounds_from(problems.with_location, :location) ||
       { south_west: nil, north_east: nil }
   end
@@ -92,6 +92,7 @@ class Area < ApplicationRecord
     Area.published
       .where.not(id: id)
       .joins(:boulders)
+      .merge(Boulder.placed)
       .group("areas.id")
       .order(Arel.sql("ST_Distance(ST_Centroid(ST_Collect(boulders.polygon::geometry)), ST_SetSRID(ST_MakePoint(#{center_lon}, #{center_lat}), 4326))"))
       .limit(limit)

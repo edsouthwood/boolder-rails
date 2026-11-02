@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -118,11 +118,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   end
 
   create_table "boulders", force: :cascade do |t|
-    t.geography "polygon", limit: {:srid=>4326, :type=>"st_polygon", :geographic=>true}
+    t.geography "polygon", limit: {srid: 4326, type: "st_polygon", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "area_id"
     t.boolean "ignore_for_area_hull", default: false, null: false
+    t.string "name"
+    t.index "area_id, lower((name)::text)", name: "index_boulders_on_area_id_and_lower_name", unique: true, where: "(name IS NOT NULL)"
     t.index ["area_id"], name: "index_boulders_on_area_id"
   end
 
@@ -136,9 +138,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   create_table "clusters", force: :cascade do |t|
     t.string "name"
     t.integer "main_area_id"
-    t.geography "center", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
-    t.geography "sw", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
-    t.geography "ne", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "center", limit: {srid: 4326, type: "st_point", geographic: true}
+    t.geography "sw", limit: {srid: 4326, type: "st_point", geographic: true}
+    t.geography "ne", limit: {srid: 4326, type: "st_point", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -146,7 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   create_table "contribution_requests", force: :cascade do |t|
     t.string "what", null: false
     t.string "state", null: false
-    t.geography "location_estimated", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "location_estimated", limit: {srid: 4326, type: "st_point", geographic: true}
     t.bigint "problem_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -159,7 +161,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   create_table "contributions", force: :cascade do |t|
     t.bigint "problem_id"
     t.text "comment"
-    t.geography "location", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "contributor_name"
@@ -216,7 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "poi_type", default: "parking", null: false
-    t.geography "location", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}
   end
 
   create_table "problems", force: :cascade do |t|
@@ -224,7 +226,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
     t.string "grade"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.geography "location", limit: {:srid=>4326, :type=>"st_point", :geographic=>true}
+    t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}
     t.bigint "circuit_id"
     t.string "circuit_number"
     t.string "steepness", null: false
@@ -243,7 +245,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
     t.boolean "has_line", default: false, null: false
     t.string "ukc_url"
     t.text "description"
+    t.bigint "boulder_id"
     t.index ["area_id"], name: "index_problems_on_area_id"
+    t.index ["boulder_id"], name: "index_problems_on_boulder_id"
     t.index ["circuit_id"], name: "index_problems_on_circuit_id"
     t.index ["grade"], name: "index_problems_on_grade"
     t.index ["has_line"], name: "index_problems_on_has_line"
@@ -267,5 +271,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_01_100000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "boulders", "areas"
   add_foreign_key "problems", "areas"
+  add_foreign_key "problems", "boulders", on_delete: :nullify
   add_foreign_key "topos", "areas"
 end

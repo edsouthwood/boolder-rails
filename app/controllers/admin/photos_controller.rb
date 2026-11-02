@@ -52,7 +52,7 @@ class Admin::PhotosController < Admin::BaseController
     return if lat.nil?
 
     point = Boulder.sanitize_sql_array([ "ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography", lon, lat ])
-    @area.boulders.
+    @area.boulders.placed.
       where("ST_DWithin(boulders.polygon, #{point}, ?)", BOULDER_MATCH_METRES).
       order(Arel.sql("ST_Distance(boulders.polygon, #{point})")).
       first

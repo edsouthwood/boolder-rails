@@ -10,6 +10,7 @@
 7. [Managing Areas](#managing-areas)
 8. [Bulk Upload (Problems)](#bulk-upload-problems)
 9. [Photo Inbox (Upload Many Photos)](#photo-inbox)
+    - [Boulder Names and Importing a Problem List](#boulder-names)
 10. [Importing Problems from Photos](#importing-from-photos)
 11. [Location Editor (Drag-and-Drop)](#location-editor)
 12. [Adding Boulders (Polygon Map Data)](#adding-boulders)
@@ -498,6 +499,71 @@ If your CSV references images in `image_filename`, upload those image files in t
 - Go to each problem's show page to draw lines on topos
 
 ---
+
+## Boulder Names and Importing a Problem List {#boulder-names}
+
+Boulders can have names, and every problem can say which boulder it's on, even before it has
+a location or a photo. That gives each area a to-do list of boulders still needing photos or
+lines.
+
+### Importing a problem list
+
+Area ⋯ menu → **Import problem list** (`/en/admin/areas/<slug>/problem-list`). Paste a list or
+choose a `.txt` file in this shape: each boulder's name on its own line, then its problems one
+per line, each starting with a tab, then the problem's name, a tab and its grade (`f6B`, `6b`,
+`f4+` and `5` all work):
+
+```
+  Photo Arête
+  Little Roof
+		Name	Grade
+Photo Arête
+		Photo Wall	f4
+		Photo Arête	f5
+Little Roof
+		Roof Jug	f5
+```
+
+- The list of names at the top is optional. When it's there, any other untabbed line is a note
+  (sun, approach…) and is ignored. Without it, a line straight after a boulder's name is a note.
+- Only names and grades are read. Other columns are ignored, and grades that aren't bouldering
+  grades (e.g. `Summit`) are skipped.
+- **Preview** shows every boulder and problem before anything is saved:
+  - **matches** is an existing problem with the same name. Accents, case and apostrophes are
+    ignored. It goes onto that boulder.
+  - **moves from …** means the problem was on another boulder.
+  - **Change grade a → b** shows where the list's grade differs. Grades only change if you tick
+    the box.
+  - **new** creates the problem. It's ticked by default; untick to leave it out.
+  - **check** is a near-identical name (one or two letters out). Pick the existing problem,
+    "Create as a new problem", or leave it on "Skip this row".
+  - **new boulder** is created without an outline, ready to be drawn.
+- Importing the same list again is safe: nothing is duplicated.
+
+### The Boulders list
+
+Area ⋯ menu → **Boulders** (`/en/admin/areas/<slug>/boulders`) lists every boulder, most urgent
+first:
+
+| Status | Meaning | Next step |
+| --- | --- | --- |
+| Not on map | A name with no outline yet | **Draw it** in the boulder editor |
+| Needs photos | Drawn, no photos | **Upload photos** (photo inbox) |
+| Needs lines | Some of its problems have no line | **Draw lines**: opens the workbench on its next photo |
+| Done | Every problem has a line | – |
+| No problems | Usually an unnamed outline | – |
+
+**Needs topos** (the default) hides Done and No problems; **All** shows everything. Click a
+boulder's name to see its problems (✓ = has a line). Problems on no boulder are listed at the
+bottom.
+
+A photo counts for a boulder when it has a line for one of the boulder's problems, or the photo
+inbox matched it there by GPS.
+
+How problems get a boulder: from an imported list, or when a located problem sits on an outline.
+That happens when the problem gets its location and when the outline is drawn. A boulder set by
+a list is never overwritten by location. (When this went live, existing located problems were
+linked to the outline they sit on.)
 
 ## Photo Inbox (Upload Many Photos) {#photo-inbox}
 

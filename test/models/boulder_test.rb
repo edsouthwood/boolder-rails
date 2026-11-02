@@ -98,4 +98,75 @@ class BoulderTest < ActiveSupport::TestCase
       @area.problems.create!(steepness: "wall", lat: LAT + 1, lon: LON)
     end
   end
+  test "placed boulders have an outline; unplaced ones are just a name" do
+    drawn = @area.boulders.create!(polygon: square)
+    named = @area.boulders.create!(name: "Photo Arête")
+
+    assert_equal [ drawn ], @area.boulders.placed.to_a
+    assert_equal [ named ], @area.boulders.unplaced.to_a
+    assert_equal "Photo Arête", named.display_name
+    assert_equal "Boulder ##{drawn.id}", drawn.display_name
+  end
+
+  test "names are unique within an area, ignoring case, and blanks are no name" do
+    @area.boulders.create!(name: "Photo Arête")
+
+    assert_not @area.boulders.new(name: "photo arête").valid?
+    assert Area.create!(name: "Other", slug: "other-names").boulders.new(name: "Photo Arête").valid?
+    assert_nil @area.boulders.create!(name: "  ").name
+  end
+
+  test "saving an outline claims the located problems on it that have no boulder" do
+    listed = @area.boulders.create!(name: "Listed")
+    free = @area.problems.create!(steepness: "wall", lat: LAT, lon: LON)
+    assigned = @area.problems.create!(steepness: "wall", lat: LAT, lon: LON, boulder: listed)
+
+    drawn = @area.boulders.create!(polygon: square)
+
+    assert_equal drawn, free.reload.boulder
+    assert_equal listed, assigned.reload.boulder
+  end
+
+  test "a newly located problem with no boulder takes the outline it sits on" do
+    drawn = @area.boulders.create!(polygon: square)
+    problem = @area.problems.create!(steepness: "wall")
+    assert_nil problem.boulder
+
+    problem.update!(lat: LAT, lon: LON)
+    assert_equal drawn, problem.reload.boulder
+
+    elsewhere = @area.boulders.create!(name: "Elsewhere")
+    moved = @area.problems.create!(steepness: "wall", boulder: elsewhere)
+    moved.update!(lat: LAT, lon: LON)
+    assert_equal elsewhere, moved.reload.boulder, "an explicit boulder is kept"
+  end
+
+  test "a problem's boulder must be in its area" do
+    other = Area.create!(name: "Other", slug: "other-area").boulders.create!(name: "There")
+    problem = @area.problems.new(steepness: "wall", boulder: other)
+
+    assert_not problem.valid?
+    assert_includes problem.errors[:boulder], "must be in the same area"
+  end
+
+  test "absorb takes over another boulder's name and problems" do
+    drawn = @area.boulders.create!(polygon: square)
+    listed = @area.boulders.create!(name: "Photo Arête")
+    problem = @area.problems.create!(steepness: "wall", boulder: listed)
+
+    drawn.absorb!(listed)
+
+    assert_equal "Photo Arête", drawn.reload.name
+    assert_equal drawn, problem.reload.boulder
+    assert_not Boulder.exists?(listed.id)
+    assert_raises(ArgumentError) { drawn.absorb!(drawn) }
+  end
+
+  test "deleting a boulder leaves its problems without one" do
+    listed = @area.boulders.create!(name: "Gone")
+    problem = @area.problems.create!(steepness: "wall", boulder: listed)
+
+    listed.destroy!
+    assert_nil problem.reload.boulder_id
+  end
 end

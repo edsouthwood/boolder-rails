@@ -16,6 +16,7 @@
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
       <li><a href="#photo-inbox" class="hover:underline">Photo Inbox (Upload Many Photos)</a></li>
+      <li><a href="#boulder-names" class="hover:underline">Boulder Names &amp; Problem Lists</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
       <li><a href="#adding-boulders" class="hover:underline">Adding Boulders (GeoJSON)</a></li>
@@ -294,6 +295,25 @@ Unnamed Slab,,slab,false,,,,</pre>
         <p>Upload image files alongside the CSV. Each image creates a topo — draw line coordinates on it afterwards in the topo editor.</p>
 
         <%= link_to "Go to Bulk Upload →", new_admin_bulk_upload_path, class: "inline-block mt-2 text-blue-600 hover:underline text-sm" %>
+      </div>
+    </section>
+
+    <%# Boulder names and problem lists %>
+    <section id="boulder-names">
+      <%= render "admin/docs/section_header", title: "Boulder Names & Problem Lists" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Boulders can have names, and each problem can say which boulder it's on before it has a location or photo.</p>
+        <p class="font-medium text-gray-800">Import problem list</p>
+        <p>Area ⋯ menu → <strong>Import problem list</strong>. Paste (or upload a <code>.txt</code>) each boulder's name on its own line, followed by its problems, one per line, starting with a tab: name, tab, grade (<code>f6B</code>, <code>6b</code>, <code>f4+</code> and <code>5</code> all work). An optional list of the names at the top makes any other untabbed lines count as notes, which are ignored. Only names and grades are read.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Preview</strong> first, then <strong>Import</strong>. Nothing is saved before that</li>
+          <li><strong>matches</strong>: an existing problem with the same name (accents, case and apostrophes ignored) goes onto that boulder. Grades only change if you tick <strong>Change grade</strong></li>
+          <li><strong>new</strong> problems are created (untick to leave one out); <strong>check</strong> rows have a near-identical name, so pick the existing problem, create a new one, or skip</li>
+          <li>New boulders are created without an outline, ready to draw. Importing the same list again changes nothing</li>
+        </ul>
+        <p class="font-medium text-gray-800">Boulders list</p>
+        <p>Area ⋯ menu → <strong>Boulders</strong>: every boulder, most urgent first. <strong>Not on map</strong> (draw it), <strong>Needs photos</strong> (upload), <strong>Needs lines</strong> (opens the workbench on its next photo), then <strong>Done</strong>. "Needs topos" hides finished boulders and outlines without problems. Click a name to see its problems (✓ = has a line); problems on no boulder are listed at the bottom.</p>
+        <p>A located problem sitting on an outline joins that boulder automatically, but a boulder set by a list is never overwritten.</p>
       </div>
     </section>
 
