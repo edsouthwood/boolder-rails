@@ -67,9 +67,18 @@ class ContributionImporter
     { start_holds: contribution.start_holds, excluded_areas: contribution.excluded_areas }
   end
 
+  # The contribute form accepts a two-click straight line, but a Line needs at least 3
+  # points, so a midpoint is added (the curve through three collinear points is straight).
+  # A single point isn't a line at all and is dropped; any start holds still import.
   def line_coordinates
     coords = contribution.line_coordinates
     coords = JSON.parse(coords) if coords.is_a?(String)
-    coords.presence
+    coords = Array(coords)
+    return nil if coords.size < 2
+    return coords unless coords.size == 2
+
+    a, b = coords
+    mid = { "x" => ((a["x"] + b["x"]) / 2.0).round(4), "y" => ((a["y"] + b["y"]) / 2.0).round(4) }
+    [ a, mid, b ]
   end
 end

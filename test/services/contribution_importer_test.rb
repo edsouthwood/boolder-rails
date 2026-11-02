@@ -97,6 +97,30 @@ class ContributionImporterTest < ActiveSupport::TestCase
     assert_equal areas, @problem.lines.find_by(topo: topo).excluded_areas
   end
 
+  test "a two-point straight line gets a midpoint so it imports" do
+    contribution = Contribution.create!(state: "accepted", problem: @problem, comment: "x",
+      line_coordinates: '[{"x":0.2,"y":0.8},{"x":0.4,"y":0.2}]')
+    contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "boulder.jpg", content_type: "image/jpeg")
+
+    importer = ContributionImporter.new(contribution)
+    importer.import!
+
+    assert_equal [ { "x" => 0.2, "y" => 0.8 }, { "x" => 0.3, "y" => 0.5 }, { "x" => 0.4, "y" => 0.2 } ],
+                 importer.created_line.reload.coordinates
+  end
+
+  test "a single point is dropped rather than failing the import" do
+    topo = existing_topo
+    contribution = Contribution.create!(state: "accepted", problem: @problem, existing_topo: topo,
+      line_coordinates: '[{"x":0.2,"y":0.8}]', start_holds: '[{"x":0.2,"y":0.8}]')
+
+    ContributionImporter.new(contribution).import!
+
+    line = @problem.lines.find_by(topo: topo)
+    assert_nil line.coordinates
+    assert_equal [ { "x" => 0.2, "y" => 0.8 } ], line.start_holds
+  end
+
   private
 
   def existing_topo
