@@ -150,8 +150,12 @@ and a test contribution can be submitted and accepted.
 
 ### Post-cutover tasks
 
-- **Rotate `ADMIN_PASSWORD`** in `.env` (the old one travelled over plain HTTP in dev mode),
-  then `systemctl --user restart boolder-rails`.
+- **Admin passwords** travelled over plain HTTP while the site ran in dev mode, before Caddy's
+  HTTPS. They live in the encrypted credentials (`admin_accounts`; see [Admin Accounts](#admin-accounts)),
+  not `.env`. Checked 2 Nov 2026: none appears in plain text anywhere in git history. Ed decided
+  not to rotate them, because the only exposure was interception of pre-June traffic. Change one
+  with `bin/rails credentials:edit` if that account was used on an untrusted network before June,
+  or if you have any reason to think it leaked.
 - **Fix the Caddyfile**: `/etc/caddy/Caddyfile` has a stray `EOF` line after the site block —
   remove it and `sudo systemctl reload caddy`.
 - **Set up email**: add the `smtp` credentials (see [Email Setup](#email-setup)).
@@ -358,11 +362,18 @@ and sampled photo files were byte-identical off-site. Worth repeating every few 
 
 ## Admin Accounts
 
-Admin credentials are stored in Rails encrypted credentials. To edit them:
+Admin credentials are stored in Rails encrypted credentials. To edit them, from the main
+checkout on the server:
 
 ```bash
-rails credentials:edit
+EDITOR=nano bin/rails credentials:edit
+systemctl --user restart boolder-rails
 ```
+
+Then commit the updated `config/credentials.yml.enc`; it's encrypted, and `config/master.key`
+is never committed. `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` are only a fallback, used
+when `admin_accounts` is empty, so changing them has no effect in production. Changing a
+password doesn't end existing sessions: those last up to 14 days or until **Sign out**.
 
 ### Legacy format (treated as super admin)
 ```yaml
