@@ -685,13 +685,20 @@ Click a suggestion (where it isn't covered by a boulder) for its size and height
 
 When a selected boulder has an overlapping suggestion, a **Use LiDAR outline** button also appears above Save changes.
 
-How it decides: rock is anything more than 1 m above the ground model whose first and last laser returns agree. In gorse and trees the first return comes off the leaves and the last from deeper in, so vegetation is ignored. Shapes under 3 m² are left out.
+How it decides: two kinds of rock are found.
+
+- **Freestanding rock** is anything more than 1 m above the ground model whose first and last laser returns agree. In gorse and trees the first return comes off the leaves and the last from deeper in, so vegetation is ignored.
+- **Outcrops that rise out of the hillside**, like Saddle Tor's, where one face is vertical and the back melts into the slope. The Environment Agency's ground model often keeps that rock as "ground", so it sits 0 m above ground, and its last-return data there just copies the ground model. Instead the editor looks for a **face**: the ground model itself is steeper than 45° *and* the surface drops more than 1.5 m within 2 m. A bush can't pass that test, because bushes are stripped out of the ground model. Each face is widened 1.5 m uphill to stand for the top of the rock.
+
+Shapes under 3 m² are left out. Tested Nov 2026: at Saddle Tor the face rule matched all 14 mapped boulders (the first rule alone matched none); at Bonehill results are unchanged (30 of 32).
 
 Limitations:
 
 - Touching boulders often merge into one shape. When a suggestion covers several mapped boulders, the popup and status line warn you — trim it to one rock before saving, or keep it if your separate outlines were really one boulder.
 - Outlines are only good to about ±0.5 m (1 m data), and boulders under 1 m high are missed.
-- Walls, banks and parked cars (on the survey day) can show up as rock.
+- Walls, banks and parked cars (on the survey day) can show up as rock. Steep earth banks, old field boundaries and track cuttings can pass the face test too.
+- A tor whose faces join up comes out as one big shape (the main block at Saddle Tor is about 900 m² covering 7 mapped boulders). It overlaps mapped boulders, so **Add all** leaves it alone; don't use **Replace outline** with it unless you trim it first.
+- Outcrop shapes follow the faces, so their uphill edge is only a guess (1.5 m back from the face). Drag it to where the rock really ends.
 - **Add all N unmapped as boulders** (appears under the suggest button) saves every amber suggestion in one go, after a confirmation. Look over the amber shapes first, because walls and parked cars can show up as rock. It stops at the first error; any it didn't add stay on the map.
 - The view must be under about 750 m across; zoom in if asked. Click **Suggest again for this view** after panning, or after editing boulders so the green/amber colouring is up to date.
 
