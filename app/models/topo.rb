@@ -56,6 +56,22 @@ class Topo < ApplicationRecord
     metadata&.dig("suggested_boulder_id")
   end
 
+  # The boulder this photo shows: linked by its lines, or matched by GPS when uploaded
+  def matched_boulder_id
+    boulder_id || suggested_boulder_id
+  end
+
+  # Where the photographer stood, snapped onto the matched boulder's outline, so a problem
+  # placed there lands on the boulder (and the photo gets linked to it). Nil without both.
+  def location_on_boulder
+    lat, lon = metadata_latitude, metadata_longitude
+    return unless lat && lon && matched_boulder_id
+
+    sql = Boulder.sanitize_sql_array([ "ST_AsText(ST_ClosestPoint(polygon::geometry, ST_SetSRID(ST_MakePoint(?, ?), 4326)))", lon.to_f, lat.to_f ])
+    wkt = Boulder.placed.where(id: matched_boulder_id).pick(Arel.sql(sql))
+    wkt && FACTORY.parse_wkt(wkt)
+  end
+
   def metadata_latitude
     metadata&.dig("latitude")
   end

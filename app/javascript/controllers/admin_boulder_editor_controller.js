@@ -8,6 +8,7 @@ export default class extends Controller {
     'status', 'count', 'countSuffix', 'boulderList', 'basemapBtn', 'attribution',
     'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
     'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
+    'nameInput', 'nameOptions', 'unplacedSection', 'unplacedList',
   ]
   static values = {
     geojsonUrl: String,
@@ -18,6 +19,10 @@ export default class extends Controller {
     maptilerKey: String,
     azureKey: String,
     mapboxKey: String,
+    // Names from a problem list with no outline yet: [{ id, name, problems }]
+    unplaced: { type: Array, default: [] },
+    focusId: Number, // ?boulder=ID: zoom to and select it
+    placeId: Number, // ?place=ID: start drawing the outline for that listed name
   }
 
   connect() {
@@ -36,6 +41,8 @@ export default class extends Controller {
     this.problemsVisible = false
     this.suggestions = []
     this.originalRing = null
+    this.unplaced = [...this.unplacedValue]
+    this.placing = null // the listed name being drawn, if any
 
     const bounds = this.boundsValue
     const sw = bounds.south_west
@@ -233,7 +240,10 @@ export default class extends Controller {
         this.map.getSource('boulders').setData(this.bouldersGeoJSON)
         this.map.getSource('problems').setData({ type: 'FeatureCollection', features: this.problemFeatures })
         this.renderBoulderList()
+        this.renderUnplaced()
         this.updateCount(this.bouldersGeoJSON.features.length)
+        if (this.hasFocusIdValue) this.focusBoulder(this.focusIdValue)
+        if (this.hasPlaceIdValue) this.startPlacing(this.placeIdValue)
       })
   }
 
@@ -287,12 +297,14 @@ export default class extends Controller {
       this.showToast('Need at least 3 points', true)
       return
     }
+    const placing = this.placing
     this.exitDrawingMode()
-    this.createBoulder(coordinates)
+    this.createBoulder(coordinates, placing)
   }
 
-  // Saves a new boulder outline; resolves to its id, or null if it wasn't saved
-  createBoulder(coordinates) {
+  // Saves a new boulder outline, or the outline of a listed name (placing); resolves to its
+  // id, or null if it wasn't saved
+  createBoulder(coordinates, placing = null) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
 
     return fetch(this.createUrlValue, {
@@ -302,7 +314,7 @@ export default class extends Controller {
         'Accept': 'application/json',
         'X-CSRF-Token': csrfToken,
       },
-      body: JSON.stringify({ coordinates }),
+      body: JSON.stringify({ coordinates, boulder_id: placing?.id }),
     })
       .then(r => r.json())
       .then(data => {
@@ -313,7 +325,7 @@ export default class extends Controller {
         const feature = {
           type: 'Feature',
           id: data.id,
-          properties: { boulderId: data.id },
+          properties: { boulderId: data.id, name: data.name || null },
           geometry: { type: 'Polygon', coordinates: [closed] }
         }
         this.bouldersGeoJSON.features.push(feature)
@@ -322,7 +334,11 @@ export default class extends Controller {
         const newCount = this.bouldersGeoJSON.features.length
         this.updateCount(newCount)
         this.renderBoulderList()
-        this.showToast(`Boulder #${data.id} saved`)
+        if (placing) {
+          this.unplaced = this.unplaced.filter(u => u.id !== placing.id)
+          this.renderUnplaced()
+        }
+        this.showToast(`${this.labelFor(data.id)} saved`)
         return data.id
       })
       .catch(() => { this.showToast('Network error — not saved', true); return null })
@@ -337,6 +353,7 @@ export default class extends Controller {
 
   exitDrawingMode() {
     this.state = 'idle'
+    this.placing = null
     this.drawCoords = []
     this.map.getCanvas().style.cursor = ''
     this.map.off('click', this._onMapClick)
@@ -367,7 +384,8 @@ export default class extends Controller {
     this.map.setFeatureState({ source: 'boulders', id: boulderId }, { selected: true })
 
     this.selectedActionsTarget.classList.remove('hidden')
-    this.setStatus(`Boulder #${boulderId} selected`)
+    this.setStatus(`${this.labelFor(boulderId)} selected`)
+    this.fillNameField(boulderId)
 
     // Find the feature and place draggable vertex markers
     const feature = this.bouldersGeoJSON.features.find(
@@ -469,7 +487,10 @@ export default class extends Controller {
 
   deleteSelected() {
     if (!this.selectedBoulderId) return
-    if (!confirm(`Delete boulder #${this.selectedBoulderId}?`)) return
+    const named = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == this.selectedBoulderId)?.properties.name
+    if (!confirm(named
+      ? `Delete ${named} (#${this.selectedBoulderId})? Its problems will no longer be on a boulder.`
+      : `Delete boulder #${this.selectedBoulderId}?`)) return
 
     const boulderId = this.selectedBoulderId
     const url = this.deleteUrlTemplateValue.replace('BOULDER_ID', boulderId)
@@ -498,36 +519,133 @@ export default class extends Controller {
 
   // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
+  // Named boulders first (alphabetically), then unnamed ones by id
   renderBoulderList() {
-    const ids = this.bouldersGeoJSON.features.map(f => f.properties.boulderId).sort((a, b) => a - b)
-    if (ids.length === 0) {
-      this.boulderListTarget.innerHTML = '<p class="italic text-gray-400 py-2">No boulders yet.</p>'
+    const features = [...this.bouldersGeoJSON.features].sort((a, b) => {
+      const [na, nb] = [a.properties.name, b.properties.name]
+      if (na && nb) return na.localeCompare(nb)
+      if (na || nb) return na ? -1 : 1
+      return a.properties.boulderId - b.properties.boulderId
+    })
+    this.boulderListTarget.replaceChildren()
+    if (features.length === 0) {
+      this.boulderListTarget.append(this.element_('p', 'italic text-gray-400 py-2', 'No boulders yet.'))
       return
     }
-    this.boulderListTarget.innerHTML = ids.map(id =>
-      `<div class="py-1 cursor-pointer hover:text-granite-dark" data-boulder-id="${id}" data-action="click->admin-boulder-editor#sidebarClick">
-        Boulder #${id}
-      </div>`
-    ).join('')
+    features.forEach(f => {
+      const row = this.element_('div', 'py-1 cursor-pointer hover:text-granite-dark', this.labelFor(f.properties.boulderId))
+      if (f.properties.name) row.classList.add('text-gray-800')
+      row.dataset.boulderId = f.properties.boulderId
+      row.dataset.action = 'click->admin-boulder-editor#sidebarClick'
+      this.boulderListTarget.append(row)
+    })
   }
 
   sidebarClick(e) {
-    const id = parseInt(e.currentTarget.dataset.boulderId, 10)
     if (this.state !== 'idle' && this.state !== 'selected') return
+    this.focusBoulder(parseInt(e.currentTarget.dataset.boulderId, 10))
+  }
+
+  // Selects a boulder and flies to it
+  focusBoulder(id) {
+    const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == id)
+    if (!feature) return
     this.deselect()
     this.selectBoulder(id)
+    const coords = feature.geometry.coordinates[0]
+    const lngs = coords.map(c => c[0])
+    const lats = coords.map(c => c[1])
+    this.map.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: this.fitPadding(80), maxZoom: 20 }
+    )
+  }
 
-    // Fly to the boulder
-    const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == id)
-    if (feature) {
-      const coords = feature.geometry.coordinates[0]
-      const lngs = coords.map(c => c[0])
-      const lats = coords.map(c => c[1])
-      this.map.fitBounds(
-        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { padding: this.fitPadding(80), maxZoom: 20 }
-      )
-    }
+  labelFor(boulderId) {
+    const name = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)?.properties.name
+    return name ? `${name} (#${boulderId})` : `Boulder #${boulderId}`
+  }
+
+  element_(tag, className, text) {
+    const el = document.createElement(tag)
+    if (className) el.className = className
+    if (text != null) el.textContent = text
+    return el
+  }
+
+  // ─── Names ──────────────────────────────────────────────────────────────────
+
+  fillNameField(boulderId) {
+    const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)
+    this.nameInputTarget.value = feature?.properties.name || ''
+    this.nameOptionsTarget.replaceChildren(...this.unplaced.map(u => {
+      const option = document.createElement('option')
+      option.value = u.name
+      option.label = `${u.problems} problem${u.problems === 1 ? '' : 's'}, not on the map yet`
+      return option
+    }))
+  }
+
+  // Names the selected outline. A listed name (not on the map yet) merges into it, bringing
+  // that boulder's problems with it.
+  saveName(event) {
+    event?.preventDefault()
+    if (!this.selectedBoulderId) return
+    const boulderId = this.selectedBoulderId
+    const url = this.updateUrlTemplateValue.replace('BOULDER_ID', boulderId)
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+    fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ name: this.nameInputTarget.value }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { this.showToast(data.error, true); return }
+        const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)
+        if (feature) feature.properties.name = data.name || null
+        const absorbed = this.unplaced.find(u => u.id === data.absorbed_id)
+        if (absorbed) {
+          this.unplaced = this.unplaced.filter(u => u.id !== absorbed.id)
+          this.renderUnplaced()
+        }
+        this.renderBoulderList()
+        if (this.selectedBoulderId == boulderId) {
+          this.fillNameField(boulderId)
+          this.setStatus(`${this.labelFor(boulderId)} selected`)
+        }
+        this.showToast(absorbed
+          ? `Named ${data.name}: ${absorbed.problems} problem${absorbed.problems === 1 ? '' : 's'} now on #${boulderId}`
+          : (data.name ? `Named ${data.name}` : `Boulder #${boulderId} has no name`))
+      })
+      .catch(() => this.showToast('Network error — not saved', true))
+  }
+
+  renderUnplaced() {
+    this.unplacedSectionTarget.classList.toggle('hidden', this.unplaced.length === 0)
+    this.unplacedListTarget.replaceChildren(...this.unplaced.map(u => {
+      const row = this.element_('button', 'block w-full text-left py-0.5 text-gray-700 hover:text-granite-dark', u.name)
+      row.type = 'button'
+      row.append(this.element_('span', 'text-gray-400', ` · ${u.problems}`))
+      row.dataset.boulderId = u.id
+      row.dataset.action = 'click->admin-boulder-editor#placeClick'
+      return row
+    }))
+  }
+
+  placeClick(e) {
+    this.startPlacing(parseInt(e.currentTarget.dataset.boulderId, 10))
+  }
+
+  // Draw mode for a listed name: the finished outline is saved onto that boulder
+  startPlacing(id) {
+    const listed = this.unplaced.find(u => u.id === id)
+    if (!listed) return
+    if (this.state === 'drawing') this.exitDrawingMode()
+    this.startDrawing()
+    this.placing = listed
+    this.setStatus(`Drawing ${listed.name}: click to add vertices…`)
   }
 
   // ─── Problem marker toggle ────────────────────────────────────────────────────
@@ -722,21 +840,33 @@ export default class extends Controller {
       button(`Replace outline of #${id}`, true, () => this.replaceWithSuggestion(id, s))
     )
     button('Add as new boulder', s.overlaps.length === 0, () => this.addSuggestion(index))
+    if (this.unplaced.length) {
+      const select = document.createElement('select')
+      select.className = 'px-1 py-1 rounded border border-gray-300 bg-white text-gray-700'
+      select.append(new Option('Add as a listed boulder…', ''), ...this.unplaced.map(u => new Option(u.name, u.id)))
+      select.addEventListener('change', () => {
+        const listed = this.unplaced.find(u => u.id === Number(select.value))
+        if (!listed) return
+        this.suggestionPopup.remove()
+        this.addSuggestion(index, listed)
+      })
+      el.appendChild(select)
+    }
 
     this.suggestionPopup?.remove()
     this.suggestionPopup = new maplibregl.Popup({ offset: 8, maxWidth: '220px' })
       .setLngLat(lngLat).setDOMContent(el).addTo(this.map)
   }
 
-  async addSuggestion(index) {
+  async addSuggestion(index, placing = null) {
     const s = this.suggestions[index]
-    const id = await this.createBoulder(s.coordinates)
+    const id = await this.createBoulder(s.coordinates, placing)
     if (id == null) return
     this.suggestions[index] = null
     this.renderSuggestions()
     this.updateAddAllButton()
     this.selectBoulder(id)
-    this.setStatus(`Boulder #${id} added from LiDAR. Tidy the corners, then Save changes.`)
+    this.setStatus(`${this.labelFor(id)} added from LiDAR. Tidy the corners, then Save changes.`)
   }
 
   // Indexes of the amber suggestions (nothing mapped there yet)

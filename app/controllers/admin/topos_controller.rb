@@ -55,7 +55,8 @@ class Admin::ToposController < Admin::BaseController
     end
 
     @lines = @topo.lines.includes(problem: :circuit).to_a
-    @boulder_id = @topo.boulder_id || @topo.suggested_boulder_id
+    @boulder_id = @topo.matched_boulder_id
+    @boulder = Boulder.find_by(id: @boulder_id)
     @candidates = workbench_candidates
     undrawn = Topo.in_area(@area).undrawn.where.not(id: @topo.id).reorder(:id)
     @next_topo = undrawn.where("topos.id > ?", @topo.id).first || undrawn.first
@@ -66,8 +67,9 @@ class Admin::ToposController < Admin::BaseController
   def quick_problem
     set_topo
     area = Area.find(@topo.area_id)
-    problem = area.problems.new(name: params[:name], grade: params[:grade].presence, steepness: "other")
-    problem.location = quick_problem_location
+    problem = area.problems.new(name: params[:name], grade: params[:grade].presence, steepness: "other",
+      boulder: Boulder.find_by(id: @topo.matched_boulder_id, area_id: area.id))
+    problem.location = @topo.location_on_boulder
 
     line = Problem.transaction do
       problem.save!
@@ -132,30 +134,20 @@ class Admin::ToposController < Admin::BaseController
     slug ? require_area_access(slug) : require_super_admin
   end
 
-  # Area problems not yet on this photo: those on (or near) its boulder first, then
-  # ones still missing a line, then the rest
+  # Area problems not yet on this photo: those assigned to its boulder (by a problem list
+  # or by hand) first, then ones located on or near it, then ones still missing a line,
+  # then the rest
   def workbench_candidates
     problems = @area.problems.where.not(id: @lines.map(&:problem_id)).includes(:circuit).to_a
     near_ids = []
     if (polygon = Boulder.where(id: @boulder_id).pick(:polygon))
       near_ids = @area.problems.where("ST_DWithin(problems.location, ST_GeogFromText(?), 5)", polygon.as_text).pluck(:id)
     end
+    on_boulder = ->(p) { @boulder_id && p.boulder_id == @boulder_id }
 
     problems.
-      sort_by { |p| [ near_ids.include?(p.id) ? 0 : 1, p.has_line ? 1 : 0, p.name_with_fallback.to_s.downcase ] }.
-      map { |p| { id: p.id, name: p.name_with_fallback, grade: p.grade, near: near_ids.include?(p.id), has_line: p.has_line } }
-  end
-
-  # Where the photographer stood, snapped onto the matched boulder's outline, so the new
-  # problem lands on the boulder (and the photo gets linked to it). Nil without both.
-  def quick_problem_location
-    lat, lon = @topo.metadata_latitude, @topo.metadata_longitude
-    boulder_id = @topo.boulder_id || @topo.suggested_boulder_id
-    return unless lat && lon && boulder_id
-
-    sql = Boulder.sanitize_sql_array([ "ST_AsText(ST_ClosestPoint(polygon::geometry, ST_SetSRID(ST_MakePoint(?, ?), 4326)))", lon.to_f, lat.to_f ])
-    wkt = Boulder.where(id: boulder_id).pick(Arel.sql(sql))
-    wkt && FACTORY.parse_wkt(wkt)
+      sort_by { |p| [ on_boulder.(p) ? 0 : 1, near_ids.include?(p.id) ? 0 : 1, p.has_line ? 1 : 0, p.name_with_fallback.to_s.downcase ] }.
+      map { |p| { id: p.id, name: p.name_with_fallback, grade: p.grade, near: on_boulder.(p) || near_ids.include?(p.id), has_line: p.has_line } }
   end
 
   def topo_params

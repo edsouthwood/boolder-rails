@@ -57,6 +57,9 @@
             <td class="px-4 py-2">
               <details>
                 <summary class="cursor-pointer <%= boulder.name ? "font-medium text-gray-900" : "text-gray-500" %>"><%= boulder.display_name %></summary>
+                <% if boulder.placed? %>
+                  <%= link_to "Show in boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "ml-4 text-xs text-granite hover:underline" %>
+                <% end %>
                 <ul class="mt-1 ml-4 text-gray-700">
                   <% row.problems.each do |problem| %>
                     <li>
@@ -75,7 +78,7 @@
             <td class="px-4 py-2 whitespace-nowrap">
               <% case row.status %>
               <% when :not_on_map %>
-                <%= link_to "Draw it →", admin_area_boulder_editor_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
+                <%= link_to "Draw it →", admin_area_boulder_editor_path(area_slug: @area.slug, place: boulder.id), class: "text-granite hover:underline" %>
               <% when :needs_photos %>
                 <%= link_to "Upload photos →", new_admin_area_photo_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
               <% when :needs_lines %>

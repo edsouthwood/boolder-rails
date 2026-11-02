@@ -18,6 +18,15 @@
   <%= form.select :steepness, Problem::STEEPNESS_VALUES, { include_blank: false, default: :other } %>
 </div>
 
+<% if (area = form.object.area) %>
+  <div class="col-span-6 sm:col-span-3 sm:col-start-1">
+    <%= form.label :boulder_id, "Boulder" %>
+    <%= form.select :boulder_id,
+          area.boulders.sort_by { |b| [ b.name ? 0 : 1, b.name.to_s.downcase, b.id ] }.map { |b| [ "#{b.display_name}#{" (not on the map yet)" unless b.placed?}", b.id ] },
+          { include_blank: "No boulder" } %>
+  </div>
+<% end %>
+
 <div class="col-span-6 sm:col-span-4">
   <%= form.label :sit_start %>
   <%= form.check_box :sit_start %>

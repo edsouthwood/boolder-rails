@@ -66,6 +66,8 @@ class Admin::LinesController < Admin::BaseController
 
       if params[:use_gps_location] == "1" && params[:gps_lat].present? && params[:gps_lon].present?
         @line.problem.update(lat: params[:gps_lat], lon: params[:gps_lon])
+      else
+        locate_on_photos_boulder(@line)
       end
 
       respond_to do |format|
@@ -102,6 +104,17 @@ class Admin::LinesController < Admin::BaseController
   end
 
   private
+
+  # A problem drawn on a photo for the first time with no location of its own gets one on
+  # the photo's boulder, unless a problem list put it on a different boulder
+  def locate_on_photos_boulder(line)
+    problem, topo = line.problem, line.topo
+    return if problem.location.present? || topo.nil?
+    return if problem.boulder_id && problem.boulder_id != topo.matched_boulder_id
+
+    point = topo.location_on_boulder
+    problem.update(location: point) if point
+  end
 
   def require_line_area_access
     require_area_access(Line.find(params[:id]).problem.area.slug)

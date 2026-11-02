@@ -17,6 +17,9 @@
   data-admin-boulder-editor-maptiler-key-value="<%= @maptiler_key %>"
   data-admin-boulder-editor-azure-key-value="<%= @azure_maps_key %>"
   data-admin-boulder-editor-mapbox-key-value="<%= @mapbox_key %>"
+  data-admin-boulder-editor-unplaced-value="<%= @unplaced.to_json %>"
+  <% if @focus_id %>data-admin-boulder-editor-focus-id-value="<%= @focus_id %>"<% end %>
+  <% if @place_id %>data-admin-boulder-editor-place-id-value="<%= @place_id %>"<% end %>
 >
   <%# Side by side from md up; on phones the sidebar sits above the map so the map gets the full width %>
   <div class="flex flex-col md:flex-row border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
@@ -47,6 +50,19 @@
         </button>
 
         <div data-admin-boulder-editor-target="selectedActions" class="hidden flex flex-col gap-2">
+          <label class="block text-xs font-medium text-gray-600">
+            Name
+            <span class="flex gap-1 mt-0.5">
+              <input type="text" list="boulder-editor-names" autocomplete="off" placeholder="No name"
+                     data-admin-boulder-editor-target="nameInput"
+                     data-action="keydown.enter->admin-boulder-editor#saveName"
+                     class="flex-1 min-w-0 px-2 py-1 text-sm rounded border border-gray-300 focus:border-granite focus:ring-granite">
+              <button type="button" data-action="click->admin-boulder-editor#saveName"
+                      class="px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100">Set</button>
+            </span>
+            <datalist id="boulder-editor-names" data-admin-boulder-editor-target="nameOptions"></datalist>
+          </label>
+          <p class="text-xs text-gray-400 -mt-1">Pick a name from your problem list to give this outline its problems.</p>
           <button
             data-action="click->admin-boulder-editor#useLidarOutline"
             data-admin-boulder-editor-target="useLidarBtn"
@@ -161,6 +177,13 @@
                 class="hidden mt-1 w-full px-2 py-1 text-xs rounded bg-granite text-white hover:bg-granite-dark disabled:opacity-50 transition-colors">
           Add all unmapped as boulders
         </button>
+      </div>
+
+      <%# Listed names without an outline yet %>
+      <div data-admin-boulder-editor-target="unplacedSection" class="hidden px-3 py-2 border-b flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1">Not on the map yet</p>
+        <p class="text-xs text-gray-400 mb-1">Click a name, then draw its outline.</p>
+        <div data-admin-boulder-editor-target="unplacedList" class="text-xs max-h-40 overflow-y-auto"></div>
       </div>
 
       <div class="flex-1 overflow-y-auto">
