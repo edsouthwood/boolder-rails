@@ -2,13 +2,14 @@ class ProblemsController < ApplicationController
   def show
     @problem = Problem.find(params[:id])
     return if hide_unpublished_area(@problem.area)
+    return render_404 if @problem.hidden && !admin_session?
 
     @line = @problem.lines.published.first
   end
 
   # Browse every published problem of one grade, those with a topo photo first
   def index
-    published = Problem.joins(:area).where(areas: { published: true }).with_location
+    published = Problem.shown.joins(:area).where(areas: { published: true }).with_location
     counts = published.group(:grade).count
     @grades = Problem::DISPLAY_GRADE_VALUES.
       map { |grade| [ grade, Problem.grades_matching(grade).sum { |g| counts[g].to_i } ] }.

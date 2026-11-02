@@ -540,6 +540,22 @@ Little Roof
   - **new boulder** is created without an outline, ready to be drawn.
 - Importing the same list again is safe: nothing is duplicated.
 
+### Hiding problems
+
+Some problems on a list aren't worth showing yet. **Hide** keeps one in the system but leaves it
+off the public site (map, area pages, grade lists, search, offline downloads, other problems'
+photos; its own page is a 404 to the public) and out of the Boulders list counts and the workbench.
+
+- **On the import preview**, tick **hide** on a row. Rows for problems that are already hidden
+  start ticked; unticking one shows it again.
+- **On the Boulders list**, expand a boulder and click **Hide** next to a problem. Hidden ones are
+  listed struck through under their boulder (the summary says "(2 hidden)"), each with **Show
+  again**. A boulder whose problems are all hidden shows as "No problems", under the **All** tab.
+- **On a hidden problem's admin page**, a banner says so, with **Show it again**. The area's admin
+  problem list marks hidden problems too.
+
+Admins can still open a hidden problem's public page, with a notice that it's hidden.
+
 ### The Boulders list
 
 Area ⋯ menu → **Boulders** (`/en/admin/areas/<slug>/boulders`) lists every boulder, most urgent

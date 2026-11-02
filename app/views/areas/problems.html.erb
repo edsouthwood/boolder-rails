@@ -16,7 +16,7 @@
       <div>
         <h2 class="text-2xl font-bold mb-4 px-4 sm:px-0">
           <%= t('views.areas.show.problems_in', area: @area.name) %><%-
-          -%><span class="font-semibold text-gray-400 ml-2"><%= "(#{@area.problems.with_location.count})" %></span>
+          -%><span class="font-semibold text-gray-400 ml-2"><%= "(#{@area.problems.shown.with_location.count})" %></span>
         </h2>
         <div>
           <% @problems.each do |grade, problems| %>

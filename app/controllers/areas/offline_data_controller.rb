@@ -13,7 +13,7 @@ module Areas
       topos = Topo.where(id: topo_ids)
 
       # Canonical problem pages shown on the map, so tapping a problem works offline.
-      problems = area.problems.with_location
+      problems = area.problems.shown.with_location
       problem_urls = problems.map { |problem| area_problem_path(area, problem) }
 
       sw = area.serialized_bounds[:south_west]

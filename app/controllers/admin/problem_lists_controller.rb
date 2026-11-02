@@ -21,7 +21,8 @@ class Admin::ProblemListsController < Admin::BaseController
 
   def create
     import = CragListImport.new(@area, params[:text].to_s.first(MAX_TEXT))
-    summary = import.apply!(choices: params.fetch(:choices, {}).to_unsafe_h, update_grades: Array(params[:update_grades]))
+    summary = import.apply!(choices: params.fetch(:choices, {}).to_unsafe_h, update_grades: Array(params[:update_grades]),
+      hide: Array(params[:hide]))
     redirect_to admin_area_boulders_path(area_slug: @area.slug), notice: summary_text(summary)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to admin_area_problem_list_path(area_slug: @area.slug), flash: { error: "Nothing was imported: #{e.record.errors.full_messages.to_sentence}" }
@@ -55,6 +56,8 @@ class Admin::ProblemListsController < Admin::BaseController
       assigned: [ "problem put on a boulder", "problems put on a boulder" ],
       moved: [ "problem moved to another boulder", "problems moved to another boulder" ],
       grades_updated: [ "grade updated", "grades updated" ],
+      hidden: [ "problem hidden", "problems hidden" ],
+      unhidden: [ "problem shown again", "problems shown again" ],
       skipped: [ "row skipped", "rows skipped" ]
     }.filter_map do |key, (one, many)|
       count = summary[key]

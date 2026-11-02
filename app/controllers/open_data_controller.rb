@@ -9,7 +9,7 @@ class OpenDataController < ApplicationController
 
   def problems
     # Visibility mirrors Problem#published?: a published area and a location.
-    problems = Problem.joins(:area).where(areas: { published: true }).where.not(location: nil).
+    problems = Problem.shown.joins(:area).where(areas: { published: true }).where.not(location: nil).
       includes(:area).order(:id)
 
     return unless stale?(etag: [ problems.maximum(:updated_at), problems.size ], public: true)

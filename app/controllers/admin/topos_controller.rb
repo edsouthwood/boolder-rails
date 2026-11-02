@@ -138,7 +138,7 @@ class Admin::ToposController < Admin::BaseController
   # or by hand) first, then ones located on or near it, then ones still missing a line,
   # then the rest
   def workbench_candidates
-    problems = @area.problems.where.not(id: @lines.map(&:problem_id)).includes(:circuit).to_a
+    problems = @area.problems.shown.where.not(id: @lines.map(&:problem_id)).includes(:circuit).to_a
     near_ids = []
     if (polygon = Boulder.where(id: @boulder_id).pick(:polygon))
       near_ids = @area.problems.where("ST_DWithin(problems.location, ST_GeogFromText(?), 5)", polygon.as_text).pluck(:id)

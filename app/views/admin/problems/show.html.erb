@@ -11,6 +11,16 @@
   </div>
 <% end %>
 
+<% if @problem.hidden %>
+  <div class="mb-4">
+    <%= warning_box do %>
+      <span class="font-bold">Hidden:</span> left off the public site and the Boulders list.
+      <%= button_to "Show it again", visibility_admin_problem_path(@problem), method: :patch, params: { hidden: "0", return_to: admin_problem_path(@problem) },
+            form_class: "inline ml-2", class: "underline font-medium" %>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="mb-3 md:grid md:grid-cols-6 md:gap-6">
   <div class="md:col-span-4">
     <div class="flex justify-between">

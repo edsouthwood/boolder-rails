@@ -16,7 +16,7 @@ class AreaLabelsController < ApplicationController
         # Area page URL, for offline search results.
         path:         area_path(area),
         priority:     area.priority,
-        problemCount: area.problems.count,
+        problemCount: area.problems.shown.count,
         southWestLon: b[:south_west].lon,
         southWestLat: b[:south_west].lat,
         northEastLon: b[:north_east].lon,

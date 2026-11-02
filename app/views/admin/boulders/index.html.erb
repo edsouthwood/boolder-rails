@@ -55,20 +55,37 @@
           <% boulder = row.boulder %>
           <tr class="align-top" id="boulder-<%= boulder.id %>">
             <td class="px-4 py-2">
-              <details>
-                <summary class="cursor-pointer <%= boulder.name ? "font-medium text-gray-900" : "text-gray-500" %>"><%= boulder.display_name %></summary>
+              <details <%= "open" if params[:open].to_i == boulder.id %>>
+                <summary class="cursor-pointer <%= boulder.name ? "font-medium text-gray-900" : "text-gray-500" %>">
+                  <%= boulder.display_name %>
+                  <% if row.hidden.any? %><span class="font-normal text-xs text-gray-400">(<%= row.hidden.size %> hidden)</span><% end %>
+                </summary>
                 <% if boulder.placed? %>
                   <%= link_to "Show in boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "ml-4 text-xs text-granite hover:underline" %>
                 <% end %>
                 <ul class="mt-1 ml-4 text-gray-700">
+                  <% return_to = admin_area_boulders_path(area_slug: @area.slug, show: params[:show], open: boulder.id, anchor: "boulder-#{boulder.id}") %>
                   <% row.problems.each do |problem| %>
-                    <li>
+                    <li class="group flex items-center gap-1">
                       <%= problem.has_line ? "✓" : "·" %>
                       <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %>
                       <span class="text-gray-500"><%= problem.grade %></span>
+                      <%= button_to "Hide", visibility_admin_problem_path(problem), method: :patch, params: { hidden: "1", return_to: return_to },
+                            form_class: "inline", title: "Leave it off the public site and this list until you bring it back",
+                            class: "ml-1 text-xs text-gray-400 hover:text-red-600 hover:underline" %>
                     </li>
                   <% end %>
-                  <% if row.problems.empty? %><li class="text-gray-500">No problems</li><% end %>
+                  <% if row.problems.empty? && row.hidden.empty? %><li class="text-gray-500">No problems</li><% end %>
+                  <% row.hidden.each do |problem| %>
+                    <li class="flex items-center gap-1 text-gray-400">
+                      <span aria-hidden="true">–</span>
+                      <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "line-through hover:underline" %>
+                      <span><%= problem.grade %></span>
+                      <span class="text-xs">hidden</span>
+                      <%= button_to "Show again", visibility_admin_problem_path(problem), method: :patch, params: { hidden: "0", return_to: return_to },
+                            form_class: "inline", class: "ml-1 text-xs text-granite hover:underline" %>
+                    </li>
+                  <% end %>
                 </ul>
               </details>
             </td>
@@ -96,14 +113,37 @@
   </div>
 <% end %>
 
-<% unassigned = @progress.unassigned_problems %>
-<% if unassigned.any? %>
-  <details class="mt-6 text-sm">
-    <summary class="cursor-pointer text-gray-700"><%= pluralize(unassigned.size, "problem") %> not on any boulder</summary>
+<% if @progress.hidden_count.positive? %>
+  <p class="mt-4 text-sm text-gray-500">
+    <%= pluralize(@progress.hidden_count, "problem is", plural: "problems are") %> hidden: left off the public site and these counts.
+    They're listed, struck through, under their boulder, with <strong>Show again</strong>.
+  </p>
+<% end %>
+
+<% unassigned, unassigned_hidden = @progress.unassigned_problems.partition { |problem| !problem.hidden } %>
+<% if unassigned.any? || unassigned_hidden.any? %>
+  <details class="mt-6 text-sm" <%= "open" if params[:open] == "none" %> id="no-boulder">
+    <summary class="cursor-pointer text-gray-700">
+      <%= pluralize(unassigned.size, "problem") %> not on any boulder
+      <% if unassigned_hidden.any? %><span class="text-xs text-gray-400">(<%= unassigned_hidden.size %> hidden)</span><% end %>
+    </summary>
     <p class="mt-1 text-gray-600">Import a problem list that names their boulder, or give them a location on an outline.</p>
+    <% return_to = admin_area_boulders_path(area_slug: @area.slug, show: params[:show], open: "none", anchor: "no-boulder") %>
     <ul class="mt-1 ml-4 text-gray-700">
       <% unassigned.each do |problem| %>
-        <li><%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %> <span class="text-gray-500"><%= problem.grade %></span></li>
+        <li class="flex items-center gap-1">
+          <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %> <span class="text-gray-500"><%= problem.grade %></span>
+          <%= button_to "Hide", visibility_admin_problem_path(problem), method: :patch, params: { hidden: "1", return_to: return_to },
+                form_class: "inline", class: "ml-1 text-xs text-gray-400 hover:text-red-600 hover:underline" %>
+        </li>
+      <% end %>
+      <% unassigned_hidden.each do |problem| %>
+        <li class="flex items-center gap-1 text-gray-400">
+          <%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "line-through hover:underline" %> <span><%= problem.grade %></span>
+          <span class="text-xs">hidden</span>
+          <%= button_to "Show again", visibility_admin_problem_path(problem), method: :patch, params: { hidden: "0", return_to: return_to },
+                form_class: "inline", class: "ml-1 text-xs text-granite hover:underline" %>
+        </li>
       <% end %>
     </ul>
   </details>

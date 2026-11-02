@@ -80,6 +80,20 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
     assert_not @mine.problems.exists?(name: "New Arête")
   end
 
+  test "the preview has a hide box per row, ticked for problems already hidden, and import applies it" do
+    @old.update!(hidden: true)
+    post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: LIST }
+    assert_select "input[type=checkbox][name='hide[]']", 3
+    assert_select "input[type=checkbox][name='hide[]'][checked]", 1
+
+    key = CragListImport.new(@mine, LIST).preview.flat_map(&:rows).find { _1.row.name == "Slab" }.row.key
+    post admin_area_problem_list_path(area_slug: "mine", locale: :en), params: { text: LIST, hide: [ key ] }
+
+    assert_match "1 problem hidden, and 1 problem shown again", flash[:notice]
+    assert @mine.problems.find_by!(name: "Slab").hidden
+    assert_not @old.reload.hidden
+  end
+
   test "an empty paste is sent back with a message" do
     post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: "  " }
 

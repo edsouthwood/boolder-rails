@@ -20,7 +20,9 @@ Rails.application.routes.draw do
         post "problem-list/preview", to: "problem_lists#preview", as: :problem_list_preview
         post "problem-list",         to: "problem_lists#create"
       end
-      resources :problems, except: :index
+      resources :problems, except: :index do
+        patch :visibility, on: :member
+      end
       resources :boulders, only: [ :update, :destroy ]
       resources :circuits
       resources :imports do

@@ -81,7 +81,8 @@
                 <td class="px-3 sm:px-6 py-2 w-2/12">
                   <div class="text-sm text-gray-900 shrink">
                     <%= problem_circle_view(problem) %>
-                    <span class="ml-1"><%= link_to problem.name_with_fallback&.truncate(30), admin_problem_path(problem) %></span>
+                    <span class="ml-1"><%= link_to problem.name_with_fallback&.truncate(30), admin_problem_path(problem), class: ("text-gray-400 line-through" if problem.hidden) %></span>
+                    <% if problem.hidden %><span class="ml-1 text-xs text-gray-400">hidden</span><% end %>
                   </div>
                 </td>
                 <td class="px-3 sm:px-6 py-2 whitespace-nowrap w-1/12">

@@ -4,7 +4,7 @@ class WelcomeController < ApplicationController
   def index
     # see https://guides.rubyonrails.org/caching_with_rails.html#avoid-caching-instances-of-active-record-objects
     @popular_areas_ids = Area.published.any_tags(:popular).pluck(:id)
-    @problem_count = Problem.with_location.joins(:area).where(areas: { published: true }).count
+    @problem_count = Problem.shown.with_location.joins(:area).where(areas: { published: true }).count
     @area_count = Area.published.count
     # For the home page's "Saved for offline" list to flag areas that changed since saving.
     published = Area.published.to_a

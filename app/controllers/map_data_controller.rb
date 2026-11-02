@@ -2,7 +2,7 @@ class MapDataController < ApplicationController
   def index
     factory = RGeo::GeoJSON::EntityFactory.instance
 
-    problems = Problem.with_location.joins(:area).includes(:area).where(areas: { published: true })
+    problems = Problem.shown.with_location.joins(:area).includes(:area).where(areas: { published: true })
     boulders = Boulder.placed.joins(:area).where(areas: { published: true })
 
     # Optionally scope to a single area (used by the contribution location picker) to keep

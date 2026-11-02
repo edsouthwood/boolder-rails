@@ -21,6 +21,7 @@
   <% if (differs = rows.count(&:grade_differs?)).positive? %>
     <%= pluralize(differs, "grade differs", plural: "grades differ") %> from what's saved.
   <% end %>
+  Tick <strong>hide</strong> to keep a problem but leave it off the public site and the to-do lists for now.
   Nothing is saved until you click <strong>Import</strong>.
 </p>
 
@@ -65,6 +66,7 @@
                   <% case row_plan.action %>
                   <% when :match %>
                     <span class="<%= badge %> bg-green-100 text-green-800">matches</span>
+                    <% if row_plan.problem.hidden %><span class="<%= badge %> bg-gray-100 text-gray-500">hidden</span><% end %>
                     <%= link_to "##{row_plan.problem.id}", admin_problem_path(row_plan.problem), class: "text-gray-500 hover:underline" %>
                     <% if (from = plan.moved_from(row_plan)) %>
                       <span class="<%= badge %> bg-amber-100 text-amber-800">moves from <%= from.display_name %></span>
@@ -90,6 +92,11 @@
                             [ [ "Create as a new problem", "new" ] ], "skip"),
                           class: "ml-1 text-sm rounded-md border-gray-300" %>
                   <% end %>
+                </td>
+                <td class="px-4 py-2 w-20 text-right whitespace-nowrap">
+                  <label class="text-xs text-gray-500" title="Keep it, but leave it off the public site and the to-do lists">
+                    <%= check_box_tag "hide[]", row.key, row_plan.problem&.hidden, id: "hide-#{row.key}" %> hide
+                  </label>
                 </td>
               </tr>
             <% end %>

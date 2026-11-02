@@ -112,6 +112,8 @@ class Problem < ApplicationRecord
   end
 
   scope :with_location, -> { where.not(location: nil) }
+  # Hidden problems are kept for later but left off the public site and admin to-do lists
+  scope :shown, -> { where(hidden: false) }
   scope :without_location, -> { where(location: nil) }
   scope :with_line, -> { where(has_line: true) }
   scope :without_line, -> { where(has_line: false) }
@@ -119,7 +121,7 @@ class Problem < ApplicationRecord
   scope :complete, -> { where(has_line: true).with_location }
   scope :incomplete, -> { where("problems.has_line = FALSE OR problems.location IS NULL") }
   scope :without_contribution_request, -> { left_joins(:contribution_requests).where(contribution_requests: { id: nil }) }
-  scope :with_unpublished, ->(include_unpublished = false) { include_unpublished ? all : joins(:area).where(areas: { published: true }).where.not(location: nil) }
+  scope :with_unpublished, ->(include_unpublished = false) { include_unpublished ? all : joins(:area).where(areas: { published: true }).where.not(location: nil).shown }
 
   def geolocation
     { lat: location&.lat || 0.0, lng: location&.lon || 0.0 }
@@ -218,9 +220,9 @@ class Problem < ApplicationRecord
 
   def variants
     if parent
-      [ parent ] + parent.children - [ self ]
+      ([ parent ] + parent.children - [ self ]).reject(&:hidden)
     else
-      children
+      children.shown
     end
   end
 
