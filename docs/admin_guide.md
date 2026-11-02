@@ -897,8 +897,8 @@ One page per photo where you add every problem on it and draw all their lines, w
 How to use it:
 1. On the right, pick a problem that's already on the photo, or **add one**:
    - type to filter the area's problems. Ones **on boulder** come first: those listed on the photo's boulder (from a problem list or set by hand), then ones located on or near it. Then ones with **no line**. The photo's boulder is named in the panel heading (an unnamed one has a **name it** link to the boulder editor)
-   - or type a name and grade and click **Create and draw**. The new problem is put on the photo's boulder. If the photo has GPS and was matched to a boulder, it's also placed on that boulder's edge nearest where you stood; otherwise place it later in the [Location Editor](#location-editor)
-   - adding a line for a problem that has no location yet places it the same way, unless a problem list put it on a different boulder
+   - or type a name and grade and click **Create and draw**. The new problem is put on the photo's boulder. If the photo has GPS and was matched to a boulder, it's also placed on that boulder's edge nearest where you stood. If the photo has GPS but no boulder outline (e.g. a crag whose boulders aren't drawn yet), it's placed where the photo was taken, ready to nudge into place in the [Location Editor](#location-editor). With no GPS, place it there later
+   - adding or drawing a line for a problem that has no location yet places it the same way, unless a problem list put it on a different boulder from the photo's. A problem that already has a location is never moved
 2. Click along the line from bottom to top. Other lines on the photo show faintly with their names
 3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
 4. When every problem has a line, click **Next photo to draw →**

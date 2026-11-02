@@ -85,6 +85,44 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_nil other.reload.location, "a problem listed on another boulder isn't moved onto this one"
   end
 
+  test "with no boulder outline, a problem drawn on the photo takes the photo's GPS" do
+    unmapped = topo(@mine, "latitude" => 50.61, "longitude" => -3.91)
+    unplaced = @mine.boulders.create!(name: "Not On Map Yet")
+    listed = @mine.problems.create!(name: "Listed", steepness: "wall", boulder: unplaced)
+    plain = @mine.problems.create!(name: "Plain", steepness: "wall")
+
+    post admin_lines_path(locale: :en), params: { line: { problem_id: listed.id, topo_id: unmapped.id } }, as: :json
+    post admin_lines_path(locale: :en), params: { line: { problem_id: plain.id, topo_id: unmapped.id } }, as: :json
+
+    [ listed, plain ].each do |problem|
+      assert_in_delta 50.61, problem.reload.lat, 1e-6
+      assert_in_delta(-3.91, problem.lon, 1e-6)
+    end
+  end
+
+  test "drawing on an existing line locates an unlocated problem, but never moves a located one" do
+    unmapped = topo(@mine, "latitude" => 50.61, "longitude" => -3.91)
+    unlocated = @mine.problems.create!(name: "Unlocated", steepness: "wall")
+    located = @mine.problems.create!(name: "Located", steepness: "wall", lat: 50.62, lon: -3.92)
+    lines = [ unlocated, located ].map { |p| Line.create!(problem: p, topo: unmapped) }
+
+    lines.each do |line|
+      patch admin_line_path(line, locale: :en), params: { line: { coordinates: POINTS.to_json } }, as: :json
+      assert_response :success
+    end
+
+    assert_in_delta 50.61, unlocated.reload.lat, 1e-6
+    assert_in_delta 50.62, located.reload.lat, 1e-6
+  end
+
+  test "quick problem on a photo with GPS but no boulder outline uses the photo's GPS" do
+    post quick_problem_admin_topo_path(topo(@mine, "latitude" => 50.61, "longitude" => -3.91), locale: :en),
+         params: { name: "Off the map" }, as: :json
+
+    assert_response :created
+    assert_in_delta 50.61, @mine.problems.find_by!(name: "Off the map").lat, 1e-6
+  end
+
   test "the workbench links back to the area's topos" do
     get workbench_admin_topo_path(@topo, locale: :en)
 

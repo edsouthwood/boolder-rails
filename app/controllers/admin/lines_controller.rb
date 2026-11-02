@@ -30,6 +30,7 @@ class Admin::LinesController < Admin::BaseController
 
     if @line.update(coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas)
       auto_close_contribution_request(@line)
+      locate_from_photo(@line)
 
       respond_to do |format|
         format.html do
@@ -67,7 +68,7 @@ class Admin::LinesController < Admin::BaseController
       if params[:use_gps_location] == "1" && params[:gps_lat].present? && params[:gps_lon].present?
         @line.problem.update(lat: params[:gps_lat], lon: params[:gps_lon])
       else
-        locate_on_photos_boulder(@line)
+        locate_from_photo(@line)
       end
 
       respond_to do |format|
@@ -105,14 +106,13 @@ class Admin::LinesController < Admin::BaseController
 
   private
 
-  # A problem drawn on a photo for the first time with no location of its own gets one on
-  # the photo's boulder, unless a problem list put it on a different boulder
-  def locate_on_photos_boulder(line)
+  # A problem drawn on a photo with no location of its own takes one from the photo: on the
+  # photo's boulder outline if it has one, else the photo's GPS (see Topo#location_for)
+  def locate_from_photo(line)
     problem, topo = line.problem, line.topo
     return if problem.location.present? || topo.nil?
-    return if problem.boulder_id && problem.boulder_id != topo.matched_boulder_id
 
-    point = topo.location_on_boulder
+    point = topo.location_for(problem)
     problem.update(location: point) if point
   end
 

@@ -72,6 +72,21 @@ class Topo < ApplicationRecord
     wkt && FACTORY.parse_wkt(wkt)
   end
 
+  # Where a problem drawn on this photo goes when it has no location yet: on the photo's
+  # boulder outline when there is one, else where the photo was taken (so it can be found
+  # on the map and nudged into place). Nil without photo GPS, or when a problem list put
+  # the problem on a different boulder from the one this photo shows.
+  def location_for(problem)
+    return if problem.boulder_id && matched_boulder_id && problem.boulder_id != matched_boulder_id
+
+    location_on_boulder || gps_location
+  end
+
+  def gps_location
+    lat, lon = metadata_latitude, metadata_longitude
+    FACTORY.point(lon.to_f, lat.to_f) if lat && lon
+  end
+
   def metadata_latitude
     metadata&.dig("latitude")
   end
