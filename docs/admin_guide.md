@@ -627,9 +627,10 @@ Visitors can send photos of boulders without picking a problem first, from **Add
 
 **What the visitor does**
 
-1. Chooses an area. A side panel lists that area's boulders whose problems still have no photo, most-needed first, with a link to the map
-2. Chooses or drops photos. Each is checked in the browser before anything is sent: JPEG/PNG/WebP under 15 MB, landscape only (portrait photos are refused with a "retake in landscape" message, as topos are cropped to 4:3), and GPS + compass heading read from the photo
-3. Optionally gives a name (for the contributors leaderboard), email and comment, then presses **Send photos**. Photos upload one at a time
+1. Chooses an area
+2. Chooses **which boulder** from a list of the area's boulders with **no photo at all**, most problems first. It uses the same rule as the admin Boulders list: a boulder has a photo once a line is drawn for one of its problems, the topo recompute linked one to it, or an inbox or contributed photo was matched to it. Only named boulders, or ones with problems, are listed; unnamed outlines aren't. Boulders without an outline are marked **Not on the map yet**, and ones with a photo waiting for review are marked so. The last option, **Another boulder, or not sure**, leaves it to GPS. A link can preselect a boulder with `&boulder_id=N`
+3. Chooses or drops photos. Each is checked in the browser before anything is sent: JPEG/PNG/WebP under 15 MB, landscape only (portrait photos are refused with a "retake in landscape" message, as topos are cropped to 4:3), and GPS + compass heading read from the photo
+4. Optionally gives a name (for the contributors leaderboard), email and comment, then presses **Send photos**. Photos upload one at a time. **Photograph another boulder** goes back to the list for the next one
 
 Where each photo was taken:
 
@@ -637,11 +638,11 @@ Where each photo was taken:
 - If it has none but was taken in the last 15 minutes, the phone's current position is used instead (only if accurate to 50 m). These show as **(phone position)** in the queue
 - Otherwise it has no position, and you place it by hand when drawing
 
-A photo with a position is matched to the nearest boulder outline within 15 m **in any published area**, and the boulder's area wins over the one the visitor chose.
+The photo's boulder is the **chosen** one when the visitor picked one, which also sets the area. Otherwise, a photo with a position is matched to the nearest boulder outline within 15 m **in any published area**, and that boulder's area wins over the one the visitor chose. The GPS match is kept either way: if it disagrees with the chosen boulder, the card says **⚠ GPS puts it at …**.
 
 **Reviewing: Photos (N) in the admin menu** (`/admin/photo-contributions`)
 
-- A grid of pending photos, each with its area, matched boulder, an OpenStreetMap link to where it was taken, contributor and comment. Area admins see only their areas
+- A grid of pending photos, each with its area, boulder (marked **chosen** or **by GPS**, and **not on map** when it has no outline), an OpenStreetMap link to where it was taken, contributor and comment. Area admins see only their areas
 - **Accept** turns the photo into an undrawn topo in its area, exactly like a [Photo Inbox](#photo-inbox) upload (same GPS, heading and boulder hint), so it appears in **Photos to draw**. The file moves to the topo, it isn't copied. The accepted list has a **Draw lines →** link to the workbench
 - **Decline** keeps the photo in the closed list, with an optional note
 - Tick several (or **Select all**) to accept or decline them together

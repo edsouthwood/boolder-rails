@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -220,9 +220,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
     t.text "moderator_note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "boulder_chosen", default: false, null: false
+    t.bigint "gps_boulder_id"
     t.index ["area_id"], name: "index_photo_contributions_on_area_id"
     t.index ["batch"], name: "index_photo_contributions_on_batch"
     t.index ["boulder_id"], name: "index_photo_contributions_on_boulder_id"
+    t.index ["gps_boulder_id"], name: "index_photo_contributions_on_gps_boulder_id"
     t.index ["state"], name: "index_photo_contributions_on_state"
     t.index ["topo_id"], name: "index_photo_contributions_on_topo_id"
   end
@@ -301,6 +304,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   add_foreign_key "boulders", "areas"
   add_foreign_key "contributions", "areas", on_delete: :nullify
   add_foreign_key "photo_contributions", "areas"
+  add_foreign_key "photo_contributions", "boulders", column: "gps_boulder_id", on_delete: :nullify
   add_foreign_key "photo_contributions", "boulders", on_delete: :nullify
   add_foreign_key "photo_contributions", "topos", on_delete: :nullify
   add_foreign_key "problems", "areas"

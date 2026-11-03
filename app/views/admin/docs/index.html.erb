@@ -346,11 +346,11 @@ Unnamed Slab,,slab,false,,,,</pre>
     <section id="boulder-photos">
       <%= render "admin/docs/section_header", title: "Boulder Photos from Visitors" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
-        <p>Visitors can send photos of boulders without choosing a problem, from <%= link_to "Add boulder photos", new_mapping_photo_contribution_path, class: "text-blue-600 hover:underline" %>. It's linked from the Contribute page, the Mapping page and each area's "Problems to map" list. After choosing an area they see the boulders there that still need photos.</p>
+        <p>Visitors can send photos of boulders without choosing a problem, from <%= link_to "Add boulder photos", new_mapping_photo_contribution_path, class: "text-blue-600 hover:underline" %>. It's linked from the Contribute page, the Mapping page and each area's "Problems to map" list. After choosing an area they choose <strong>which boulder</strong> from a list of named boulders with no photo at all (the same rule as the admin Boulders list), or <strong>Another boulder, or not sure</strong>. Boulders without an outline are marked "Not on the map yet", and ones with a photo waiting for review are marked too.</p>
         <ul class="list-disc list-inside space-y-1">
           <li>Photos are checked in the browser first: JPEG/PNG/WebP under 15&nbsp;MB, and <strong>landscape only</strong> (topos are cropped to 4:3)</li>
           <li>Position comes from the photo's GPS. A photo without GPS taken in the last 15 minutes uses the phone's position instead, shown as <strong>(phone position)</strong></li>
-          <li>A located photo is matched to the nearest boulder within 15&nbsp;m in any published area, and that boulder's area replaces the one the visitor chose</li>
+          <li>A chosen boulder wins, and sets the area. Otherwise a located photo is matched to the nearest boulder within 15&nbsp;m in any published area. Cards say <strong>chosen</strong> or <strong>by GPS</strong>, and warn <strong>⚠ GPS puts it at …</strong> when the two disagree</li>
         </ul>
         <p><strong>Reviewing:</strong> <%= link_to "Photos (N)", admin_photo_contributions_path, class: "text-blue-600 hover:underline" %> in the admin menu shows a grid of pending photos. Area admins see only their areas.</p>
         <ul class="list-disc list-inside space-y-1">

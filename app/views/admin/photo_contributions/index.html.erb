@@ -9,7 +9,7 @@
 <p class="text-sm text-gray-600 px-4 sm:px-0 max-w-3xl">
   Photos sent in from <%= link_to "Add boulder photos", new_mapping_photo_contribution_path, class: "underline" %>.
   Accepting one makes it a photo in its area, ready for lines in "Photos to draw".
-  The boulder match comes from the photo's GPS (within <%= Boulder::MATCH_METRES %>&nbsp;m of an outline).
+  The boulder is the one the visitor chose, else the one the photo's GPS is within <%= Boulder::MATCH_METRES %>&nbsp;m of.
 </p>
 
 <%= form_with url: admin_photo_contributions_path, method: :get, class: "my-4", data: { controller: "auto-submit" } do |form| %>
@@ -66,6 +66,7 @@
             <p class="text-gray-600">
               <% if pc.boulder %>
                 <%= pc.boulder.display_name %>
+                <span class="text-xs text-gray-500">(<%= pc.boulder_chosen ? "chosen" : "by GPS" %><%= ", not on map" unless pc.boulder.placed? %>)</span>
               <% elsif pc.located? %>
                 <span class="text-amber-700">No boulder within <%= Boulder::MATCH_METRES %>&nbsp;m</span>
               <% else %>
@@ -76,6 +77,9 @@
                 <% if pc.location_source == "device" %><span class="text-xs text-gray-500">(phone position)</span><% end %>
               <% end %>
             </p>
+            <% if pc.gps_disagrees? %>
+              <p class="text-xs text-amber-700">⚠ GPS puts it at <%= pc.gps_boulder.display_name %></p>
+            <% end %>
             <p class="text-gray-500 text-xs">
               <%= pc.contributor_name.presence || "Anonymous" %><% if pc.contributor_email.present? %> · <%= pc.contributor_email %><% end %>
               · <%= time_ago_in_words(pc.created_at) %> ago

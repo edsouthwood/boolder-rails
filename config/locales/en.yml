@@ -121,13 +121,25 @@ en:
           area_step: 1. Choose the area
           area_prompt: Choose an area…
           area_go: Go
-          area_hint: "If your photos have GPS, each one is matched to its boulder automatically, even if it's in a neighbouring area."
-          photos_step: 2. Add your photos
+          area_hint: "If you're not sure which area a boulder is in, choose the nearest. Photos with GPS are filed in the right area automatically."
+          boulder_step: 2. Which boulder?
+          boulder_intro:
+            one: "This boulder at %{area} doesn't have a photo yet. Choose it, or tell us it's another one."
+            other: "These %{count} boulders at %{area} don't have a photo yet. Choose the one you're photographing."
+          boulder_none: "Every named boulder at %{area} has a photo. Photos of other boulders or faces are still welcome."
+          awaiting_review: Photo waiting for review
+          not_on_map: Not on the map yet
+          problem_count:
+            one: "1 problem"
+            other: "%{count} problems"
+          other_boulder: Another boulder, or not sure
+          other_boulder_hint: "We'll work out which boulder it is from the photo's location."
+          photos_step: 3. Add your photos
           tips_title: How to take a good photo
           dropzone: Choose photos, or drop them here
           dropzone_hint: "Landscape photos, please. JPEG, PNG or WebP, up to %{size} MB each."
           privacy: Photos are shown on the site without their location or camera details. Please avoid having people in them.
-          about_step: 3. About you (optional)
+          about_step: 4. About you (optional)
           name_label: Your name
           email_label: Your email
           email_hint: Private. Only used to tell you when your photos have been reviewed.
@@ -136,12 +148,9 @@ en:
           submit: Send photos
           done_title: Thank you!
           done_body: "They're waiting for review. Once accepted, they'll appear on the site as soon as lines are drawn on them."
-          add_more: Add more photos
-          wanted_title: Boulders still needing photos
-          wanted_intro: "%{count} problems at %{area} don't have a photo yet."
-          wanted_none: "Every problem at %{area} has a photo. Photos of other faces are still welcome."
+          add_more: Photograph another boulder
           wanted_more_problems: " and %{count} more"
-          wanted_see_map: See them on the map
+          wanted_see_map: See the area on the map
           unnamed_boulder: Unnamed boulder
         js:
           reading: Checking…
@@ -159,6 +168,7 @@ en:
           near: "on %{boulder}"
           failed: "Couldn't send this one"
           reload: "Couldn't send. Please reload this page and try again."
+          awaiting_review: Photo waiting for review
           result: "%{sent} sent."
           result_failed: "%{sent} sent, %{failed} couldn't be sent. Try sending them again."
       problems:

@@ -12,13 +12,12 @@ class Mapping::PhotoContributionsController < ApplicationController
   rate_limit to: 120, within: 1.hour, only: :create,
              with: -> { render json: { error: t("views.mapping.photo_contributions.errors.too_many") }, status: :too_many_requests }
 
-  WANTED_LIMIT = 30
-
   def new
     @photo_contribution = PhotoContribution.new(**remembered_contributor)
     @areas = Area.published.order(:name)
     @area = @areas.find_by(id: params[:area_id])
     load_wanted if @area
+    @chosen_boulder_id = params[:boulder_id].to_i if params[:boulder_id].present?
   end
 
   def create
@@ -48,12 +47,19 @@ class Mapping::PhotoContributionsController < ApplicationController
     batch.present? && batch == session[:photo_contribution_batch]
   end
 
-  # Where the photo was taken, and the boulder it shows. A matching boulder decides the
-  # area, so a photo is filed correctly even when the wrong area was chosen.
+  # Where the photo was taken, and the boulder it shows: the one the visitor chose from
+  # the list, else the one its GPS matches. The boulder decides the area, so a photo is
+  # filed correctly even when the wrong area was chosen.
   def assign_position
+    @photo_contribution.area = Area.published.find_by(id: @photo_contribution.area_id)
+    if (chosen = published_boulders.find_by(id: params.dig(:photo_contribution, :boulder_id).presence))
+      @photo_contribution.boulder = chosen
+      @photo_contribution.boulder_chosen = true
+      @photo_contribution.area = chosen.area
+    end
+
     lat = Float(params[:lat], exception: false)
     lon = Float(params[:lon], exception: false)
-    @photo_contribution.area = Area.published.find_by(id: @photo_contribution.area_id)
     return unless lat&.between?(-90, 90) && lon&.between?(-180, 180)
 
     @photo_contribution.location = FACTORY.point(lon, lat)
@@ -61,11 +67,15 @@ class Mapping::PhotoContributionsController < ApplicationController
     heading = Float(params[:heading], exception: false)
     @photo_contribution.heading = heading if heading&.between?(0, 360)
 
-    boulder = Boulder.joins(:area).merge(Area.published).nearest_to(lat, lon)
-    return unless boulder
+    @photo_contribution.gps_boulder = published_boulders.nearest_to(lat, lon)
+    return if @photo_contribution.boulder_chosen || @photo_contribution.gps_boulder.nil?
 
-    @photo_contribution.boulder = boulder
-    @photo_contribution.area = boulder.area
+    @photo_contribution.boulder = @photo_contribution.gps_boulder
+    @photo_contribution.area = @photo_contribution.gps_boulder.area
+  end
+
+  def published_boulders
+    Boulder.joins(:area).merge(Area.published)
   end
 
   def notify
@@ -73,16 +83,14 @@ class Mapping::PhotoContributionsController < ApplicationController
     PhotoContributionMailer.with(photo_contribution: @photo_contribution).acknowledgement_email.deliver_later
   end
 
-  # Boulders in the area with problems still waiting for a photo, most-needed first
+  # Boulders with no photo at all (by the same rule as the admin Boulders list), most
+  # problems first. Only named ones or ones with problems: an unnamed outline means nothing
+  # to a visitor, and its photos can still come in with "another boulder" and GPS.
   def load_wanted
-    missing = Problem.shown.where(area: @area, has_line: false)
-    @wanted = @area.boulders.joins(:problems).merge(missing).
-      group("boulders.id").
-      select("boulders.*, COUNT(problems.id) AS missing_count").
-      order(Arel.sql("COUNT(problems.id) DESC"), :name).
-      limit(WANTED_LIMIT).to_a
-    @wanted_problems = missing.where(boulder_id: @wanted.map(&:id)).order(:name).group_by(&:boulder_id)
-    @missing_count = missing.count
+    @wanted = BoulderProgress.new(@area).rows.
+      select { |row| row.photos.empty? && (row.boulder.name.present? || row.problems.any?) }.
+      sort_by { |row| [ -row.problems.size, row.boulder.name.to_s.downcase ] }
+    @awaiting_review = PhotoContribution.pending.where(boulder_id: @wanted.map { |row| row.boulder.id }).distinct.pluck(:boulder_id).to_set
   end
 
   def photo_contribution_params

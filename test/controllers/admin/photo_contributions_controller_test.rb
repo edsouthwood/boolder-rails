@@ -48,6 +48,19 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[value=accept]"
   end
 
+  test "cards say whether the boulder was chosen, and warn when GPS disagrees" do
+    egg = @mine.boulders.create!(name: "The Egg")
+    other = @mine.boulders.create!(name: "Other Block")
+    photo_contribution(boulder: egg, boulder_chosen: true, gps_boulder: other)
+    photo_contribution(boulder: other, gps_boulder: other)
+
+    get admin_photo_contributions_path(locale: :en)
+
+    assert_select "li", text: /The Egg\s+\(chosen, not on map\)/
+    assert_select "li", text: /GPS puts it at Other Block/, count: 1
+    assert_select "li", text: /Other Block\s+\(by GPS, not on map\)/
+  end
+
   test "accepting selected photos makes topos and emails each contributor once" do
     a = photo_contribution(contributor_email: "ann@example.com", contributor_name: "Ann")
     b = photo_contribution(contributor_email: "ANN@example.com")

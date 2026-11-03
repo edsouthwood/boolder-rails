@@ -9,7 +9,7 @@ import exifr from 'exifr/full'
 // All sends from one page load share a batch: the server checks the spam captcha (whose
 // timestamp is single-use) on the batch's first photo and lets the rest of it through.
 export default class extends Controller {
-  static targets = ['dropzone', 'input', 'list', 'summary', 'sendButton', 'picker', 'about', 'done', 'doneText']
+  static targets = ['dropzone', 'input', 'list', 'summary', 'sendButton', 'boulders', 'picker', 'about', 'done', 'doneText']
   static values = { maxSize: Number, types: Array, messages: Object }
 
   static FRESH_MS = 15 * 60 * 1000
@@ -155,8 +155,10 @@ export default class extends Controller {
     this.summaryTarget.textContent = failed ? this.t('result_failed', { sent, failed }) : ''
     this.refresh()
 
+    if (sent > 0) this.markChosenBoulderSent()
     if (sent > 0 && failed === 0) {
       this.doneTextTarget.textContent = this.t('result', { sent })
+      this.bouldersTarget.classList.add('hidden')
       this.pickerTarget.classList.add('hidden')
       this.aboutTarget.classList.add('hidden')
       this.sendButtonTarget.parentElement.classList.add('hidden')
@@ -236,11 +238,25 @@ export default class extends Controller {
     this.items = []
     this.listTarget.replaceChildren()
     this.doneTarget.classList.add('hidden')
+    this.bouldersTarget.classList.remove('hidden')
     this.pickerTarget.classList.remove('hidden')
     this.aboutTarget.classList.remove('hidden')
     this.sendButtonTarget.parentElement.classList.remove('hidden')
+    this.bouldersTarget.querySelectorAll('input[type=radio]').forEach((radio) => { radio.checked = false })
     this.refresh()
-    this.inputTarget.click()
+    this.bouldersTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Show the boulder just photographed as waiting for review, as a reload would
+  markChosenBoulderSent() {
+    const label = this.bouldersTarget.querySelector('input[type=radio]:checked')?.closest('label')
+    if (!label || !label.dataset.boulder || label.querySelector('[data-awaiting]')) return
+
+    const badge = document.createElement('span')
+    badge.dataset.awaiting = ''
+    badge.className = 'rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800 ring-1 ring-amber-200'
+    badge.textContent = this.t('awaiting_review')
+    label.querySelector('[data-badges]')?.append(badge)
   }
 
   warnBeforeLeaving(event) {

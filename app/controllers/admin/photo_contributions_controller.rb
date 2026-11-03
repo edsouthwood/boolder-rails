@@ -6,7 +6,7 @@ class Admin::PhotoContributionsController < Admin::BaseController
     scope = PhotoContribution.reviewable_by(current_admin_user)
     @pending_count = scope.pending.count
 
-    @photo_contributions = scope.includes(:area, :boulder, :topo, photo_attachment: :blob, topo: { photo_attachment: :blob }).
+    @photo_contributions = scope.includes(:area, :boulder, :gps_boulder, :topo, photo_attachment: :blob, topo: { photo_attachment: :blob }).
       order(id: :desc)
     @photo_contributions = @photo_contributions.where(state: @state) if @state
     @photo_contributions = @photo_contributions.page(params[:page]).per(60)
