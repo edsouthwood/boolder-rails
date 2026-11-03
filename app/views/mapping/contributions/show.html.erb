@@ -49,16 +49,17 @@
     </div>
 
     <div class="px-4 sm:px-0 mt-6 space-y-3">
+      <%# Resized copies with EXIF (camera, exact GPS) stripped, never the uploaded originals %>
       <% @contribution.photos.each do |photo| %>
-        <%= image_tag(photo, class: "w-full object-cover rounded-lg") %>
+        <%= image_tag(public_photo(photo), class: "w-full object-cover rounded-lg") %>
       <% end %>
 
       <% @contribution.line_drawings.each do |line_drawing| %>
-        <%= image_tag(line_drawing, class: "w-full object-cover rounded-lg") %>
+        <%= image_tag(public_photo(line_drawing), class: "w-full object-cover rounded-lg") %>
       <% end %>
 
       <% @contribution.location_drawings.each do |location_drawing| %>
-        <%= image_tag(location_drawing, class: "w-full object-cover rounded-lg") %>
+        <%= image_tag(public_photo(location_drawing), class: "w-full object-cover rounded-lg") %>
       <% end %>
     </div>
   </div>

@@ -16,6 +16,7 @@
       <li><a href="#managing-areas" class="hover:underline">Managing Areas</a></li>
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
       <li><a href="#photo-inbox" class="hover:underline">Photo Inbox (Upload Many Photos)</a></li>
+      <li><a href="#boulder-photos" class="hover:underline">Boulder Photos from Visitors</a></li>
       <li><a href="#boulder-names" class="hover:underline">Boulder Names &amp; Problem Lists</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
@@ -339,6 +340,26 @@ Unnamed Slab,,slab,false,,,,</pre>
           <li><strong>Photos to draw</strong> on the area's Topos page lists photos with no lines, or with a line still to draw</li>
           <li>Click a photo there (or <strong>Photo #N →</strong> after uploading) to draw its lines in the <a href="#topos" class="text-blue-600 hover:underline">topo workbench</a></li>
         </ul>
+      </div>
+    </section>
+
+    <section id="boulder-photos">
+      <%= render "admin/docs/section_header", title: "Boulder Photos from Visitors" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Visitors can send photos of boulders without choosing a problem, from <%= link_to "Add boulder photos", new_mapping_photo_contribution_path, class: "text-blue-600 hover:underline" %>. It's linked from the Contribute page, the Mapping page and each area's "Problems to map" list. After choosing an area they see the boulders there that still need photos.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Photos are checked in the browser first: JPEG/PNG/WebP under 15&nbsp;MB, and <strong>landscape only</strong> (topos are cropped to 4:3)</li>
+          <li>Position comes from the photo's GPS. A photo without GPS taken in the last 15 minutes uses the phone's position instead, shown as <strong>(phone position)</strong></li>
+          <li>A located photo is matched to the nearest boulder within 15&nbsp;m in any published area, and that boulder's area replaces the one the visitor chose</li>
+        </ul>
+        <p><strong>Reviewing:</strong> <%= link_to "Photos (N)", admin_photo_contributions_path, class: "text-blue-600 hover:underline" %> in the admin menu shows a grid of pending photos. Area admins see only their areas.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Accept</strong> makes the photo an undrawn topo in its area, just like a <a href="#photo-inbox" class="text-blue-600 hover:underline">Photo Inbox</a> upload, so it appears in <strong>Photos to draw</strong>. Accepted photos have a <strong>Draw lines →</strong> link</li>
+          <li><strong>Decline</strong> keeps it in the closed list, with an optional note for the contributor</li>
+          <li>Tick several, or <strong>Select all</strong>, to review them together</li>
+        </ul>
+        <p><strong>Emails:</strong> staff get one email per upload session, not per photo. Contributors who gave an email get one acknowledgement per session and one email per review action.</p>
+        <p><strong>Abuse and privacy:</strong> the invisible captcha checks the first photo of each session, and each visitor can send up to 120 photos an hour. Photos are only ever shown as resized copies with EXIF (GPS, camera) stripped, which now also applies to photos on public contribution pages. Accepted photos count towards the Top contributors leaderboard.</p>
       </div>
     </section>
 

@@ -19,6 +19,8 @@
     <div class="col-span-1">
       <h1 class="text-3xl font-bold mb-4 mt-2 px-4 sm:px-0"><%= t("views.mapping.problems.index.title", area: @area.name) %></h1>
 
+      <div class="px-4 sm:px-0 mb-4"><%= render "mapping/photo_contributions/cta", area: @area %></div>
+
       <div class="px-4 sm:px-0 mb-4">
         <%= link_to mapping_map_path(@area) do %>
           <div class="flex items-center space-x-2 text-granite mb-6">

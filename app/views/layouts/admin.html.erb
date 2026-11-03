@@ -50,6 +50,8 @@
 
                 <%= link_to "Contribs (#{Contribution.pending.count})", admin_contributions_path(state: "pending"), class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
+                <%= link_to "Photos (#{PhotoContribution.pending.count})", admin_photo_contributions_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+
                 <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
                 <%= link_to "Docs", admin_docs_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>

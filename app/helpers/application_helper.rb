@@ -1,4 +1,12 @@
 module ApplicationHelper
+  # A visitor's uploaded image as shown publicly: a resized copy with its EXIF (camera
+  # details, exact GPS) stripped, never the original file.
+  def public_photo(attachment)
+    return attachment unless attachment.variable?
+
+    attachment.variant(resize_to_limit: [ 1600, 1600 ], saver: { quality: 70, strip: true })
+  end
+
   # Icons in public/ are served with a one-year cache at fixed URLs, so browsers keep
   # whatever they fetched first (the old green Boolder icon until 31 Oct 2026). Bump this
   # whenever the icon files change, so every browser fetches the new ones.

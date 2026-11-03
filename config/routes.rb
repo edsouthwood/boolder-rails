@@ -52,6 +52,9 @@ Rails.application.routes.draw do
           post :bulk_close
         end
       end
+      resources :photo_contributions, path: "photo-contributions", only: :index do
+        post :review, on: :collection
+      end
       resources :audits
       resources :redirects, only: :new
       resources :bulk_uploads, only: [ :new, :create ]
@@ -89,6 +92,7 @@ Rails.application.routes.draw do
     namespace :mapping do
       resources :problems, only: [ :show, :index ]
       resources :contributions, only: [ :show, :new, :create ]
+      resources :photo_contributions, path: "photos", only: [ :new, :create ]
       resources :requests, controller: "contribution_requests", only: [ :index ]
       get "map(/:slug)", to: "/map#index", as: :map, defaults: { contribute: true }
       get "/", to: "areas#index"

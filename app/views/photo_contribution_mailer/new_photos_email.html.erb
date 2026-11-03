@@ -1,0 +1,15 @@
+<p>
+  New boulder photos at <%= @photo_contribution.area.name %>
+  (more may follow from the same upload).
+</p>
+
+<p><%= admin_photo_contributions_url(locale: I18n.default_locale) %></p>
+
+<ul>
+  <li>Name: <%= @photo_contribution.contributor_name %></li>
+  <li>Email: <%= @photo_contribution.contributor_email %></li>
+</ul>
+
+<% if @photo_contribution.comment.present? %>
+  <p><%= @photo_contribution.comment %></p>
+<% end %>

@@ -6,7 +6,7 @@ class Admin::PhotosController < Admin::BaseController
   CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
   MAX_SIZE = 25.megabytes
   # How far from a boulder outline a photo can be taken and still be matched to it
-  BOULDER_MATCH_METRES = 15
+  BOULDER_MATCH_METRES = Boulder::MATCH_METRES
 
   def new
     @undrawn_count = Topo.in_area(@area).undrawn.count
@@ -49,12 +49,6 @@ class Admin::PhotosController < Admin::BaseController
   end
 
   def nearest_boulder(lat, lon)
-    return if lat.nil?
-
-    point = Boulder.sanitize_sql_array([ "ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography", lon, lat ])
-    @area.boulders.placed.
-      where("ST_DWithin(boulders.polygon, #{point}, ?)", BOULDER_MATCH_METRES).
-      order(Arel.sql("ST_Distance(boulders.polygon, #{point})")).
-      first
+    @area.boulders.nearest_to(lat, lon)
   end
 end

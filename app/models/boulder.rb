@@ -20,6 +20,20 @@ class Boulder < ApplicationRecord
   # outside) the outline count as being on the boulder.
   TOLERANCE = BigDecimal("1e-06")
 
+  # How far from an outline a photo can be taken and still be matched to that boulder
+  MATCH_METRES = 15
+
+  # The placed boulder nearest a photo's GPS position, within MATCH_METRES; nil without GPS.
+  def self.nearest_to(lat, lon, within: MATCH_METRES)
+    return if lat.nil? || lon.nil?
+
+    point = sanitize_sql_array([ "ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography", lon.to_f, lat.to_f ])
+    placed.
+      where("ST_DWithin(boulders.polygon, #{point}, ?)", within).
+      order(Arel.sql("ST_Distance(boulders.polygon, #{point})")).
+      first
+  end
+
   scope :containing, ->(point) {
     where("ST_DWithin(boulders.polygon::geometry, ST_GeomFromText(?, 4326), ?)", point.as_text, TOLERANCE)
   }

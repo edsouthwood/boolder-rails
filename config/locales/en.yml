@@ -14,6 +14,18 @@ en:
       subject: "About your recent contribution"
       body: "Thanks for your contribution to %{problem}. After review we weren't able to add this one to the map."
       note_intro: "A note from the team:"
+  photo_contribution_mailer:
+    acknowledgement_email:
+      subject: "We received your boulder photos"
+      body: "Thanks for your photos from %{area}. They're now waiting for review by our team, and we'll let you know once they've been looked at."
+    reviewed_email:
+      subject: "Your boulder photos have been reviewed"
+      accepted:
+        one: "Good news: your photo has been accepted. It will appear on the site once lines are drawn on it."
+        other: "Good news: %{count} of your photos have been accepted. They will appear on the site once lines are drawn on them."
+      closed:
+        one: "After review we weren't able to use one of your photos."
+        other: "After review we weren't able to use %{count} of your photos."
   circuit:
     name:
       white_for_kids: White (kids)
@@ -94,6 +106,61 @@ en:
             other: "%{count} contributions"
           metas:
             title: Mapping
+      photo_contributions:
+        cta:
+          title: Add boulder photos
+          title_area: "Add photos of boulders at %{area}"
+          description: "The most useful thing you can send: a photo of each boulder face. Lines for its problems can be drawn on it afterwards."
+        errors:
+          too_many: "You've sent a lot of photos in the last hour. Please try the rest later."
+        new:
+          metas:
+            title: Add boulder photos
+          title: Add boulder photos
+          intro: "Photos of the boulders are the most useful thing you can send us. Once a boulder has a photo, lines can be drawn on it for every problem on that face, so each photo can map several problems at once."
+          area_step: 1. Choose the area
+          area_prompt: Choose an area…
+          area_go: Go
+          area_hint: "If your photos have GPS, each one is matched to its boulder automatically, even if it's in a neighbouring area."
+          photos_step: 2. Add your photos
+          tips_title: How to take a good photo
+          dropzone: Choose photos, or drop them here
+          dropzone_hint: "Landscape photos, please. JPEG, PNG or WebP, up to %{size} MB each."
+          privacy: Photos are shown on the site without their location or camera details. Please avoid having people in them.
+          about_step: 3. About you (optional)
+          name_label: Your name
+          email_label: Your email
+          email_hint: Private. Only used to tell you when your photos have been reviewed.
+          comment_label: Anything we should know?
+          comment_placeholder: "e.g. the arête on the left of the second photo is The Fin"
+          submit: Send photos
+          done_title: Thank you!
+          done_body: "They're waiting for review. Once accepted, they'll appear on the site as soon as lines are drawn on them."
+          add_more: Add more photos
+          wanted_title: Boulders still needing photos
+          wanted_intro: "%{count} problems at %{area} don't have a photo yet."
+          wanted_none: "Every problem at %{area} has a photo. Photos of other faces are still welcome."
+          wanted_more_problems: " and %{count} more"
+          wanted_see_map: See them on the map
+          unnamed_boulder: Unnamed boulder
+        js:
+          reading: Checking…
+          gps: Ready · GPS found
+          no_gps: "Ready · no GPS in this photo, so we'll place it by hand"
+          device: "Ready · no GPS in this photo, so your phone's current position will be used"
+          portrait: Portrait photo. Please retake it in landscape.
+          not_image: Not a JPEG, PNG or WebP photo
+          too_big: "Over %{size} MB"
+          remove: Remove
+          ready: "%{count} ready to send"
+          progress: "Sending… %{done} of %{total}"
+          uploading: Sending…
+          sent: Sent
+          near: "on %{boulder}"
+          failed: "Couldn't send this one"
+          reload: "Couldn't send. Please reload this page and try again."
+          result: "%{sent} sent."
+          result_failed: "%{sent} sent, %{failed} couldn't be sent. Try sending them again."
       problems:
         index:
           title: Problems to map in %{area}

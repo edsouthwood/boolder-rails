@@ -1,0 +1,15 @@
+<p><%= t("contribute_mailer.greeting", name: @name.presence || t("contribute_mailer.fallback_name")) %></p>
+
+<% if @accepted > 0 %>
+  <p><%= t("photo_contribution_mailer.reviewed_email.accepted", count: @accepted) %></p>
+<% end %>
+
+<% if @closed > 0 %>
+  <p><%= t("photo_contribution_mailer.reviewed_email.closed", count: @closed) %></p>
+  <% if @note.present? %>
+    <p><%= t("contribute_mailer.declined_email.note_intro") %></p>
+    <blockquote><%= @note %></blockquote>
+  <% end %>
+<% end %>
+
+<p><%= t("contribute_mailer.signoff") %></p>
