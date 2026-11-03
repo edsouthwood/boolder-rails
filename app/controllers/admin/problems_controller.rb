@@ -83,6 +83,7 @@ class Admin::ProblemsController < Admin::BaseController
   def map_editor
     @area = Area.find_by!(slug: params[:area_slug])
     @unlocated_problems = @area.problems.without_location.order(:name)
+    @estimated_count = @area.problems.with_location.where(location_estimated: true).count
   end
 
   def update

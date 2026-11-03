@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['mapContainer', 'problem', 'count', 'sidebar']
+  static targets = ['mapContainer', 'problem', 'count', 'sidebar', 'estimatedCount']
   static values = {
     geojsonUrl: String,
     updateUrlTemplate: String,
@@ -67,21 +67,27 @@ export default class extends Controller {
             const [lng, lat] = f.geometry.coordinates
             const id = f.properties.problemId
             const name = f.properties.name
-            this.addMarker(id, name, lng, lat)
+            this.addMarker(id, name, lng, lat, f.properties.estimated)
           }
         })
       })
   }
 
-  addMarker(problemId, name, lng, lat) {
-    const el = document.createElement('div')
-    el.className = [
-      'w-4 h-4 rounded-full border-2 border-white cursor-move shadow-md',
-      'bg-granite hover:bg-granite-dark transition-colors',
+  // Estimated markers (guessed from a photo) are amber until the problem is dragged into place
+  markerClass(estimated) {
+    return [
+      'w-4 h-4 rounded-full border-2 cursor-move shadow-md transition-colors',
+      estimated ? 'bg-amber-400 hover:bg-amber-500 border-amber-900 border-dashed' : 'bg-granite hover:bg-granite-dark border-white',
     ].join(' ')
-    el.title = name
+  }
 
-    const popup = new maplibregl.Popup({ offset: 10 }).setText(name)
+  addMarker(problemId, name, lng, lat, estimated = false) {
+    const el = document.createElement('div')
+    el.className = this.markerClass(estimated)
+    const label = estimated ? `${name} (estimated from a photo: drag it into place)` : name
+    el.title = label
+
+    const popup = new maplibregl.Popup({ offset: 10 }).setText(label)
 
     const marker = new maplibregl.Marker({ element: el, draggable: true })
       .setLngLat([lng, lat])
@@ -95,7 +101,15 @@ export default class extends Controller {
       const lngLat = marker.getLngLat()
       this.patchLocation(problemId, lngLat.lat, lngLat.lng)
         .then(ok => {
-          if (ok) this.showToast(`Saved: ${name}`)
+          if (!ok) return
+          if (estimated) {
+            estimated = false
+            el.className = this.markerClass(false)
+            el.title = name
+            popup.setText(name)
+            this.updateEstimatedCount(-1)
+          }
+          this.showToast(`Saved: ${name}`)
         })
     })
 
@@ -177,6 +191,11 @@ export default class extends Controller {
     if (!this.hasCountTarget) return
     const current = parseInt(this.countTarget.textContent, 10)
     this.countTarget.textContent = current + delta
+  }
+
+  updateEstimatedCount(delta) {
+    if (!this.hasEstimatedCountTarget) return
+    this.estimatedCountTarget.textContent = parseInt(this.estimatedCountTarget.textContent, 10) + delta
   }
 
   showToast(message, isError = false) {

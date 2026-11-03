@@ -424,7 +424,8 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>The <strong>left sidebar</strong> lists all problems without a location, sorted alphabetically</li>
           <li>The <strong>map</strong> shows boulder polygons for context and green pins for already-located problems</li>
           <li><strong>Drag</strong> a problem name from the sidebar and <strong>drop</strong> it on the map at the correct position — saved instantly</li>
-          <li>To <strong>reposition</strong> an already-placed problem, drag its green pin to a new spot — saves on release</li>
+          <li>To <strong>reposition</strong> an already-placed problem, drag its pin to a new spot — saves on release</li>
+          <li><strong>Amber dashed</strong> pins are locations estimated from a photo. Drag each into its real spot and it turns into a normal pin (the legend counts how many are left)</li>
         </ol>
 
         <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-xs text-yellow-800">
@@ -597,6 +598,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>When they're all drawn, click <strong>Next photo to draw →</strong></li>
         </ol>
         <p><strong>Boulder</strong> (top of the sidebar): the boulder the photo shows, tied by you, linked by its drawn problems, or matched by GPS. Pick another and click <strong>Tie</strong> (useful with no GPS, or for listed boulders not on the map yet); <strong>Not tied to a boulder</strong> goes back to the automatic match. New problems go on that boulder.</p>
+        <p>A problem with no location gets an <strong>estimated</strong> one when it's added to a photo: from the photo's GPS (moved onto its boulder's outline), else from a problem already placed on the photo. Several from one photo are spread about 2 m apart. Estimates show as amber pins in the location editor until you drag them into place.</p>
         <p>The yellow box lists that boulder's problems not on the photo yet: click one to add it, or <strong>Add all N</strong> to add them all and draw them in turn.</p>
         <p class="text-xs text-gray-500">Keys: Enter save · Esc undo changes · Z undo point · N next undrawn problem · 1/2/3 line, start holds, not-in. On an already-drawn line the first click starts it afresh. ✕ removes a problem from the photo.</p>
 

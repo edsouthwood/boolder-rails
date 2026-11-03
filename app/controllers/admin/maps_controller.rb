@@ -13,6 +13,7 @@ class Admin::MapsController < Admin::BaseController
       hash[:name] = problem.name_debug
       hash[:problem_id] = problem.id
       hash[:updated_at] = problem.updated_at
+      hash[:estimated] = problem.location_estimated # guessed from a photo, not placed by hand yet
       hash.deep_transform_keys! { |key| key.camelize(:lower) }
 
       # simple-style attributes to make the map look nicer on geojson.io

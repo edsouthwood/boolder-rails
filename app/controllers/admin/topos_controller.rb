@@ -70,10 +70,9 @@ class Admin::ToposController < Admin::BaseController
     area = Area.find(@topo.area_id)
     problem = area.problems.new(name: params[:name], grade: params[:grade].presence, steepness: "other",
       boulder: Boulder.find_by(id: @topo.matched_boulder_id, area_id: area.id))
-    problem.location = @topo.location_for(problem)
-
     line = Problem.transaction do
       problem.save!
+      @topo.estimate_location!(problem)
       Line.create!(problem: problem, topo: @topo)
     end
     render json: line.workbench_json, status: :created
