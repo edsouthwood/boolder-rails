@@ -80,4 +80,26 @@ class TopoNeighboursTest < ActiveSupport::TestCase
     @area.update!(published: false)
     assert_nil TopoNeighbours.new(@south).left
   end
+
+  test "missing_reason explains why a photo has no arrows" do
+    assert_nil TopoNeighbours.new(@south).missing_reason
+
+    loose = photo_with_problem("Loose", 50.7, -3.9)
+    assert_match "No facing direction", TopoNeighbours.new(loose).missing_reason
+
+    unlocated = photo_with_problem("Unlocated", nil, nil)
+    assert_match "No position", TopoNeighbours.new(unlocated).missing_reason
+
+    @east.update!(published: false)
+    assert_equal "This photo is unpublished.", TopoNeighbours.new(@east).missing_reason
+    assert_equal "No other photo to the right within 150 m.", TopoNeighbours.new(@south).missing_reason
+  end
+
+  test "preview works them out while the area is unpublished" do
+    @area.update!(published: false)
+
+    assert_nil TopoNeighbours.new(@south).right
+    assert_equal "The area isn't published.", TopoNeighbours.new(@south).missing_reason
+    assert_equal "East", TopoNeighbours.new(@south, preview: true).right.problem.name
+  end
 end

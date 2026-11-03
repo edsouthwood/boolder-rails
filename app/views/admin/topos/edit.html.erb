@@ -8,6 +8,12 @@
   <p class="my-3"><%= link_to "Draw lines on this photo (workbench) →", workbench_admin_topo_path(@topo), class: "text-granite font-medium hover:underline" %></p>
 <% end %>
 
+<% if area %>
+  <div class="my-3 max-w-md rounded border border-gray-200 bg-white p-3">
+    <%= render "admin/topos/neighbours", topo: @topo %>
+  </div>
+<% end %>
+
 <div class="my-3">
   <% @topo.problems.each do |problem| %>
     <span class="mr-3">

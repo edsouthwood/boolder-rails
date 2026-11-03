@@ -114,5 +114,9 @@
         <%= link_to "Upload more photos", new_admin_area_photo_path(area_slug: @area.slug), class: "text-granite hover:underline" %>
       </p>
     </div>
+
+    <div class="bg-white shadow sm:rounded-md p-3">
+      <%= render "admin/topos/neighbours", topo: @topo %>
+    </div>
   </aside>
 </div>
