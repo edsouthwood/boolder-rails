@@ -21,8 +21,8 @@
     <p class="text-base text-gray-600"><%= t("views.mapping.photo_contributions.new.intro") %></p>
   </div>
 
-  <div class="mt-8 lg:grid lg:grid-cols-3 lg:gap-10">
-    <div class="lg:col-span-2 space-y-8">
+  <div class="mt-8 max-w-3xl">
+    <div class="space-y-8">
 
       <%# Step 1: the area. A plain GET form, so the "still needing photos" list can load. %>
       <section class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-8">
@@ -48,6 +48,57 @@
               } do |form| %>
           <%= invisible_captcha %>
           <%= form.hidden_field :area_id, value: @area.id %>
+
+          <%# Step 2: which boulder. Required, so photos are never sent without an answer. %>
+          <fieldset data-photo-contribution-target="boulders" class="scroll-mt-4 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-8">
+            <legend class="sr-only"><%= t("views.mapping.photo_contributions.new.boulder_step") %></legend>
+            <h2 class="text-base font-semibold leading-7 text-gray-900" aria-hidden="true"><%= t("views.mapping.photo_contributions.new.boulder_step") %></h2>
+            <p class="mt-1 text-sm text-gray-600">
+              <% if @wanted.any? %>
+                <%= t("views.mapping.photo_contributions.new.boulder_intro", count: @wanted.size, area: @area.name) %>
+              <% else %>
+                <%= t("views.mapping.photo_contributions.new.boulder_none", area: @area.name) %>
+              <% end %>
+            </p>
+
+            <div class="mt-4 space-y-2">
+              <% @wanted.each do |row| %>
+                <% boulder = row.boulder %>
+                <label data-boulder="<%= boulder.id %>" class="flex items-start gap-3 rounded-md p-3 ring-1 ring-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:ring-2 has-[:checked]:ring-granite has-[:checked]:bg-ground">
+                  <%= radio_button_tag "photo_contribution[boulder_id]", boulder.id, @chosen_boulder_id == boulder.id,
+                        required: true, class: "mt-1 text-granite focus:ring-granite" %>
+                  <span class="flex-1 min-w-0">
+                    <span class="flex flex-wrap items-center gap-x-2 gap-y-1" data-badges>
+                      <span class="text-sm font-medium text-gray-900"><%= boulder.name.presence || t("views.mapping.photo_contributions.new.unnamed_boulder") %></span>
+                      <% if @awaiting_review.include?(boulder.id) %>
+                        <span data-awaiting class="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800 ring-1 ring-amber-200"><%= t("views.mapping.photo_contributions.new.awaiting_review") %></span>
+                      <% end %>
+                      <% unless boulder.placed? %>
+                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"><%= t("views.mapping.photo_contributions.new.not_on_map") %></span>
+                      <% end %>
+                    </span>
+                    <% if row.problems.any? %>
+                      <span class="mt-0.5 block text-xs text-gray-500">
+                        <%= t("views.mapping.photo_contributions.new.problem_count", count: row.problems.size) %>:
+                        <%= row.problems.first(4).map(&:name_with_fallback).compact_blank.join(", ") %><% if row.problems.size > 4 %><%= t("views.mapping.photo_contributions.new.wanted_more_problems", count: row.problems.size - 4) %><% end %>
+                      </span>
+                    <% end %>
+                  </span>
+                </label>
+              <% end %>
+
+              <label class="flex items-start gap-3 rounded-md p-3 ring-1 ring-gray-200 cursor-pointer hover:bg-gray-50 has-[:checked]:ring-2 has-[:checked]:ring-granite has-[:checked]:bg-ground">
+                <%= radio_button_tag "photo_contribution[boulder_id]", "", @wanted.empty?, required: true, id: "photo_contribution_boulder_id_other",
+                      class: "mt-1 text-granite focus:ring-granite" %>
+                <span class="flex-1">
+                  <span class="block text-sm font-medium text-gray-900"><%= t("views.mapping.photo_contributions.new.other_boulder") %></span>
+                  <span class="mt-0.5 block text-xs text-gray-500"><%= t("views.mapping.photo_contributions.new.other_boulder_hint") %></span>
+                </span>
+              </label>
+            </div>
+            <%= link_to t("views.mapping.photo_contributions.new.wanted_see_map"), mapping_map_path(slug: @area.slug),
+                  class: "mt-4 inline-block text-sm font-medium text-granite underline" %>
+          </fieldset>
 
           <section data-photo-contribution-target="picker" class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-8">
             <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.photo_contributions.new.photos_step") %></h2>
@@ -117,33 +168,5 @@
       <% end %>
     </div>
 
-    <% if @area %>
-      <aside class="mt-8 lg:mt-0">
-        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-6">
-          <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.photo_contributions.new.wanted_title") %></h2>
-          <% if @missing_count.zero? %>
-            <p class="mt-2 text-sm text-gray-600"><%= t("views.mapping.photo_contributions.new.wanted_none", area: @area.name) %></p>
-          <% else %>
-            <p class="mt-2 text-sm text-gray-600"><%= t("views.mapping.photo_contributions.new.wanted_intro", count: @missing_count, area: @area.name) %></p>
-            <% if @wanted.any? %>
-              <ul class="mt-4 divide-y divide-gray-100">
-                <% @wanted.each do |boulder| %>
-                  <% problems = @wanted_problems[boulder.id] || [] %>
-                  <li class="py-2">
-                    <p class="text-sm font-medium text-gray-900"><%= boulder.name.presence || t("views.mapping.photo_contributions.new.unnamed_boulder") %></p>
-                    <p class="text-xs text-gray-500">
-                      <%= problems.first(4).map(&:name_with_fallback).compact_blank.join(", ") %>
-                      <% if problems.size > 4 %><%= t("views.mapping.photo_contributions.new.wanted_more_problems", count: problems.size - 4) %><% end %>
-                    </p>
-                  </li>
-                <% end %>
-              </ul>
-            <% end %>
-            <%= link_to t("views.mapping.photo_contributions.new.wanted_see_map"), mapping_map_path(slug: @area.slug),
-                  class: "mt-4 inline-block text-sm font-medium text-granite underline" %>
-          <% end %>
-        </div>
-      </aside>
-    <% end %>
   </div>
 </div>

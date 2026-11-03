@@ -9,7 +9,10 @@ class PhotoContribution < ApplicationRecord
   end
 
   belongs_to :area
+  # The boulder it shows: chosen by the visitor from the list, else matched by GPS
   belongs_to :boulder, optional: true
+  # The boulder nearest the photo's position, whether or not it was chosen
+  belongs_to :gps_boulder, class_name: "Boulder", optional: true
   # Set once accepted: the topo the photo became
   belongs_to :topo, optional: true
 
@@ -55,6 +58,11 @@ class PhotoContribution < ApplicationRecord
   end
 
   def located? = location.present?
+
+  # The visitor chose one boulder but the photo was taken by another: worth a look
+  def gps_disagrees?
+    boulder_chosen && gps_boulder_id.present? && gps_boulder_id != boulder_id
+  end
 
   # Makes the photo a topo in the area (undrawn, so it shows in "Photos to draw") and marks
   # this accepted. The photo's file moves to the topo rather than being copied. Returns the
