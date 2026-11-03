@@ -8,6 +8,7 @@ class Area < ApplicationRecord
   has_many :circuits, -> { distinct }, through: :problems
   has_many :poi_routes, dependent: :destroy
   has_many :topos, dependent: :nullify
+  has_many :photo_contributions, dependent: :destroy
   belongs_to :cluster, optional: true
   belongs_to :bleau_area, optional: true
 

@@ -65,9 +65,14 @@ class Contribution < ApplicationRecord
     parts
   end
 
+  # Accepted problem contributions and accepted boulder photos both count.
   def self.top_contributors(limit: 15)
-    accepted
-      .where.not(contributor_name: [ nil, "" ])
+    names = Arel::Nodes::UnionAll.new(
+      accepted.where.not(contributor_name: [ nil, "" ]).select(:contributor_name).arel,
+      PhotoContribution.accepted.where.not(contributor_name: [ nil, "" ]).select(:contributor_name).arel
+    )
+    unscoped
+      .from(Arel::Nodes::TableAlias.new(Arel::Nodes::Grouping.new(names), "contributions"))
       .group("LOWER(TRIM(contributor_name))")
       .select("MIN(contributor_name) AS display_name, COUNT(*) AS contributions_count")
       .order(Arel.sql("contributions_count DESC, display_name ASC"))

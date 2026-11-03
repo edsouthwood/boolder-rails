@@ -1,0 +1,112 @@
+<div class="flex items-baseline gap-3 mb-2 pt-4 px-4 sm:px-0">
+  <h2 class="text-2xl font-bold">Boulder photos</h2>
+  <% if @pending_count > 0 %>
+    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-sm font-medium text-amber-800">
+      <%= @pending_count %> pending
+    </span>
+  <% end %>
+</div>
+<p class="text-sm text-gray-600 px-4 sm:px-0 max-w-3xl">
+  Photos sent in from <%= link_to "Add boulder photos", new_mapping_photo_contribution_path, class: "underline" %>.
+  Accepting one makes it a photo in its area, ready for lines in "Photos to draw".
+  The boulder match comes from the photo's GPS (within <%= Boulder::MATCH_METRES %>&nbsp;m of an outline).
+</p>
+
+<%= form_with url: admin_photo_contributions_path, method: :get, class: "my-4", data: { controller: "auto-submit" } do |form| %>
+  <label for="state" class="block text-sm font-medium text-gray-700">State</label>
+  <%= form.select :state, PhotoContribution::STATES, { selected: @state, include_blank: "All" }, { data: { action: "change->auto-submit#submit" }, class: "mt-1 block w-full md:w-48 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
+<% end %>
+
+<% if @photo_contributions.empty? %>
+  <p class="my-8 text-sm text-gray-500 italic">No <%= @state %> photos.</p>
+<% else %>
+  <%= form_with url: review_admin_photo_contributions_path, method: :post, data: { controller: "bulk-select" } do %>
+    <%= hidden_field_tag :return_state, @state %>
+    <%# Pressing Enter in the note field submits the form's first button: make that one do nothing %>
+    <button type="submit" name="decision" value="" class="hidden" tabindex="-1" aria-hidden="true"></button>
+
+    <% if @state == "pending" %>
+      <div class="my-3 flex flex-wrap items-center gap-3 rounded-md bg-gray-50 border border-gray-200 px-4 py-3">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" data-bulk-select-target="all" data-action="bulk-select#toggleAll">
+          Select all
+        </label>
+        <div data-bulk-select-target="bar" class="hidden flex flex-1 flex-wrap items-center gap-3">
+          <span class="text-sm text-gray-700"><span data-bulk-select-target="count">0</span> selected</span>
+          <button type="submit" name="decision" value="accept" class="btn bg-granite hover:bg-granite-dark">Accept selected</button>
+          <%= text_field_tag :moderator_note, nil, placeholder: "Optional note (included in the decline email)", class: "flex-1 min-w-[14rem] rounded-md border-gray-300 text-sm" %>
+          <button type="submit" name="decision" value="close" class="btn bg-red-600 hover:bg-red-700"
+                  data-turbo-confirm="Decline the selected photos and email the contributors?">Decline selected</button>
+        </div>
+      </div>
+    <% end %>
+
+    <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-4">
+      <% @photo_contributions.each do |pc| %>
+        <% photo = pc.display_photo %>
+        <li class="bg-white shadow rounded-md overflow-hidden flex flex-col">
+          <div class="relative bg-gray-100 aspect-[4/3]">
+            <% if photo %>
+              <%= link_to rails_representation_path(photo.variant(pc.topo ? :medium : :large)), target: "_blank", rel: "noopener" do %>
+                <%= image_tag photo.variant(:thumb), class: "w-full h-full object-cover", alt: "Photo ##{pc.id}", loading: "lazy" %>
+              <% end %>
+            <% end %>
+            <% if pc.pending? %>
+              <label class="absolute top-2 left-2 bg-white/90 rounded px-1.5 py-1 shadow">
+                <input type="checkbox" name="ids[]" value="<%= pc.id %>" aria-label="Select photo #<%= pc.id %>"
+                       data-bulk-select-target="checkbox" data-action="bulk-select#refresh">
+              </label>
+            <% end %>
+          </div>
+
+          <div class="p-3 text-sm space-y-1 flex-1">
+            <p class="font-medium text-gray-900">
+              #<%= pc.id %> · <%= pc.area.name %>
+            </p>
+            <p class="text-gray-600">
+              <% if pc.boulder %>
+                <%= pc.boulder.display_name %>
+              <% elsif pc.located? %>
+                <span class="text-amber-700">No boulder within <%= Boulder::MATCH_METRES %>&nbsp;m</span>
+              <% else %>
+                <span class="text-amber-700">No GPS</span>
+              <% end %>
+              <% if pc.located? %>
+                · <%= link_to "map", "https://www.openstreetmap.org/?mlat=#{pc.location.lat}&mlon=#{pc.location.lon}#map=19/#{pc.location.lat}/#{pc.location.lon}", target: "_blank", rel: "noopener", class: "underline" %>
+                <% if pc.location_source == "device" %><span class="text-xs text-gray-500">(phone position)</span><% end %>
+              <% end %>
+            </p>
+            <p class="text-gray-500 text-xs">
+              <%= pc.contributor_name.presence || "Anonymous" %><% if pc.contributor_email.present? %> · <%= pc.contributor_email %><% end %>
+              · <%= time_ago_in_words(pc.created_at) %> ago
+            </p>
+            <% if pc.comment.present? %>
+              <p class="text-gray-700 bg-gray-50 rounded p-2 text-xs"><%= pc.comment %></p>
+            <% end %>
+            <% if pc.moderator_note.present? %>
+              <p class="text-xs text-gray-500">Note: <%= pc.moderator_note %></p>
+            <% end %>
+          </div>
+
+          <div class="px-3 pb-3 flex items-center gap-2">
+            <% if pc.pending? %>
+              <button type="submit" name="decision" value="accept" formaction="<%= review_admin_photo_contributions_path(only_id: pc.id) %>"
+                      class="btn bg-granite hover:bg-granite-dark text-xs">Accept</button>
+              <button type="submit" name="decision" value="close" formaction="<%= review_admin_photo_contributions_path(only_id: pc.id) %>"
+                      class="btn bg-red-600 hover:bg-red-700 text-xs" data-turbo-confirm="Decline photo #<%= pc.id %>?">Decline</button>
+            <% elsif pc.accepted? %>
+              <span class="text-xs text-green-700">Accepted<% if pc.reviewed_by %> by <%= pc.reviewed_by %><% end %></span>
+              <% if pc.topo %>
+                <%= link_to "Draw lines →", workbench_admin_topo_path(pc.topo), class: "ml-auto text-xs font-medium text-granite underline" %>
+              <% end %>
+            <% else %>
+              <span class="text-xs text-gray-500">Declined<% if pc.reviewed_by %> by <%= pc.reviewed_by %><% end %></span>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= paginate @photo_contributions %>
+<% end %>

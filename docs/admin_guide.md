@@ -10,6 +10,7 @@
 7. [Managing Areas](#managing-areas)
 8. [Bulk Upload (Problems)](#bulk-upload-problems)
 9. [Photo Inbox (Upload Many Photos)](#photo-inbox)
+    - [Boulder Photos from Visitors](#boulder-photos)
     - [Boulder Names and Importing a Problem List](#boulder-names)
 10. [Importing Problems from Photos](#importing-from-photos)
 11. [Location Editor (Drag-and-Drop)](#location-editor)
@@ -617,6 +618,41 @@ What happens to each photo:
 - The GPS position and compass heading are kept with the photo
 
 **Photos to draw** on the area's Topos page lists photos with no lines yet, plus any with a line still to draw (for example from a bulk upload). Click a photo there (or **Photo #N →** straight after uploading) to open it in the [Topo Workbench](#topo-workbench) and draw its lines.
+
+---
+
+## Boulder Photos from Visitors {#boulder-photos}
+
+Visitors can send photos of boulders without picking a problem first, from **Add boulder photos** (`/en/mapping/photos/new`). It's linked at the top of the Contribute page, the Mapping page and each area's "Problems to map" list.
+
+**What the visitor does**
+
+1. Chooses an area. A side panel lists that area's boulders whose problems still have no photo, most-needed first, with a link to the map
+2. Chooses or drops photos. Each is checked in the browser before anything is sent: JPEG/PNG/WebP under 15 MB, landscape only (portrait photos are refused with a "retake in landscape" message, as topos are cropped to 4:3), and GPS + compass heading read from the photo
+3. Optionally gives a name (for the contributors leaderboard), email and comment, then presses **Send photos**. Photos upload one at a time
+
+Where each photo was taken:
+
+- From the photo's own GPS when it has one
+- If it has none but was taken in the last 15 minutes, the phone's current position is used instead (only if accurate to 50 m). These show as **(phone position)** in the queue
+- Otherwise it has no position, and you place it by hand when drawing
+
+A photo with a position is matched to the nearest boulder outline within 15 m **in any published area**, and the boulder's area wins over the one the visitor chose.
+
+**Reviewing: Photos (N) in the admin menu** (`/admin/photo-contributions`)
+
+- A grid of pending photos, each with its area, matched boulder, an OpenStreetMap link to where it was taken, contributor and comment. Area admins see only their areas
+- **Accept** turns the photo into an undrawn topo in its area, exactly like a [Photo Inbox](#photo-inbox) upload (same GPS, heading and boulder hint), so it appears in **Photos to draw**. The file moves to the topo, it isn't copied. The accepted list has a **Draw lines →** link to the workbench
+- **Decline** keeps the photo in the closed list, with an optional note
+- Tick several (or **Select all**) to accept or decline them together
+
+**Emails**: staff get one "New boulder photos" email per upload session, not per photo (`CONTRIBUTION_EMAILS`, as for contributions). A contributor who gave an email gets one acknowledgement per session, and one email per review action saying how many were accepted or declined (with your note when declining).
+
+**Spam and abuse**: the usual invisible captcha checks the first photo of each upload session; the rest of that session goes through on it. Each visitor is limited to 120 photos an hour.
+
+**Privacy**: photos are only ever shown as resized copies with EXIF (exact GPS, camera details) stripped, including on the admin grid. The same now applies to photos on the public contribution pages.
+
+Accepted photos count towards the **Top contributors** leaderboard on the Mapping page, alongside accepted contributions.
 
 ---
 

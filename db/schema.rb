@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -203,6 +203,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_100000) do
     t.index ["topo_id"], name: "index_lines_on_topo_id"
   end
 
+  create_table "photo_contributions", force: :cascade do |t|
+    t.bigint "area_id", null: false
+    t.bigint "boulder_id"
+    t.bigint "topo_id"
+    t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}
+    t.string "location_source"
+    t.float "heading"
+    t.string "contributor_name"
+    t.string "contributor_email"
+    t.text "comment"
+    t.string "state", default: "pending", null: false
+    t.string "batch"
+    t.string "reviewed_by"
+    t.datetime "reviewed_at"
+    t.text "moderator_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["area_id"], name: "index_photo_contributions_on_area_id"
+    t.index ["batch"], name: "index_photo_contributions_on_batch"
+    t.index ["boulder_id"], name: "index_photo_contributions_on_boulder_id"
+    t.index ["state"], name: "index_photo_contributions_on_state"
+    t.index ["topo_id"], name: "index_photo_contributions_on_topo_id"
+  end
+
   create_table "poi_routes", force: :cascade do |t|
     t.integer "distance", null: false
     t.string "transport", null: false
@@ -276,6 +300,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_100000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "boulders", "areas"
   add_foreign_key "contributions", "areas", on_delete: :nullify
+  add_foreign_key "photo_contributions", "areas"
+  add_foreign_key "photo_contributions", "boulders", on_delete: :nullify
+  add_foreign_key "photo_contributions", "topos", on_delete: :nullify
   add_foreign_key "problems", "areas"
   add_foreign_key "problems", "boulders", on_delete: :nullify
   add_foreign_key "topos", "areas"
