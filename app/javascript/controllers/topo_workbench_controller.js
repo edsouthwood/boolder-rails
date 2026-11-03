@@ -7,7 +7,7 @@ import { LINE_RED as RED, pointFromClick, drawDot, drawHold, drawExcludedArea, d
 export default class extends Controller {
   static targets = [
     'viewport', 'container', 'image', 'canvas', 'zoomLabel', 'modeRadio',
-    'list', 'candidates', 'filter', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
+    'list', 'candidates', 'suggestions', 'filter', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
   ]
   static values = {
     lines: Array, candidates: Array, topoId: Number,
@@ -193,6 +193,32 @@ export default class extends Controller {
     this.activate(this.lines.length - 1)
   }
 
+  // Adds every problem on the photo's boulder that isn't on the photo yet, then starts on the first
+  async addAllSuggested() {
+    const suggested = this.suggested()
+    if (!suggested.length) return
+    if (this.draft?.dirty && !confirm('Discard the unsaved changes to this line?')) return
+    if (this.draft) this.draft.dirty = false
+
+    const firstNew = this.lines.length
+    for (const [index, candidate] of suggested.entries()) {
+      this.setStatus(`Adding ${index + 1} of ${suggested.length}: ${candidate.name}…`)
+      const line = await this.request('POST', this.linesUrlValue, { line: { problem_id: candidate.id, topo_id: this.topoIdValue } })
+      if (!line) break // request() has shown the error; keep what was added
+      this.candidates = this.candidates.filter(c => c.id !== candidate.id)
+      this.lines.push(line)
+    }
+    this.renderCandidates()
+    if (this.lines.length > firstNew) {
+      this.activeIndex = null
+      this.draft = null
+      this.activate(firstNew)
+      if (this.lines.length - firstNew === suggested.length) {
+        this.setStatus(`Added ${suggested.length}. Drawing ${this.lines[firstNew].name}: click along the line`)
+      }
+    }
+  }
+
   async quickCreate(event) {
     event.preventDefault()
     const name = this.nameFieldTarget.value.trim()
@@ -216,7 +242,7 @@ export default class extends Controller {
     if (ok === null) return
 
     this.lines.splice(index, 1)
-    this.candidates.unshift({ id: line.problem_id, name: line.name, grade: line.grade, near: false, has_line: false })
+    this.candidates.unshift({ id: line.problem_id, name: line.name, grade: line.grade, near: !!line.on_boulder, has_line: false })
     if (this.activeIndex === index) { this.activeIndex = null; this.draft = null }
     else if (this.activeIndex > index) this.activeIndex--
     this.renderList()
@@ -368,7 +394,41 @@ export default class extends Controller {
     })
   }
 
+  // Problems on the photo's boulder (listed on it, or located on its outline) not on the photo yet,
+  // in the order they were entered (a problem list's order, usually left to right)
+  suggested() {
+    return this.candidates.filter(c => c.near).sort((a, b) => a.id - b.id)
+  }
+
+  renderSuggestions() {
+    if (!this.hasSuggestionsTarget) return
+    const box = this.suggestionsTarget
+    const suggested = this.suggested()
+    box.replaceChildren()
+    box.hidden = !suggested.length
+    if (!suggested.length) return
+
+    const count = suggested.length
+    box.append(this.element_('p', 'text-xs text-amber-900',
+      `${count} ${count === 1 ? 'problem' : 'problems'} on ${box.dataset.boulderName} ${count === 1 ? "isn't" : "aren't"} on this photo yet:`))
+    const names = this.element_('p', 'text-xs leading-relaxed')
+    suggested.forEach((candidate, index) => {
+      if (index) names.append(', ')
+      const add = this.element_('button', 'text-granite hover:underline', candidate.grade ? `${candidate.name} ${candidate.grade}` : candidate.name)
+      add.type = 'button'
+      add.title = `Add ${candidate.name} to this photo`
+      add.addEventListener('click', () => this.addExisting(candidate))
+      names.append(add)
+    })
+    const all = this.element_('button', 'w-full px-2 py-1 rounded bg-granite text-white hover:bg-granite-dark text-xs font-medium',
+      count === 1 ? 'Add it' : `Add all ${count}`)
+    all.type = 'button'
+    all.addEventListener('click', () => this.addAllSuggested())
+    box.append(names, all)
+  }
+
   renderCandidates() {
+    this.renderSuggestions()
     const query = this.filterTarget.value.trim().toLowerCase()
     const matches = this.candidates.filter(c => !query || `${c.name} ${c.grade || ''}`.toLowerCase().includes(query))
     const list = this.candidatesTarget

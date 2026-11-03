@@ -33,7 +33,8 @@ class Line < ApplicationRecord
   def workbench_json
     {
       id: id, problem_id: problem_id, name: problem.name_with_fallback, grade: problem.grade,
-      coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas
+      coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas,
+      on_boulder: problem.boulder_id.present? && problem.boulder_id == topo&.matched_boulder_id
     }
   end
 

@@ -931,6 +931,10 @@ One page per photo where you add every problem on it and draw all their lines, w
 - the **Photo #N →** link after uploading through the [Photo Inbox](#photo-inbox)
 - **Draw lines on this photo** on a topo's edit page, or **Draw all lines on this photo** in the line editor
 
+**Tying the photo to a boulder:** the **Boulder** box at the top of the sidebar shows which boulder the photo is of: one you tied it to, else the boulder its drawn problems are on, else the one nearest where the photo was taken. Pick a different boulder (named ones first, then unnamed ones by number) and click **Tie** to set it, or pick **Not tied to a boulder** to go back to the automatic match. Tying is useful for photos with no GPS and for boulders from a problem list that aren't drawn on the map yet. The tied boulder gets the problems you create on the photo, and the photo counts towards that boulder on the Boulders list.
+
+**Problems on the photo's boulder:** when the photo has a boulder, a yellow box under **Add a problem to this photo** lists that boulder's problems that aren't on the photo yet (listed on it by a problem list or by hand, or located on its outline). Click a name to add just that one, or **Add all N** to add every one in the order they were entered, then draw them one after another with **Enter**. A problem you remove with **✕** goes back into the box.
+
 How to use it:
 1. On the right, pick a problem that's already on the photo, or **add one**:
    - type to filter the area's problems. Ones **on boulder** come first: those listed on the photo's boulder (from a problem list or set by hand), then ones located on or near it. Then ones with **no line**. The photo's boulder is named in the panel heading (an unnamed one has a **name it** link to the boulder editor)

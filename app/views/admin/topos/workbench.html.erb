@@ -73,12 +73,28 @@
           </span>
         <% end %>
       </p>
-      <p class="mt-1 text-xs text-gray-500">Problems on this photo. Click one to draw it.</p>
+      <%= form_with url: boulder_admin_topo_path(@topo), method: :patch, class: "mt-2 flex items-center gap-2", data: { turbo: false } do %>
+        <label for="workbench_boulder_id" class="text-xs text-gray-500 shrink-0">Boulder</label>
+        <%= select_tag :boulder_id,
+              options_for_select(@area_boulders.map { |id, name| [ name.presence || "Boulder ##{id} (unnamed)", id ] }, @boulder_id),
+              include_blank: "Not tied to a boulder", id: "workbench_boulder_id",
+              class: "min-w-0 flex-1 rounded-md border-gray-300 text-xs py-1 focus:border-granite focus:ring-granite" %>
+        <button type="submit" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 text-xs">Tie</button>
+      <% end %>
+      <p class="mt-1 text-xs text-gray-400">
+        <%= { chosen: "Tied by hand.", lines: "Linked by the problems drawn on it.", gps: "Matched by where the photo was taken." }[@topo.boulder_match_source] ||
+              "Tie it to a boulder to see that boulder's problems first." %>
+      </p>
+      <p class="mt-2 text-xs text-gray-500">Problems on this photo. Click one to draw it.</p>
       <ul data-topo-workbench-target="list" class="mt-2 divide-y divide-gray-100"></ul>
     </div>
 
     <div class="bg-white shadow sm:rounded-md p-3 space-y-2">
       <p class="font-semibold text-gray-800">Add a problem to this photo</p>
+      <% if @boulder %>
+        <div data-topo-workbench-target="suggestions" hidden class="rounded-md bg-amber-50 border border-amber-200 p-2 space-y-1"
+             data-boulder-name="<%= @boulder.display_name %>"></div>
+      <% end %>
       <input type="search" placeholder="Filter <%= @area.name %> problems…" autocomplete="off"
              data-topo-workbench-target="filter" data-action="input->topo-workbench#renderCandidates"
              class="block w-full rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite">

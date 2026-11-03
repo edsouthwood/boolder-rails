@@ -30,8 +30,9 @@ Rails.application.routes.draw do
       end
       resources :topos do
         member do
-          get  :workbench
-          post :quick_problem
+          get   :workbench
+          post  :quick_problem
+          patch :boulder, action: :choose_boulder
         end
       end
       resources :problem_imports
