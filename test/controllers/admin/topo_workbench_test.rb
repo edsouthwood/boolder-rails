@@ -94,10 +94,75 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     post admin_lines_path(locale: :en), params: { line: { problem_id: listed.id, topo_id: unmapped.id } }, as: :json
     post admin_lines_path(locale: :en), params: { line: { problem_id: plain.id, topo_id: unmapped.id } }, as: :json
 
-    [ listed, plain ].each do |problem|
-      assert_in_delta 50.61, problem.reload.lat, 1e-6
-      assert_in_delta(-3.91, problem.lon, 1e-6)
+    assert_in_delta 50.61, listed.reload.lat, 1e-6
+    assert_in_delta(-3.91, listed.lon, 1e-6)
+    assert listed.location_estimated?
+    # The second one is spread a little way off, not stacked on the first
+    assert_operator unmapped.metres_between(listed.location, plain.reload.location), :>, 1
+    assert_operator unmapped.metres_between(listed.location, plain.location), :<, 3
+    assert plain.location_estimated?
+  end
+
+  test "problems added to a photo of a mapped boulder are spread along its outline" do
+    problems = %w[One Two Three].map { |name| @mine.problems.create!(name: name, steepness: "wall") }
+    problems.each do |problem|
+      post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
     end
+
+    locations = problems.map { |p| p.reload.location }
+    assert_equal 3, locations.map(&:as_text).uniq.size
+    locations.combination(2).each { |a, b| assert_operator @topo.metres_between(a, b), :>=, 1.5 }
+    problems.each do |problem|
+      assert Boulder.containing(problem.location).exists?(@boulder.id), "#{problem.name} stays on the boulder"
+      assert_equal @boulder, problem.boulder
+      assert problem.location_estimated?
+    end
+  end
+
+  test "on a photo with no GPS, a problem takes a spot next to one already placed on it" do
+    no_gps = topo(@mine)
+    @topo.choose_boulder!(nil)
+    cracked = @mine.boulders.create!(name: "Cracked") # listed, not on the map
+    no_gps.choose_boulder!(cracked)
+    placed = @mine.problems.create!(name: "Placed", steepness: "wall", boulder: cracked, lat: 50.58, lon: -3.79)
+    Line.create!(problem: placed, topo: no_gps, coordinates: POINTS)
+    snatch = @mine.problems.create!(name: "Snatch", steepness: "wall", boulder: cracked)
+    elsewhere = @mine.problems.create!(name: "Elsewhere", steepness: "wall", boulder: @mine.boulders.create!(name: "Other"))
+
+    [ snatch, elsewhere ].each do |problem|
+      post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: no_gps.id } }, as: :json
+    end
+
+    distance = no_gps.metres_between(placed.location, snatch.reload.location)
+    assert_operator distance, :>, 1
+    assert_operator distance, :<, 3
+    assert snatch.location_estimated?
+    assert_nil elsewhere.reload.location, "a problem listed on another boulder doesn't take its neighbour's spot"
+    assert_not placed.reload.location_estimated?
+  end
+
+  test "placing an estimated problem by hand clears the estimate" do
+    problem = @mine.problems.create!(name: "Guess", steepness: "wall")
+    post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
+    assert problem.reload.location_estimated?
+
+    problem.update!(name: "Renamed")
+    assert problem.reload.location_estimated?, "other edits leave it estimated"
+
+    patch admin_problem_path(problem, locale: :en), params: { problem: { lat: 50.6, lon: -3.9 } }, as: :json
+    assert_response :success
+    assert_not problem.reload.location_estimated?
+  end
+
+  test "the location editor's map marks estimated locations" do
+    estimated = @mine.problems.create!(name: "Guess", steepness: "wall")
+    post admin_lines_path(locale: :en), params: { line: { problem_id: estimated.id, topo_id: @topo.id } }, as: :json
+    @mine.problems.create!(name: "Placed", steepness: "wall", lat: 50.6, lon: -3.9)
+
+    get admin_map_path(area_id: @mine.id, format: :geojson, locale: :en)
+    flags = JSON.parse(response.body)["features"].select { |f| f["properties"]["problemId"] }.to_h { |f| [ f["properties"]["name"], f["properties"]["estimated"] ] }
+    assert_equal true, flags.find { |name, _| name.include?("Guess") }.last
+    assert_equal false, flags.find { |name, _| name.include?("Placed") }.last
   end
 
   test "drawing on an existing line locates an unlocated problem, but never moves a located one" do
@@ -111,7 +176,8 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
       assert_response :success
     end
 
-    assert_in_delta 50.61, unlocated.reload.lat, 1e-6
+    # From the photo's GPS (spread a little), not from the located problem a kilometre away
+    assert_operator unmapped.metres_between(unlocated.reload.location, unmapped.gps_location), :<, 3
     assert_in_delta 50.62, located.reload.lat, 1e-6
   end
 

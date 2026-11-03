@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_221244) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -277,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_140000) do
     t.text "description"
     t.bigint "boulder_id"
     t.boolean "hidden", default: false, null: false
+    t.boolean "location_estimated", default: false, null: false
     t.index ["area_id"], name: "index_problems_on_area_id"
     t.index ["boulder_id"], name: "index_problems_on_boulder_id"
     t.index ["circuit_id"], name: "index_problems_on_circuit_id"

@@ -720,7 +720,15 @@ The location editor lets you set GPS coordinates for unlocated problems directly
 2. The right panel shows a map with boulder polygons for context and green pins for already-located problems
 3. **Drag** a problem name from the sidebar and **drop** it onto the map at the correct position — the pin is placed and the location is saved instantly
 4. Once placed, the problem disappears from the sidebar and a green marker appears on the map
-5. **Reposition** an already-placed problem by dragging its green marker to a new position — saves on release
+5. **Reposition** an already-placed problem by dragging its marker to a new position — saves on release
+6. **Amber dashed** markers are locations estimated from a photo (see [Topo workbench](#topo-workbench)). Drag each into its real spot and it turns to a normal marker. The legend under the map counts how many are left. Changing a problem's coordinates on its edit page also counts as placing it
+
+Problems already on a photo but with no location can be given estimates in one go (dry run first, lists what it would do):
+
+```bash
+bin/rails problems:estimate_locations            # dry run; add AREA=bonehill for one area
+bin/rails problems:estimate_locations APPLY=1    # save
+```
 
 ### Bulk-clearing bad locations
 
@@ -939,7 +947,8 @@ How to use it:
 1. On the right, pick a problem that's already on the photo, or **add one**:
    - type to filter the area's problems. Ones **on boulder** come first: those listed on the photo's boulder (from a problem list or set by hand), then ones located on or near it. Then ones with **no line**. The photo's boulder is named in the panel heading (an unnamed one has a **name it** link to the boulder editor)
    - or type a name and grade and click **Create and draw**. The new problem is put on the photo's boulder. If the photo has GPS and was matched to a boulder, it's also placed on that boulder's edge nearest where you stood. If the photo has GPS but no boulder outline (e.g. a crag whose boulders aren't drawn yet), it's placed where the photo was taken, ready to nudge into place in the [Location Editor](#location-editor). With no GPS, place it there later
-   - adding or drawing a line for a problem that has no location yet places it the same way, unless a problem list put it on a different boulder from the photo's. A problem that already has a location is never moved
+   - adding or drawing a line for a problem that has no location yet gives it an **estimated** location from the photo, taken from (in order): where the photo was taken, moved onto its boulder's outline; another problem already placed on the photo (ones placed by hand first, and only within 30 m of where the photo was taken, if it has GPS); or where the photo was taken. Problems estimated from the same photo are spread about 2 m apart (along the boulder's outline when it's on the map, so they stay on it) rather than stacked on one spot. Nothing is estimated when a problem list put the problem on a different boulder from the photo's and no problem on that boulder is placed on the photo. A problem that already has a location is never moved
+   - estimated locations show as **amber** pins in the [Location Editor](#location-editor) until you drag them into place
 2. Click along the line from bottom to top. Other lines on the photo show faintly with their names
 3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
 4. When every problem has a line, click **Next photo to draw →**

@@ -106,14 +106,10 @@ class Admin::LinesController < Admin::BaseController
 
   private
 
-  # A problem drawn on a photo with no location of its own takes one from the photo: on the
-  # photo's boulder outline if it has one, else the photo's GPS (see Topo#location_for)
+  # A problem drawn on a photo with no location of its own takes an estimated one from the
+  # photo (see Topo#estimated_location_for)
   def locate_from_photo(line)
-    problem, topo = line.problem, line.topo
-    return if problem.location.present? || topo.nil?
-
-    point = topo.location_for(problem)
-    problem.update(location: point) if point
+    line.topo&.estimate_location!(line.problem)
   end
 
   def require_line_area_access

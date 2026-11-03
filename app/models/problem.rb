@@ -21,6 +21,11 @@ class Problem < ApplicationRecord
   before_save :fill_boulder_from_location, if: -> { boulder_id.nil? && location.present? && will_save_change_to_location? }
   validate :boulder_in_same_area
 
+  # Moving a problem any other way (dragged on the map, typed in, from a contribution)
+  # places it by hand, so it's no longer an estimate (see Topo#estimate_location!)
+  before_save -> { self.location_estimated = false },
+    if: -> { location_estimated? && will_save_change_to_location? && !will_save_change_to_location_estimated? }
+
   # Keep topos.boulder_id / position in step with where problems sit (old and new spot)
   after_save -> { Boulder.recompute_topos_later(points: saved_change_to_location) }, if: :saved_change_to_location?
   after_destroy -> { Boulder.recompute_topos_later(points: [ location ]) }
