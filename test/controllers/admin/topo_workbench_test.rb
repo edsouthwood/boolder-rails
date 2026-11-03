@@ -221,4 +221,58 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     get workbench_admin_topo_path(orphan, locale: :en)
     assert_redirected_to edit_admin_topo_path(orphan, locale: :en)
   end
+
+  test "a photo can be tied to one of its area's boulders, which then comes first and takes new problems" do
+    listed_rock = @mine.boulders.create!(name: "Listed Rock") # from a problem list: no outline yet
+    @mine.problems.create!(name: "Aardvark", steepness: "wall")
+    @mine.problems.create!(name: "On The List", steepness: "wall", boulder: listed_rock)
+
+    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: listed_rock.id }
+    assert_redirected_to workbench_admin_topo_path(@topo, locale: :en)
+    assert_equal listed_rock.id, @topo.reload.chosen_boulder_id
+    assert_equal listed_rock.id, @topo.matched_boulder_id, "the tie wins over the GPS match"
+    assert_equal @boulder.id, @topo.suggested_boulder_id, "the GPS match is kept"
+
+    get workbench_admin_topo_path(@topo, locale: :en)
+    candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
+    assert_equal [ "On The List", "Aardvark" ], candidates.map { |c| c["name"] }
+    assert_equal [ true, false ], candidates.map { |c| c["on_boulder"] }
+    assert_select "[data-topo-workbench-target='suggestions'][data-boulder-name='Listed Rock']"
+    assert_select "select#workbench_boulder_id option[selected][value=?]", listed_rock.id.to_s
+    assert_select "p", text: "Tied by hand."
+
+    post quick_problem_admin_topo_path(@topo, locale: :en), params: { name: "Fresh" }, as: :json
+    assert_equal listed_rock, @mine.problems.find_by!(name: "Fresh").boulder
+  end
+
+  test "untying a photo falls back to its GPS match" do
+    @topo.choose_boulder!(@mine.boulders.create!(name: "Other"))
+
+    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: "" }
+
+    assert_nil @topo.reload.chosen_boulder_id
+    assert_equal @boulder.id, @topo.matched_boulder_id
+  end
+
+  test "a photo can't be tied to another area's boulder" do
+    theirs = @theirs.boulders.create!(name: "Not Yours")
+
+    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: theirs.id }
+
+    assert_nil @topo.reload.chosen_boulder_id
+    assert_equal "That boulder isn't in this photo's area.", flash[:error]
+  end
+
+  test "area admins can't tie another area's photo" do
+    theirs = topo(@theirs)
+    patch boulder_admin_topo_path(theirs, locale: :en), params: { boulder_id: @boulder.id }
+    assert_redirected_to admin_root_path(locale: :en)
+    assert_nil theirs.reload.chosen_boulder_id
+  end
+
+  test "a photo with no boulder hides the suggestions and says how to tie one" do
+    get workbench_admin_topo_path(topo(@mine), locale: :en)
+    assert_select "[data-topo-workbench-target='suggestions']", count: 0
+    assert_select "p", text: /Tie it to a boulder/
+  end
 end

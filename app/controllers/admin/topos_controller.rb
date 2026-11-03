@@ -1,6 +1,6 @@
 class Admin::ToposController < Admin::BaseController
   before_action :require_super_admin,      only: [ :new, :create ]
-  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy, :workbench, :quick_problem ]
+  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy, :workbench, :quick_problem, :choose_boulder ]
   before_action :set_area_and_check_access, only: [ :index ]
 
   def index
@@ -58,6 +58,7 @@ class Admin::ToposController < Admin::BaseController
     @boulder_id = @topo.matched_boulder_id
     @boulder = Boulder.find_by(id: @boulder_id)
     @candidates = workbench_candidates
+    @area_boulders = @area.boulders.order(Arel.sql("name IS NULL, lower(name), id")).pluck(:id, :name)
     undrawn = Topo.in_area(@area).undrawn.where.not(id: @topo.id).reorder(:id)
     @next_topo = undrawn.where("topos.id > ?", @topo.id).first || undrawn.first
     @undrawn_count = undrawn.count
@@ -78,6 +79,21 @@ class Admin::ToposController < Admin::BaseController
     render json: line.workbench_json, status: :created
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.record.errors.full_messages.join("; ") }, status: :unprocessable_entity
+  end
+
+  # Workbench: tie the photo to one of its area's boulders (blank unties it), so the
+  # workbench suggests that boulder's problems and puts new problems on it
+  def choose_boulder
+    set_topo
+    area_id = @topo.area_id
+    boulder = params[:boulder_id].presence && Boulder.find_by(id: params[:boulder_id], area_id: area_id)
+    if params[:boulder_id].present? && !boulder
+      flash[:error] = "That boulder isn't in this photo's area."
+    else
+      @topo.choose_boulder!(boulder)
+      flash[:notice] = boulder ? "Photo tied to #{boulder.display_name}" : "Photo untied from its boulder"
+    end
+    redirect_to workbench_admin_topo_path(@topo)
   end
 
   def show
@@ -147,7 +163,8 @@ class Admin::ToposController < Admin::BaseController
 
     problems.
       sort_by { |p| [ on_boulder.(p) ? 0 : 1, near_ids.include?(p.id) ? 0 : 1, p.has_line ? 1 : 0, p.name_with_fallback.to_s.downcase ] }.
-      map { |p| { id: p.id, name: p.name_with_fallback, grade: p.grade, near: on_boulder.(p) || near_ids.include?(p.id), has_line: p.has_line } }
+      map { |p| { id: p.id, name: p.name_with_fallback, grade: p.grade, near: on_boulder.(p) || near_ids.include?(p.id),
+                  on_boulder: on_boulder.(p), has_line: p.has_line } }
   end
 
   def topo_params

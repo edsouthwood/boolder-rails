@@ -23,7 +23,9 @@
         <div class="p-2">
           <p class="text-xs font-medium text-gray-500 mb-1">
             Topo #<%= topo.id %>
-            <% if topo.suggested_boulder_id && topo.lines.empty? %>
+            <% if topo.chosen_boulder_id %>
+              <span class="font-normal">· boulder #<%= topo.chosen_boulder_id %></span>
+            <% elsif topo.suggested_boulder_id && topo.lines.empty? %>
               <span class="font-normal">· near boulder #<%= topo.suggested_boulder_id %></span>
             <% end %>
           </p>

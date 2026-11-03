@@ -56,9 +56,34 @@ class Topo < ApplicationRecord
     metadata&.dig("suggested_boulder_id")
   end
 
-  # The boulder this photo shows: linked by its lines, or matched by GPS when uploaded
+  # Boulder an admin tied the photo to in the workbench. Kept in metadata because
+  # topos.boulder_id is rewritten whenever the boulder's topos are recomputed.
+  def chosen_boulder_id
+    metadata&.dig("chosen_boulder_id")
+  end
+
+  # Ties the photo to a boulder (nil unties it); saved straight away
+  def choose_boulder!(boulder)
+    data = (metadata || {}).dup
+    if boulder
+      data["chosen_boulder_id"] = boulder.id
+    else
+      data.delete("chosen_boulder_id")
+    end
+    update!(metadata: data)
+  end
+
+  # The boulder this photo shows: tied by hand, linked by its lines, or matched by GPS when uploaded
   def matched_boulder_id
-    boulder_id || suggested_boulder_id
+    chosen_boulder_id || boulder_id || suggested_boulder_id
+  end
+
+  # How matched_boulder_id was found, for the workbench
+  def boulder_match_source
+    if chosen_boulder_id then :chosen
+    elsif boulder_id then :lines
+    elsif suggested_boulder_id then :gps
+    end
   end
 
   # Where the photographer stood, snapped onto the matched boulder's outline, so a problem

@@ -61,14 +61,14 @@ class BoulderProgress
   private
 
   # A photo counts for a boulder when it has a line for one of the boulder's problems, the
-  # topo recompute linked it, or the photo inbox matched it there by GPS.
+  # topo recompute linked it, an admin tied it there, or the photo inbox matched it by GPS.
   def photos_by_boulder
     topos = Topo.in_area(area).includes(lines: :problem).to_a
     undrawn = Topo.in_area(area).undrawn.pluck(:id).to_set
     by_boulder = Hash.new { |hash, key| hash[key] = [] }
     topos.each do |topo|
       ids = topo.lines.filter_map { |line| line.problem&.boulder_id }
-      ids << topo.boulder_id << topo.suggested_boulder_id
+      ids << topo.boulder_id << topo.chosen_boulder_id << topo.suggested_boulder_id
       ids.compact.uniq.each { |id| by_boulder[id] << topo }
     end
     [ by_boulder, undrawn ]
