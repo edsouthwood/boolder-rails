@@ -18,8 +18,10 @@ class TopoNeighbours
 
   Neighbour = Struct.new(:topo_id, :problem, :distance, keyword_init: true)
 
-  def initialize(topo)
+  # preview: work them out even while the area is unpublished (for the admin pages)
+  def initialize(topo, preview: false)
     @topo = topo
+    @preview = preview
   end
 
   def left = neighbours[:left]
@@ -27,6 +29,20 @@ class TopoNeighbours
 
   def neighbours
     @neighbours ||= find_neighbours
+  end
+
+  # Why a photo has no arrows (or only one), in words for the admin pages; nil when it has both
+  def missing_reason
+    return "This photo is unpublished." unless topo.published
+    return "Not in an area yet." unless area
+    return "The area isn't published." unless area.published || @preview
+
+    lat_lon_heading = placements[topo.id]
+    return "No position: none of its problems are located and the photo has no GPS." unless lat_lon_heading
+    return "No facing direction: no compass heading, and its problems aren't on a drawn boulder outline." unless lat_lon_heading[2]
+    return if left && right
+
+    "No other photo #{left ? 'to the right' : right ? 'to the left' : 'to either side'} within #{MAX_DISTANCE} m."
   end
 
   # Position and facing for every public photo in the area: { topo_id => [lat, lon, heading] }
@@ -43,7 +59,8 @@ class TopoNeighbours
   end
 
   def find_neighbours
-    return { left: nil, right: nil } unless area&.published && placements.key?(topo.id) && placements[topo.id][2]
+    return { left: nil, right: nil } unless area && (area.published || @preview) &&
+                                             placements.key?(topo.id) && placements[topo.id][2]
 
     own = nearest_sides(topo.id)
     { left: :right, right: :left }.to_h do |side, opposite|

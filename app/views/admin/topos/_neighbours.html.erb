@@ -1,0 +1,20 @@
+<%# The public problem page's ‹ › arrows for this photo (TopoNeighbours), so odd ones can be spotted while working %>
+<% nav = TopoNeighbours.new(topo, preview: true) %>
+<div class="text-sm" id="topo-neighbours">
+  <p class="font-semibold">Photo to the left / right <%= link_to "?", admin_docs_path(anchor: "topo-neighbours"), class: "text-xs text-gray-400 hover:underline", title: "How these are chosen" %></p>
+  <p class="mt-1 flex flex-wrap items-center justify-between gap-2">
+    <% { left: nav.left, right: nav.right }.each do |side, neighbour| %>
+      <% if neighbour %>
+        <%= link_to workbench_admin_topo_path(neighbour.topo_id), class: "text-granite hover:underline",
+              title: "Topo ##{neighbour.topo_id}, #{neighbour.distance.round} m away; the public arrow goes to #{neighbour.problem.name_with_fallback}" do %>
+          <%= side == :left ? "← #{neighbour.problem.name_with_fallback}" : "#{neighbour.problem.name_with_fallback} →" %>
+        <% end %>
+      <% else %>
+        <span class="text-gray-400"><%= side == :left ? "← none" : "none →" %></span>
+      <% end %>
+    <% end %>
+  </p>
+  <% if (reason = nav.missing_reason) %>
+    <p class="mt-1 text-xs text-gray-500"><%= reason %></p>
+  <% end %>
+</div>

@@ -942,6 +942,8 @@ A problem page's photo has **‹ ›** buttons that step to the nearest photo to
 - **Left and right:** the nearest photo 20°–160° to that side, within 150 m, in the same area. Photos taken from the same spot (under 2 m apart) are skipped. Where possible, right then left comes straight back.
 - **No arrows** when a photo's facing direction can't be worked out, i.e. no heading and no boulder outline at its problems. Locating its problems on a drawn boulder makes the arrows appear. Hidden problems, unpublished photos and unpublished areas are never linked.
 
+**Checking them while you work:** the topo workbench sidebar and the admin topo page show **Photo to the left / right** for that photo: the problem each arrow goes to (click to open that photo's workbench), or the reason there's no arrow ("No facing direction…", "No position…", "No other photo to the left within 150 m"). It works in unpublished areas too, as a preview of what visitors will see.
+
 ### Deleting a topo
 Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 

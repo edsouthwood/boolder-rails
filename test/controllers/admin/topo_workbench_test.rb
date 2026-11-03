@@ -123,6 +123,24 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_in_delta 50.61, @mine.problems.find_by!(name: "Off the map").lat, 1e-6
   end
 
+  test "the workbench and topo page show the photo's left / right arrows, or why there are none" do
+    problem = @mine.problems.create!(name: "On It", steepness: "wall", lat: 50.5999, lon: -3.9)
+    Line.create!(problem: problem, topo: @topo, coordinates: POINTS)
+    # Facing north at the south edge: a photo of the east edge is to the right
+    east = topo(@mine)
+    Line.create!(problem: @mine.problems.create!(name: "East Side", steepness: "wall", lat: 50.6, lon: -3.8999), topo: east, coordinates: POINTS)
+
+    [ workbench_admin_topo_path(@topo, locale: :en), edit_admin_topo_path(@topo, locale: :en) ].each do |path|
+      get path
+      assert_select "#topo-neighbours a[href=?]", workbench_admin_topo_path(east, locale: :en), text: /East Side →/
+      assert_select "#topo-neighbours", text: /← none/
+      assert_select "#topo-neighbours", text: /No other photo to the left/
+    end
+
+    get workbench_admin_topo_path(topo(@mine), locale: :en)
+    assert_select "#topo-neighbours", text: /No position/
+  end
+
   test "the workbench links back to the area's topos" do
     get workbench_admin_topo_path(@topo, locale: :en)
 
