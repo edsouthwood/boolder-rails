@@ -7,6 +7,7 @@ class Admin::ToposController < Admin::BaseController
     @topos = Topo.in_area(@area).includes(lines: :problem).order(id: :desc)
     @undrawn_count = @topos.undrawn.count
     @topos = @topos.undrawn if params[:undrawn] == "1"
+    @boulder_names = Boulder.where(area_id: @area.id).pluck(:id, :name).to_h
   end
 
   def new

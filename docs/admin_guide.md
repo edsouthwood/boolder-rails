@@ -594,8 +594,9 @@ its edit form.
 
 ### Naming outlines in the boulder editor
 
-- **Select an outline** and type in **Name** (the suggestions are your listed names that aren't
-  drawn yet), then press Enter or **Set**. Picking a listed name gives the outline that boulder's
+- **Select an outline**. Under **Name** is a list of your listed names that aren't drawn yet,
+  with their number of problems; typing narrows it. Click a name to give it to the outline
+  straight away, or type a name and press Enter or **Set**. Picking a listed name gives the outline that boulder's
   problems, and the name leaves the "Not on the map yet" list. Typing any other name just renames
   the outline; clearing the box removes the name. A name already used by another outline is
   refused.
@@ -625,6 +626,8 @@ What happens to each photo:
 - It becomes a topo in the area, even before any lines are drawn on it, so area admins can see and edit it
 - If it has GPS, the nearest boulder within 15 m is noted as **near boulder #N**. This is only a hint for you when drawing; the real link to a boulder is made once lines are drawn
 - The GPS position and compass heading are kept with the photo
+
+Each photo on the area's Topos page shows its boulder's name under the topo number (click it to open the boulder editor): **· tied** when you tied it in the workbench, "near" when it was only matched by where the photo was taken.
 
 **Photos to draw** on the area's Topos page lists photos with no lines yet, plus any with a line still to draw (for example from a bulk upload). Click a photo there (or **Photo #N →** straight after uploading) to open it in the [Topo Workbench](#topo-workbench) and draw its lines.
 

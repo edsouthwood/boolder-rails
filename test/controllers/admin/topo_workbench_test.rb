@@ -353,4 +353,19 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_select "[data-topo-workbench-target='suggestions']", count: 0
     assert_select "p", text: /Tie it to a boulder/
   end
+
+  test "the topos page names each photo's boulder: tied, or near by GPS" do
+    named = @mine.boulders.create!(name: "Cracked")
+    @topo.choose_boulder!(named)
+    gps_only = topo(@mine, "suggested_boulder_id" => @boulder.id)
+
+    get admin_area_topos_path(area_slug: "mine", locale: :en)
+
+    assert_select "p[title=?]", "Tied to Cracked" do
+      assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: named.id, locale: :en), text: "Cracked"
+      assert_select "span", text: "· tied"
+    end
+    assert_select "p[title=?]", "Taken near Boulder ##{@boulder.id}", text: /near\s+Boulder ##{@boulder.id}/
+    assert gps_only
+  end
 end
