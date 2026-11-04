@@ -1,0 +1,72 @@
+<%# locals: (account:) -%>
+<% input = "block w-full rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite" %>
+<% areas = Area.order(:name).pluck(:name, :slug) %>
+
+<%= form_with model: account, url: account.persisted? ? admin_account_path(account) : admin_accounts_path, scope: :admin_account,
+      class: "space-y-5 bg-white shadow sm:rounded-lg p-5 max-w-2xl", data: { controller: "reveal" } do |f| %>
+  <% if account.errors.any? %>
+    <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
+      <% account.errors.full_messages.each do |message| %><p><%= message %></p><% end %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :username, class: "block text-sm font-medium text-gray-700" %>
+    <% if account.persisted? %>
+      <p class="mt-1 text-sm font-semibold"><%= account.username %></p>
+    <% else %>
+      <%= f.text_field :username, class: "mt-1 #{input}", autocomplete: "off", required: true %>
+      <p class="mt-1 text-xs text-gray-500">What they type to sign in: lower-case letters, numbers, dots, dashes and underscores.</p>
+    <% end %>
+  </div>
+
+  <fieldset>
+    <legend class="text-sm font-medium text-gray-700">Role</legend>
+    <div class="mt-1 space-y-1 text-sm">
+      <label class="flex items-start gap-2"><%= f.radio_button :role, "area_admin" %> <span><strong>Area admin</strong>: works only on the areas ticked below</span></label>
+      <label class="flex items-start gap-2"><%= f.radio_button :role, "super_admin" %> <span><strong>Super admin</strong>: every area, plus accounts, stats, imports and jobs</span></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend class="text-sm font-medium text-gray-700">Areas <span class="font-normal text-gray-500">(for area admins)</span></legend>
+    <%= hidden_field_tag "admin_account[area_slugs][]", "" %>
+    <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+      <% areas.each do |name, slug| %>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag "admin_account[area_slugs][]", slug, account.area_slugs.include?(slug), id: "area_#{slug}" %> <%= name %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <div>
+    <%= f.label :password, account.persisted? ? "Set a new password" : "Password", class: "block text-sm font-medium text-gray-700" %>
+    <%= f.password_field :password, class: "mt-1 #{input}", autocomplete: "new-password", minlength: AdminAccount::MIN_PASSWORD_LENGTH %>
+    <p class="mt-1 text-xs text-gray-500">
+      At least <%= AdminAccount::MIN_PASSWORD_LENGTH %> characters.
+      <%= account.persisted? ? "Leave blank to keep their password." : "Leave blank and a strong one is made for you, shown once after saving." %>
+    </p>
+    <% if account.persisted? %>
+      <label class="mt-2 flex items-center gap-2 text-sm"><%= check_box_tag :generate_password, "1", false %> Make a new random password for them instead (shown once)</label>
+    <% end %>
+  </div>
+
+  <% if account.persisted? %>
+    <label class="flex items-start gap-2 text-sm">
+      <%= f.check_box :disabled %>
+      <span><strong>Disabled</strong>: can't sign in, and is signed out straight away. Their past edits stay in the audit log.</span>
+    </label>
+  <% end %>
+
+  <div class="border-t border-gray-100 pt-4">
+    <%= label_tag :current_password, "Your own password", class: "block text-sm font-medium text-gray-700" %>
+    <%= password_field_tag :current_password, nil, class: "mt-1 #{input}", autocomplete: "current-password", required: true %>
+    <p class="mt-1 text-xs text-gray-500">Needed to change accounts, in case someone else is using your signed-in browser.</p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <%= f.submit account.persisted? ? "Save changes" : "Add admin", class: "btn" %>
+    <%= link_to "Cancel", admin_accounts_path, class: "text-sm text-gray-600 hover:underline" %>
+  </div>
+<% end %>

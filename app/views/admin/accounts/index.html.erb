@@ -1,0 +1,49 @@
+<% add_breadcrumb "Accounts", nil, class: "active" %>
+<% th = "px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" %>
+
+<% if (generated = flash[:generated_password]) %>
+  <div class="my-4 rounded-lg border border-amber-300 bg-amber-50 p-4" role="status">
+    <p class="text-sm text-amber-900">New password for <strong><%= generated["username"] %></strong>, shown only this once. Send it to them somewhere private (not in a public chat), and ask them to change it from <strong>My account</strong>.</p>
+    <p class="mt-2"><code class="select-all rounded bg-white px-3 py-1.5 text-lg font-mono tracking-wide text-gray-900 border border-amber-200"><%= generated["password"] %></code></p>
+  </div>
+<% end %>
+
+<% if @credentials_in_use %>
+  <div class="my-4 rounded-lg border border-gray-300 bg-white p-4 text-sm text-gray-700">
+    Logins still come from the server's credentials file. They switch to the accounts below as soon as one of them is an enabled super admin.
+    To copy the credentials accounts across, run <code>bin/rails admin:import_accounts</code> on the server.
+  </div>
+<% end %>
+
+<div class="my-4 flex items-center justify-between gap-3">
+  <p class="text-sm text-gray-500"><%= pluralize(@accounts.size, "account") %>. Super admins can do everything; area admins only work on their areas.</p>
+  <%= link_to "Add an admin", new_admin_account_path, class: "btn" %>
+</div>
+
+<div class="bg-white shadow sm:rounded-lg overflow-x-auto">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50">
+      <tr><th class="<%= th %>">Username</th><th class="<%= th %>">Role</th><th class="<%= th %>">Areas</th><th class="<%= th %>">Last signed in</th><th class="<%= th %>"></th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <% @accounts.each do |account| %>
+        <tr class="<%= "text-gray-400" unless account.enabled? %>">
+          <td class="px-4 py-2 font-medium">
+            <%= account.username %>
+            <% if account == current_account %><span class="ml-1 text-xs font-normal text-gray-500">(you)</span><% end %>
+            <% unless account.enabled? %><span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600">disabled</span><% end %>
+          </td>
+          <td class="px-4 py-2"><%= account.super_admin? ? "Super admin" : "Area admin" %></td>
+          <td class="px-4 py-2"><%= account.super_admin? ? "All" : account.area_slugs.join(", ") %></td>
+          <td class="px-4 py-2 whitespace-nowrap"><%= account.last_signed_in_at ? "#{time_ago_in_words(account.last_signed_in_at)} ago" : "Never" %></td>
+          <td class="px-4 py-2 text-right"><%= link_to "Edit", edit_admin_account_path(account), class: "text-granite font-medium hover:underline" %></td>
+        </tr>
+      <% end %>
+      <% if @accounts.empty? %>
+        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400 italic">No accounts yet.</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<p class="mt-4 text-xs text-gray-500">Changes are recorded in the <%= link_to "audit log", admin_audits_path, class: "text-granite hover:underline" %>. Resetting a password or disabling an account signs that person out everywhere straight away.</p>

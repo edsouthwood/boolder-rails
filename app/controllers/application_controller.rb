@@ -23,8 +23,12 @@ class ApplicationController < ActionController::Base
   # Signed in to admin within the last ADMIN_SESSION_LIFETIME. Public pages use this to
   # show admin-only extras (edit links, unpublished search results).
   def admin_session?
-    session[:admin_user_name].present? &&
-      session[:admin_signed_in_at].to_i > ADMIN_SESSION_LIFETIME.ago.to_i
+    return @admin_session if defined?(@admin_session)
+
+    @admin_session = session[:admin_user_name].present? &&
+      session[:admin_signed_in_at].to_i > ADMIN_SESSION_LIFETIME.ago.to_i &&
+      (session[:admin_account_id].nil? ||
+        AdminAccount.enabled.exists?(id: session[:admin_account_id], session_version: session[:admin_session_version].to_i))
   end
 
   # Pages of an unpublished area (and its problems) are for signed-in admins only;
@@ -37,8 +41,8 @@ class ApplicationController < ActionController::Base
   end
 
   def end_admin_session
-    session.delete(:admin_user_name)
-    session.delete(:admin_signed_in_at)
+    @admin_session = false
+    %i[admin_user_name admin_signed_in_at admin_account_id admin_session_version].each { |key| session.delete(key) }
   end
 
   def render_404

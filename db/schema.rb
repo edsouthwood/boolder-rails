@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_145723) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_160443) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -44,6 +44,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_145723) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "admin_accounts", force: :cascade do |t|
+    t.string "username", null: false
+    t.string "password_digest", null: false
+    t.string "role", default: "area_admin", null: false
+    t.string "area_slugs", default: [], null: false, array: true
+    t.integer "session_version", default: 0, null: false
+    t.datetime "disabled_at"
+    t.datetime "last_signed_in_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["username"], name: "index_admin_accounts_on_username", unique: true
   end
 
   create_table "areas", force: :cascade do |t|

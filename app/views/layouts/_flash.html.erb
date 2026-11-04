@@ -1,4 +1,5 @@
 <% flash.each do |type, msg| %>
+  <% next if type.to_s == "generated_password" # shown on its own by admin/accounts %>
   <% colors = {
     notice: "bg-granite",
     error: "bg-red-600",

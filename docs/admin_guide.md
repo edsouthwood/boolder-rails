@@ -365,43 +365,35 @@ and sampled photo files were byte-identical off-site. Worth repeating every few 
 
 ## Admin Accounts
 
-Admin credentials are stored in Rails encrypted credentials. To edit them, from the main
-checkout on the server:
+Admin logins are managed on the website, under **Accounts** in the admin bar (super admins
+only). Passwords are stored as bcrypt hashes, never as readable text.
+
+- **Add an admin**: username, role (super admin or area admin), and for an area admin the areas
+  they can work on. Leave the password blank and a strong one is made and shown **once** on the
+  Accounts page: send it to them privately and ask them to change it.
+- **Edit**: change the role or areas, set a new password (or tick *Make a new random password*),
+  or tick **Disabled**. A new password or disabling signs that person out everywhere at once.
+- **Delete**: only a disabled account can be deleted; its past edits stay in the audit log.
+- Every change asks for **your own password** again, and is recorded in the audit log.
+- There's always at least one enabled super admin: the last one can't be demoted or disabled, and
+  you can't change your own role or disable yourself.
+
+**My account** (click your username, top right) shows your role and areas and lets you change your
+own password: at least 12 characters. You stay signed in on that browser; others are signed out.
+
+### Where logins come from
+Logins use these accounts as soon as there's an enabled super admin among them. Until then, and as
+an emergency way back in, the old `admin_accounts` list in the encrypted credentials file (or
+`ADMIN_USERNAME` / `ADMIN_PASSWORD`) is used instead. On the server:
 
 ```bash
-EDITOR=nano bin/rails credentials:edit
-systemctl --user restart boolder-rails
+bin/rails admin:import_accounts          # copy the credentials accounts across (once; skips existing)
+bin/rails admin:set_password ADMIN=ed    # locked out? set (or create) a super admin's password
 ```
 
-Then commit the updated `config/credentials.yml.enc`; it's encrypted, and `config/master.key`
-is never committed. `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` are only a fallback, used
-when `admin_accounts` is empty, so changing them has no effect in production. Changing a
-password doesn't end existing sessions: those last up to 14 days or until **Sign out**.
-
-### Legacy format (treated as super admin)
-```yaml
-admin_accounts:
-  yourusername: "yourpassword"
-```
-
-### New format with roles
-```yaml
-admin_accounts:
-  # Super admin — full access to everything
-  alice:
-    password: "somepassword"
-    role: super_admin
-
-  # Area admin — restricted to listed area slugs
-  bob:
-    password: "otherpassword"
-    role: area_admin
-    areas:
-      - bonehill
-      - haytor
-```
-
-Any existing plain string format continues to work and is treated as `super_admin`.
+Imported accounts keep their old passwords, even ones shorter than 12 characters (the import
+says which); ask those people to change them from My account. Once accounts are in use, the
+credentials `admin_accounts` list can be emptied.
 
 ### Login lockout
 After 10 wrong passwords from one IP address, admin login (including `/jobs`) is refused

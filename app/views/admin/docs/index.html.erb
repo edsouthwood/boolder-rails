@@ -175,29 +175,14 @@ systemctl --user status boolder-backup.timer</pre>
     <section id="admin-accounts">
       <%= render "admin/docs/section_header", title: "Admin Accounts" %>
       <div class="prose-content space-y-4 text-sm text-gray-700">
-        <p>Credentials are stored in Rails encrypted credentials. Edit them with:</p>
-        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">rails credentials:edit</pre>
-
-        <p class="font-medium text-gray-800">Legacy format (treated as super admin)</p>
-        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">admin_accounts:
-  yourusername: "yourpassword"</pre>
-
-        <p class="font-medium text-gray-800">New format with roles</p>
-        <pre class="bg-gray-800 text-gray-100 text-xs rounded-md p-4">admin_accounts:
-  # Super admin — full access
-  alice:
-    password: "somepassword"
-    role: super_admin
-
-  # Area admin — restricted to listed areas
-  bob:
-    password: "otherpassword"
-    role: area_admin
-    areas:
-      - bonehill
-      - haytor</pre>
-
-        <p class="text-gray-500 text-xs">Plain string credentials continue to work unchanged and are treated as super_admin.</p>
+        <p>Managed on the website under <strong>Accounts</strong> (super admins). Passwords are stored as bcrypt hashes.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Add an admin</strong>: username, role, and areas for an area admin. Leave the password blank for a strong one, shown once: send it privately</li>
+          <li><strong>Edit</strong>: role, areas, new or random password, or <strong>Disabled</strong>. A new password or disabling signs them out everywhere at once</li>
+          <li>Only disabled accounts can be deleted. Every change needs your own password and goes in the audit log. The last super admin can't be demoted or disabled</li>
+          <li><strong>My account</strong> (your username, top right): change your own password (12+ characters)</li>
+        </ul>
+        <p>Until an enabled super admin exists in Accounts, and as an emergency way back in, logins come from the old <code>admin_accounts</code> credentials list. On the server: <code>bin/rails admin:import_accounts</code> copies those across; <code>bin/rails admin:set_password ADMIN=name</code> sets (or creates) a super admin's password if you're locked out.</p>
 
         <p class="font-medium text-gray-800">Login lockout</p>
         <p>After 10 wrong passwords from one IP address, admin login (including <code>/jobs</code>) is refused with "429 Too Many Requests" for 15 minutes from the first failure. To unlock early, in a Rails console on the server:</p>

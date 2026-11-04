@@ -11,7 +11,7 @@ class Admin::BaseController < ApplicationController
   private
 
   def authenticate
-    return true if admin_session? && accounts[session[:admin_user_name]].present?
+    return true if admin_session? && signed_in_account_valid?
 
     end_admin_session # expired, or the account was removed
     return head(:too_many_requests) if login_failures >= MAX_LOGIN_FAILURES
@@ -21,17 +21,52 @@ class Admin::BaseController < ApplicationController
     return request_http_basic_authentication("admin") if session.delete(:admin_signed_out)
 
     authenticate_or_request_with_http_basic("admin") do |id, password|
-      account = accounts[id.to_s]
-      expected = account.is_a?(String) ? account : account&.with_indifferent_access&.dig(:password)
-      if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password, expected)
+      username, account = verify_login(id, password)
+      if username
         reset_session # a fresh session id on login
-        session[:admin_user_name] = id
+        session[:admin_user_name] = username
         session[:admin_signed_in_at] = Time.current.to_i
+        if account
+          session[:admin_account_id] = account.id
+          session[:admin_session_version] = account.session_version
+          account.update_column(:last_signed_in_at, Time.current)
+        end
         true
       else
         record_login_failure
         false
       end
+    end
+  end
+
+  # Logins come from Admin → Accounts (AdminAccount) once there's an enabled super admin
+  # there. Until then, and as a way back in if the database accounts are ever unusable,
+  # the admin_accounts credentials list (or ADMIN_USERNAME / ADMIN_PASSWORD) is used.
+  def database_accounts?
+    return @database_accounts if defined?(@database_accounts)
+
+    @database_accounts = AdminAccount.any_super_admin?
+  end
+
+  # [username, account (nil for a credentials login)] when the password is right
+  def verify_login(id, password)
+    if database_accounts?
+      account = AdminAccount.enabled.authenticate_by(username: id.to_s, password: password.to_s)
+      [ account.username, account ] if account
+    else
+      raw = accounts[id.to_s]
+      expected = raw.is_a?(String) ? raw : raw&.with_indifferent_access&.dig(:password)
+      [ id.to_s, nil ] if expected.present? && ActiveSupport::SecurityUtils.secure_compare(password.to_s, expected)
+    end
+  end
+
+  # The signed-in account still exists, is enabled and hasn't been signed out everywhere
+  # (password changed or reset); a credentials login only while credentials are in use
+  def signed_in_account_valid?
+    if session[:admin_account_id]
+      current_account.present?
+    else
+      !database_accounts? && accounts[session[:admin_user_name]].present?
     end
   end
 
@@ -58,6 +93,8 @@ class Admin::BaseController < ApplicationController
   end
 
   def current_admin_user
+    return @current_admin_user ||= current_account.to_admin_user if current_account
+
     @current_admin_user ||= begin
       username = session[:admin_user_name]
       raw = accounts[username.to_s]
@@ -67,6 +104,25 @@ class Admin::BaseController < ApplicationController
         # ENV-var fallback: already authenticated, treat as super_admin
         AdminUser.new(username: username.to_s, role: "super_admin")
       end
+    end
+  end
+
+  helper_method :current_account
+
+  # The signed-in AdminAccount (nil for a credentials login)
+  def current_account
+    return @current_account if defined?(@current_account)
+
+    @current_account = session[:admin_account_id] &&
+      AdminAccount.enabled.find_by(id: session[:admin_account_id], session_version: session[:admin_session_version].to_i)
+  end
+
+  # Re-entering your own password before changing accounts
+  def own_password_correct?(password)
+    if current_account
+      current_account.authenticate(password.to_s).present?
+    else
+      verify_login(session[:admin_user_name], password).present?
     end
   end
 
