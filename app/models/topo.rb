@@ -101,6 +101,9 @@ class Topo < ApplicationRecord
   SPREAD_METRES = 2
   # A problem on the photo further than this from where it was taken isn't used as a guide
   NEIGHBOUR_MAX_METRES = 30
+  # A spot with a problem closer than this is taken; give up looking for a free one after so many
+  TAKEN_METRES = 1
+  MAX_SPREAD_TRIES = 20
 
   # Gives a problem with no location an estimated one from this photo (see
   # estimated_location_for) and flags it, so the location editor shows it needs placing
@@ -117,7 +120,8 @@ class Topo < ApplicationRecord
   # 1. where the photo was taken, snapped onto its boulder's outline
   # 2. another located problem on the photo (hand-placed ones first, same boulder first)
   # 3. where the photo was taken
-  # Problems estimated from the same photo are spread out round that spot: along the
+  # Problems estimated from the same photo, or landing where another problem already is,
+  # are spread out round that spot: along the
   # boulder's outline when there is one (so they stay on the boulder), else in a small
   # spiral. Nil when there's nothing to go on. Photo GPS isn't used when a problem list
   # put the problem on a different boulder from the one this photo shows.
@@ -133,7 +137,15 @@ class Topo < ApplicationRecord
     anchor = (gps if boulder) || neighbour&.location || gps
     return unless anchor
 
-    (boulder && spread_along_outline(boulder, anchor, others.size)) || spread_round(anchor, others.size)
+    # Start after the photo's other located problems, then skip any spot already taken by
+    # some other problem (another photo taken from the same place, say)
+    nth = others.size
+    loop do
+      point = (boulder && spread_along_outline(boulder, anchor, nth)) || spread_round(anchor, nth)
+      return point if nth >= others.size + MAX_SPREAD_TRIES || !spot_taken?(point, problem)
+
+      nth += 1
+    end
   end
 
   # Located problems on this photo other than this one, hand-placed first, then those on
@@ -171,6 +183,11 @@ class Topo < ApplicationRecord
     metres_per_degree = 111_320.0
     FACTORY.point(anchor.lon + radius * Math.sin(angle) / (metres_per_degree * Math.cos(anchor.lat * Math::PI / 180)),
                   anchor.lat + radius * Math.cos(angle) / metres_per_degree)
+  end
+
+  def spot_taken?(point, problem)
+    Problem.where.not(id: problem.id).
+      where("ST_DWithin(location, ST_GeogFromText(?), ?)", "SRID=4326;#{point.as_text}", TAKEN_METRES).exists?
   end
 
   def metres_between(a, b)
