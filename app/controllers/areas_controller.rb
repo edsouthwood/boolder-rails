@@ -1,4 +1,7 @@
 class AreasController < ApplicationController
+  include CountsPageViews
+  count_page_views(:area, only: :show) { { area: @area } }
+
   def index
     # see https://guides.rubyonrails.org/caching_with_rails.html#avoid-caching-instances-of-active-record-objects
     @popular_areas_ids = Area.published.any_tags(:popular).pluck(:id).shuffle

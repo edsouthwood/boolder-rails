@@ -1,4 +1,7 @@
 class MapController < ApplicationController
+  include CountsPageViews
+  count_page_views(:map, only: :index) { { area: @area } }
+
   layout "map"
 
   def index

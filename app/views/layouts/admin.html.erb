@@ -38,7 +38,7 @@
         <div class="flex items-center w-full ">
           <div class="w-full">
             <div class="flex justify-between w-full ">
-              <div class="flex items-center space-x-1 overflow-x-auto">
+              <div class="flex min-w-0 items-center space-x-1 overflow-x-auto">
                 <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
                 <%= link_to root_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" do %>
                   <%= bowda_logo_svg(color: "#C9CDD0", class: "h-8 w-auto", role: "img", "aria-label": "bowda admin") %>
@@ -53,6 +53,10 @@
                 <%= link_to "Photos (#{PhotoContribution.pending.count})", admin_photo_contributions_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
                 <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+
+                <% if current_admin_user.super_admin? %>
+                  <%= link_to "Stats", admin_stats_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <% end %>
 
                 <%= link_to "Docs", admin_docs_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 

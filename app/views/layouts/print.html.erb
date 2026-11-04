@@ -8,6 +8,9 @@
     <%= render "layouts/icons" %>
     <%= display_meta_tags site: 'Dartmoor Bouldering', reverse: true %>
     <%= csrf_meta_tags %>
+    <%# No hover prefetch: a prefetched page is shown on click without a request, so the visit
+        would go uncounted (see CountsPageViews). It also saves rendering pages nobody opens. %>
+    <meta name="turbo-prefetch" content="false">
     <%= csp_meta_tag %>
     <%= stylesheet_link_tag "tailwind", "outfit-font", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>

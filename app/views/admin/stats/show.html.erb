@@ -1,0 +1,202 @@
+<% add_breadcrumb "Stats", nil, class: "active" %>
+<% card = "bg-white shadow sm:rounded-lg p-4" %>
+<% th = "px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" %>
+<% num = "px-3 py-1.5 text-right tabular-nums" %>
+
+<div class="space-y-8">
+  <%# ── Visits ───────────────────────────────────────────────────────────── %>
+  <section class="space-y-4" aria-labelledby="visits-heading">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 id="visits-heading" class="text-lg font-semibold text-gray-900">Visits</h2>
+        <p class="text-xs text-gray-500">
+          Anonymous daily totals of page views (no IP addresses, cookies or visitor IDs). Bots, admins and offline downloads aren't counted.
+          <%= @stats.counting_since ? "Counting since #{l(@stats.counting_since, format: "%-d %B %Y")}." : "Nothing counted yet: totals start from the day this went live." %>
+        </p>
+      </div>
+      <nav class="flex gap-1 text-sm" aria-label="Period">
+        <% AdminStats::PERIODS.each do |d| %>
+          <%= link_to "#{d} days", admin_stats_path(days: d),
+                class: "px-2.5 py-1 rounded-md #{d == @stats.days ? "bg-granite text-white" : "text-gray-600 hover:bg-gray-200"}",
+                aria: { current: (d == @stats.days ? "page" : nil) } %>
+        <% end %>
+      </nav>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div class="<%= card %>">
+        <p class="text-xs text-gray-500">Page views, last <%= pluralize(@stats.days, "day") %></p>
+        <p class="text-3xl font-semibold tabular-nums text-gray-900"><%= number_with_delimiter(@stats.total_views) %></p>
+        <%= stats_change(@stats.change_percent) %>
+      </div>
+      <% { "home" => "Home page", "area" => "Area pages", "problem" => "Problem pages", "map" => "Map" }.each do |kind, label| %>
+        <div class="<%= card %>">
+          <p class="text-xs text-gray-500"><%= label %></p>
+          <p class="text-2xl font-semibold tabular-nums text-gray-800"><%= number_with_delimiter(@stats.views_by_kind[kind].to_i) %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="<%= card %>">
+      <p class="text-sm font-medium text-gray-800 mb-2">Page views per day</p>
+      <% daily = @stats.daily_views %>
+      <%= stats_chart(type: "line", labels: daily.map { |d, _| l(d, format: "%-d %b") }, values: daily.map(&:last), label: "Page views per day", height: 220) %>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="<%= card %> overflow-x-auto">
+        <p class="text-sm font-medium text-gray-800 mb-2">Most viewed areas</p>
+        <% if (areas = @stats.top_areas).any? %>
+          <table class="min-w-full text-sm">
+            <thead><tr><th class="<%= th %>">Area</th><th class="<%= th %> text-right">Area page</th><th class="<%= th %> text-right">Problems</th><th class="<%= th %> text-right">Map</th><th class="<%= th %> text-right">Total</th></tr></thead>
+            <tbody class="divide-y divide-gray-100">
+              <% areas.each do |area, kinds, total| %>
+                <tr>
+                  <td class="px-3 py-1.5"><%= area.slug.present? ? link_to(area.name, area_path(slug: area.slug), class: "hover:underline", target: "_blank") : area.name %></td>
+                  <td class="<%= num %> text-gray-600"><%= kinds["area"] %></td>
+                  <td class="<%= num %> text-gray-600"><%= kinds["problem"] %></td>
+                  <td class="<%= num %> text-gray-600"><%= kinds["map"] %></td>
+                  <td class="<%= num %> font-semibold"><%= total %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="text-sm text-gray-400 italic">No area views in this period yet.</p>
+        <% end %>
+      </div>
+
+      <div class="<%= card %> overflow-x-auto">
+        <p class="text-sm font-medium text-gray-800 mb-2">Most viewed problems</p>
+        <% if (problems = @stats.top_problems).any? %>
+          <table class="min-w-full text-sm">
+            <thead><tr><th class="<%= th %>">Problem</th><th class="<%= th %>">Area</th><th class="<%= th %> text-right">Views</th></tr></thead>
+            <tbody class="divide-y divide-gray-100">
+              <% problems.each do |problem, views| %>
+                <tr>
+                  <td class="px-3 py-1.5"><%= link_to problem.name_with_fallback, admin_problem_path(problem), class: "hover:underline" %> <span class="text-gray-500"><%= problem.grade %></span></td>
+                  <td class="px-3 py-1.5 text-gray-600"><%= problem.area&.name %></td>
+                  <td class="<%= num %> font-semibold"><%= views %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="text-sm text-gray-400 italic">No problem views in this period yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <%# ── Weekly activity ──────────────────────────────────────────────────── %>
+  <section class="space-y-4" aria-labelledby="activity-heading">
+    <div>
+      <h2 id="activity-heading" class="text-lg font-semibold text-gray-900">Activity, last <%= AdminStats::WEEKS %> weeks</h2>
+      <p class="text-xs text-gray-500">Things added each week (Monday to Sunday). Hover a bar for the number.</p>
+    </div>
+    <% week_labels = @stats.week_starts.map { |w| l(w, format: "%-d %b") } %>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% @stats.weekly.each do |label, values| %>
+        <div class="<%= card %>">
+          <p class="text-sm font-medium text-gray-800"><%= label %></p>
+          <p class="text-xs text-gray-500 mb-2"><%= number_with_delimiter(values.sum) %> in <%= AdminStats::WEEKS %> weeks · <%= values.last %> this week</p>
+          <%= stats_chart(type: "bar", labels: week_labels, values: values, label: label, height: 140) %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <%# ── Community ────────────────────────────────────────────────────────── %>
+  <section class="space-y-4" aria-labelledby="community-heading">
+    <h2 id="community-heading" class="text-lg font-semibold text-gray-900">Community</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <% [ [ "Contributions and reports", @stats.contribution_states, @stats.contribution_review_days, admin_contributions_path(state: "pending") ],
+           [ "Photos from visitors", @stats.photo_contribution_states, @stats.photo_review_days, admin_photo_contributions_path ] ].each do |label, states, review_days, path| %>
+        <div class="<%= card %>">
+          <p class="text-sm font-medium text-gray-800 mb-2"><%= link_to label, path, class: "hover:underline" %></p>
+          <dl class="grid grid-cols-3 gap-2 text-center">
+            <% { "pending" => "Waiting", "accepted" => "Accepted", "closed" => "Closed" }.each do |state, name| %>
+              <div class="rounded-md <%= state == "pending" && states[state].to_i.positive? ? "bg-amber-50" : "bg-gray-50" %> py-2">
+                <dt class="text-xs text-gray-500"><%= name %></dt>
+                <dd class="text-xl font-semibold tabular-nums text-gray-800"><%= states[state].to_i %></dd>
+              </div>
+            <% end %>
+          </dl>
+          <p class="mt-2 text-xs text-gray-500">
+            <%= review_days ? "Typical wait for a decision (last 90 days): #{review_days} #{review_days == 1 ? "day" : "days"}" : "No decisions in the last 90 days." %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <%# ── Mapping progress ─────────────────────────────────────────────────── %>
+  <section class="space-y-4" aria-labelledby="progress-heading">
+    <div>
+      <h2 id="progress-heading" class="text-lg font-semibold text-gray-900">Mapping progress</h2>
+      <p class="text-xs text-gray-500">Per area, hidden problems left out. "Estimated" locations came from a photo and still need placing by hand.</p>
+    </div>
+    <div class="<%= card %> overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr>
+            <th class="<%= th %>">Area</th>
+            <th class="<%= th %> text-right">Problems</th>
+            <th class="<%= th %> text-right">Placed</th>
+            <th class="<%= th %> text-right">Estimated</th>
+            <th class="<%= th %> text-right">No location</th>
+            <th class="<%= th %> text-right">With a line</th>
+            <th class="<%= th %> text-right">Photos</th>
+            <th class="<%= th %> text-right">To draw</th>
+            <th class="<%= th %> text-right">Boulders on map</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% (@stats.progress + [ @stats.progress_totals ]).each do |row| %>
+            <% total = row.area.nil? %>
+            <tr class="<%= "font-semibold border-t-2 border-gray-200" if total %>">
+              <td class="px-3 py-1.5 whitespace-nowrap">
+                <% if total %>All areas<% else %>
+                  <%= row.area.slug.present? ? link_to(row.area.name, admin_area_boulders_path(area_slug: row.area.slug), class: "hover:underline") : row.area.name %>
+                  <% unless row.area.published %><span class="ml-1 text-xs font-normal text-amber-600">unpublished</span><% end %>
+                <% end %>
+              </td>
+              <td class="<%= num %>"><%= row.problems %></td>
+              <td class="<%= num %>"><%= row.placed %> <span class="text-xs text-gray-400"><%= row.placed_percent %>%</span></td>
+              <td class="<%= num %> <%= "text-amber-700" if row.estimated.positive? %>"><%= row.estimated %></td>
+              <td class="<%= num %> <%= "text-amber-700" if row.unlocated.positive? %>"><%= row.unlocated %></td>
+              <td class="<%= num %>"><%= row.with_line %> <span class="text-xs text-gray-400"><%= row.line_percent %>%</span></td>
+              <td class="<%= num %>"><%= row.photos %></td>
+              <td class="<%= num %> <%= "text-amber-700" if row.to_draw.positive? %>"><%= row.to_draw %></td>
+              <td class="<%= num %>"><%= row.boulders_on_map %> <span class="text-xs text-gray-400">/ <%= row.boulders %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <%# ── Admin activity ───────────────────────────────────────────────────── %>
+  <section class="space-y-4" aria-labelledby="admin-heading">
+    <h2 id="admin-heading" class="text-lg font-semibold text-gray-900">Admin edits, last 30 days</h2>
+    <div class="<%= card %> overflow-x-auto">
+      <% if (activity = @stats.admin_activity).any? %>
+        <table class="min-w-full text-sm">
+          <thead><tr><th class="<%= th %>">Who</th><th class="<%= th %>">What</th><th class="<%= th %> text-right">Edits</th></tr></thead>
+          <tbody class="divide-y divide-gray-100">
+            <% activity.each do |user, types, total| %>
+              <tr>
+                <td class="px-3 py-1.5"><%= user %></td>
+                <td class="px-3 py-1.5 text-gray-600"><%= types.sort_by { |_, n| -n }.map { |type, n| "#{n} #{type.underscore.humanize(capitalize: false).pluralize(n)}" }.join(", ") %></td>
+                <td class="<%= num %> font-semibold"><%= total %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <p class="mt-2 text-xs text-gray-500"><%= link_to "Full audit log", admin_audits_path, class: "text-granite hover:underline" %></p>
+      <% else %>
+        <p class="text-sm text-gray-400 italic">No edits in the last 30 days.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

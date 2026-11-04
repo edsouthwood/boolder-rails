@@ -30,6 +30,7 @@
       <li><a href="#pois" class="hover:underline">POIs and Routes</a></li>
       <li><a href="#contributions" class="hover:underline">Contributions</a></li>
       <li><a href="#offline-use" class="hover:underline">Offline Use (Map &amp; Photos)</a></li>
+      <li><a href="#stats" class="hover:underline">Stats</a></li>
       <li><a href="#problems-by-grade" class="hover:underline">Problems by Grade and Map Grade Filters</a></li>
       <li><a href="#topo-neighbours" class="hover:underline">Photo to the Left / Right</a></li>
       <li><a href="#topo-sheets" class="hover:underline">Printable Topo Sheets</a></li>
@@ -769,6 +770,15 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p>A single area is only a few MB. After saving, a timestamp and a <strong>Remove</strong> link appear; Remove clears that area's tiles, photos and pages. If some files fail to download, the saved message says how many — re-save on a better connection.</p>
         <p><strong>Checking a saved area:</strong> the <a href="/en/offline-status" class="text-granite-dark underline">offline status page</a> ("Details" next to a saved area) shows the service worker version, cache contents, the pinned tile snapshot, and whether each saved area is complete. If offline mode misbehaves in the field, a screenshot of that page is the bug report.</p>
         <p class="text-gray-500 text-xs">Implementation: a service worker (<code>public/service-worker.js</code>) serves cached assets offline — it also handles Turbo Drive link clicks (not just full navigations) and races the network against a 3.5&nbsp;s timeout so a weak signal falls back to cache quickly. <code>offline_download_controller.js</code> pre-fetches everything using the area's bounds/URLs from <code>Areas::OfflineDataController</code>, counting failures, and re-pins a <em>fresh</em> OpenFreeMap style + TileJSON on every save (their tile URLs contain a rotating dated snapshot — downloading against a stale one yields an empty map). End-to-end check: <code>script/offline_check.mjs</code>. <strong>Known limitation:</strong> problems in a <em>different</em>, un-downloaded area still need a connection.</p>
+      </div>
+    </section>
+
+    <%# Stats %>
+    <section id="stats">
+      <%= render "admin/docs/section_header", title: "Stats" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p><strong>Admin → Stats</strong> (super admins only): page views for the chosen period (7–365 days) with a daily chart and the most viewed areas and problems; weekly activity over 12 weeks (problems, lines, photos, contributions, visitor photos, admin edits); contributions waiting and the typical wait for a decision; mapping progress per area; and who edited what in the last 30 days.</p>
+        <p><strong>How visits are counted:</strong> anonymous daily totals per page (home, area, problem, map) in <code>page_views</code>, with no IP address, cookie, browser details or visitor ID, as the privacy policy says. Only real visits count (a page opened in the browser or by following a link); hover prefetches, offline downloads, admins, bots and error pages don't. Counting started on 4 November 2026.</p>
       </div>
     </section>
 
