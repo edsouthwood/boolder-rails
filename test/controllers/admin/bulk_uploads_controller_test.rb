@@ -26,7 +26,7 @@ class Admin::BulkUploadsControllerTest < ActionDispatch::IntegrationTest
     csv = Rack::Test::UploadedFile.new(StringIO.new("name,grade,image_filename\nArete,6a,arete.jpg\n"), "text/csv", original_filename: "problems.csv")
     image = Rack::Test::UploadedFile.new(StringIO.new("fake image"), "image/jpeg", original_filename: "arete.jpg")
 
-    post admin_bulk_uploads_url(locale: :en), params: { area_id: @area.id, csv_file: csv, images: [ image ] }
+    post admin_bulk_uploads_url, params: { area_id: @area.id, csv_file: csv, images: [ image ] }
     assert_redirected_to new_admin_bulk_upload_path
 
     problem = @area.problems.find_by!(name: "Arete")

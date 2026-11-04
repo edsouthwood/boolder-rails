@@ -31,7 +31,7 @@ class OpenDataControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta 50.58, row["latitude"].to_f, 0.0001
     assert_in_delta(-3.9, row["longitude"].to_f, 0.0001)
     assert_equal "Open Area", row["area"]
-    assert_match %r{/en/p/#{problem.id}\z}, row["url"]
+    assert_match %r{/p/#{problem.id}\z}, row["url"]
   end
 
   test "returns just the header row when nothing is published" do

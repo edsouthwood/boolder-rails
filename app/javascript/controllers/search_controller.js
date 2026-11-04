@@ -27,7 +27,7 @@ const debouncedSearch = debouncePromise(async (query, params = {}) => {
     } catch (_) {}
   }
   if (!("caches" in window)) return { results: [], offline: true };
-  return { results: await searchOffline(query, params.locale), offline: true };
+  return { results: await searchOffline(query), offline: true };
 }, 400);
 
 function escapeHtml(text) {

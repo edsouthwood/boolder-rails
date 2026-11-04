@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Debug read-out for the offline feature (/[locale]/offline-status): reports the
+// Debug read-out for the offline feature (/offline-status): reports the
 // service worker version, per-cache entry counts, the pinned base-map tile snapshot,
 // and — for each saved area — how many of its tracked URLs are actually present in
 // Cache Storage. Read-only; nothing here mutates the caches.

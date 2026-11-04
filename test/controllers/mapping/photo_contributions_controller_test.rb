@@ -17,19 +17,19 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
 
   # The fields a freshly loaded page carries (authenticity token, invisible_captcha's spinner)
   def page_fields(area = @area)
-    get new_mapping_photo_contribution_url(locale: :en, area_id: area.id)
+    get new_mapping_photo_contribution_url(area_id: area.id)
     css_select("form[action$='/mapping/photos'] input[type=hidden][name]").to_h { |input| [ input["name"], input["value"].to_s ] }
   end
 
   def upload(fields, **params)
     travel 10.seconds do
-      post mapping_photo_contributions_url(locale: :en), params: fields.merge(photo: photo, **params), as: nil,
+      post mapping_photo_contributions_url, params: fields.merge(photo: photo, **params), as: nil,
            headers: { "Accept" => "application/json" }
     end
   end
 
   test "the page asks for an area first" do
-    get new_mapping_photo_contribution_url(locale: :en)
+    get new_mapping_photo_contribution_url
 
     assert_response :success
     assert_select "select[name=area_id] option", text: "Photo Tor"
@@ -52,7 +52,7 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
     @area.boulders.create!(name: "Lonely Block")
     @area.boulders.create!(polygon: @neighbour_boulder.polygon)
 
-    get new_mapping_photo_contribution_url(locale: :en, area_id: @area.id, boulder_id: egg.id)
+    get new_mapping_photo_contribution_url(area_id: @area.id, boulder_id: egg.id)
 
     assert_response :success
     assert_select "form[data-controller=photo-contribution]"
@@ -71,7 +71,7 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
     pc.photo.attach(io: StringIO.new("x"), filename: "a.jpg", content_type: "image/jpeg")
     pc.save!
 
-    get new_mapping_photo_contribution_url(locale: :en, area_id: @area.id)
+    get new_mapping_photo_contribution_url(area_id: @area.id)
     assert_select "label[data-boulder=?]", egg.id.to_s, text: /Photo waiting for review/
   end
 
@@ -101,7 +101,7 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
 
   test "an unpublished area isn't offered" do
     hidden = Area.create!(name: "Hidden Tor", slug: "hidden-tor", published: false)
-    get new_mapping_photo_contribution_url(locale: :en, area_id: hidden.id)
+    get new_mapping_photo_contribution_url(area_id: hidden.id)
 
     assert_select "select option", text: "Hidden Tor", count: 0
     assert_select "form[data-controller=photo-contribution]", count: 0
@@ -132,7 +132,7 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
     end
     assert_response :created
 
-    get new_mapping_photo_contribution_url(locale: :en, area_id: @area.id)
+    get new_mapping_photo_contribution_url(area_id: @area.id)
     assert_select "input[name='photo_contribution[contributor_name]'][value=Ann]"
   end
 
@@ -166,7 +166,7 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
 
     assert_no_difference -> { PhotoContribution.count } do
       travel 10.seconds do
-        post mapping_photo_contributions_url(locale: :en), params: fields.merge(photo: photo("image/svg+xml")),
+        post mapping_photo_contributions_url, params: fields.merge(photo: photo("image/svg+xml")),
              headers: { "Accept" => "application/json" }
       end
       assert_response :unprocessable_entity
@@ -182,18 +182,18 @@ class Mapping::PhotoContributionsControllerTest < ActionDispatch::IntegrationTes
     assert_response :created
 
     # No spinner or timestamp left, but the same batch
-    post mapping_photo_contributions_url(locale: :en), params: { photo: photo, "photo_contribution[area_id]" => @area.id,
+    post mapping_photo_contributions_url, params: { photo: photo, "photo_contribution[area_id]" => @area.id,
          "photo_contribution[batch]" => fields["photo_contribution[batch]"] }, headers: { "Accept" => "application/json" }
     assert_response :created
 
-    post mapping_photo_contributions_url(locale: :en), params: { photo: photo, "photo_contribution[area_id]" => @area.id,
+    post mapping_photo_contributions_url, params: { photo: photo, "photo_contribution[area_id]" => @area.id,
          "photo_contribution[batch]" => SecureRandom.uuid }, headers: { "Accept" => "application/json" }
     assert_response :unprocessable_entity
   end
 
   test "an upload straight after the page loads is told to wait" do
     fields = page_fields
-    post mapping_photo_contributions_url(locale: :en), params: fields.merge(photo: photo), headers: { "Accept" => "application/json" }
+    post mapping_photo_contributions_url, params: fields.merge(photo: photo), headers: { "Accept" => "application/json" }
 
     assert_response :unprocessable_entity
     assert_equal "too_fast", response.parsed_body["error"]

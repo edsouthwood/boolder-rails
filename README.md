@@ -95,9 +95,9 @@ Remote destination is configured in `.env.backup` (not committed to git).
 
 ## Admin
 
-The admin interface is at `/en/admin`, protected by HTTP basic auth (set via `ADMIN_USERNAME` / `ADMIN_PASSWORD` or Rails credentials).
+The admin interface is at `/admin`, protected by HTTP basic auth (set via `ADMIN_USERNAME` / `ADMIN_PASSWORD` or Rails credentials).
 
-Full documentation is available in-app at `/en/admin/docs` and in `docs/admin_guide.md`.
+Full documentation is available in-app at `/admin/docs` and in `docs/admin_guide.md`.
 
 ### Admin roles
 
@@ -145,7 +145,7 @@ This fork diverges from [boolder-org/boolder-rails](https://github.com/boolder-o
 ### Operations
 - Systemd user services for the dev server (`boolder-rails`, `boolder-css`) with auto-start at boot
 - Daily automated backup script (`bin/backup`) with systemd timer — database, storage files, master key, and `.env`
-- In-app admin documentation at `/en/admin/docs`
+- In-app admin documentation at `/admin/docs`
 
 ---
 

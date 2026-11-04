@@ -64,7 +64,7 @@ check_certificate() {
 }
 
 check_page "Health check" "/up"
-check_page "Home page" "/en" "Bouldering on Dartmoor"
+check_page "Home page" "/" "Bouldering on Dartmoor"
 check_certificate
 
 if (( ${#failures[@]} > 0 )); then

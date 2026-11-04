@@ -37,19 +37,19 @@ class UnpublishedVisibilityTest < ActionDispatch::IntegrationTest
   end
 
   def sign_in_admin
-    get admin_docs_url(locale: :en),
+    get admin_docs_url,
         headers: { "Authorization" => ActionController::HttpAuthentication::Basic.encode_credentials("admin", "correct-password") }
     assert_response :success
   end
 
   def hidden_pages
     [
-      area_url(@hidden.slug, locale: :en),
-      area_problems_url(@hidden.slug, locale: :en),
-      area_problem_url(@hidden.slug, @hidden_problem, locale: :en),
-      problem_permalink_url(id: @hidden_problem.id, locale: :en),
-      mapping_problem_url(@hidden_problem, locale: :en),
-      mapping_problems_url(area_id: @hidden.id, locale: :en)
+      area_url(@hidden.slug),
+      area_problems_url(@hidden.slug),
+      area_problem_url(@hidden.slug, @hidden_problem),
+      problem_permalink_url(id: @hidden_problem.id),
+      mapping_problem_url(@hidden_problem),
+      mapping_problems_url(area_id: @hidden.id)
     ]
   end
 
@@ -58,14 +58,14 @@ class UnpublishedVisibilityTest < ActionDispatch::IntegrationTest
       get url
       assert_response :not_found, url
     end
-    get area_offline_data_url(@hidden.slug, locale: :en)
+    get area_offline_data_url(@hidden.slug)
     assert_response :not_found
   end
 
   test "published areas and problems are unaffected" do
-    get area_url(@open.slug, locale: :en)
+    get area_url(@open.slug)
     assert_response :success
-    get area_problem_url(@open.slug, @open_problem, locale: :en)
+    get area_problem_url(@open.slug, @open_problem)
     assert_response :success
     assert_select "img[src^=?]", "/proxy/topos/#{@open_topo.id}"
   end
@@ -76,7 +76,7 @@ class UnpublishedVisibilityTest < ActionDispatch::IntegrationTest
       get url
       assert_response :success, url unless url.include?("/p/")
     end
-    get area_problem_url(@hidden.slug, @hidden_problem, locale: :en)
+    get area_problem_url(@hidden.slug, @hidden_problem)
     # Admins load the photo through a signed URL, as the public proxy won't serve it
     assert_select "img[src*='/rails/active_storage/']"
   end
@@ -96,7 +96,7 @@ class UnpublishedVisibilityTest < ActionDispatch::IntegrationTest
   test "the contribution form offers only published photos from published areas" do
     unpublished = topo_for(@open_problem, published: false)
 
-    get new_mapping_contribution_url(problem_id: @open_problem.id, locale: :en)
+    get new_mapping_contribution_url(problem_id: @open_problem.id)
     assert_response :success
     assert_match "Topo #{@open_topo.id}", response.body
     assert_no_match "Topo #{unpublished.id}\"", response.body

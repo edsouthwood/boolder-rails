@@ -19,7 +19,7 @@ class Admin::LoginThrottleTest < ActionDispatch::IntegrationTest
   end
 
   def get_admin(password)
-    get admin_docs_url(locale: :en),
+    get admin_docs_url,
       headers: { "Authorization" => ActionController::HttpAuthentication::Basic.encode_credentials("admin", password) }
   end
 

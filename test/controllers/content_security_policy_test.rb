@@ -6,7 +6,7 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
   end
 
   test "pages send a report-only CSP and an enforced Permissions-Policy" do
-    get area_url(@area.slug, locale: :en)
+    get area_url(@area.slug)
     assert_response :success
 
     csp = response.headers["Content-Security-Policy-Report-Only"]
@@ -22,7 +22,7 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
   end
 
   test "every executable inline script carries the page's nonce" do
-    get area_url(@area.slug, locale: :en)
+    get area_url(@area.slug)
     nonce = response.headers["Content-Security-Policy-Report-Only"][/'nonce-([^']+)'/, 1]
 
     inline = css_select("script:not([src])").reject { |s| s["type"] == "application/ld+json" }

@@ -7,7 +7,7 @@ class PwaTest < ActionDispatch::IntegrationTest
 
     manifest = JSON.parse(response.body)
     assert_equal "standalone", manifest["display"]
-    assert_equal "/en", manifest["start_url"]
+    assert_equal "/", manifest["start_url"]
 
     sizes = manifest["icons"].map { |icon| [ icon["sizes"], icon["purpose"] ] }
     assert_includes sizes, [ "192x192", "any" ]
@@ -25,7 +25,7 @@ class PwaTest < ActionDispatch::IntegrationTest
   end
 
   test "home page links the manifest, registers the service worker and offers install" do
-    get root_localized_path(locale: :en)
+    get root_path
 
     assert_select "link[rel=manifest][href='/manifest']"
     assert_select "link[rel=apple-touch-icon][href=?]", "/apple-touch-icon.png?v=#{ApplicationHelper::ICON_VERSION}"
@@ -35,7 +35,7 @@ class PwaTest < ActionDispatch::IntegrationTest
   end
 
   test "map page links the manifest and registers the service worker" do
-    get map_path(locale: :en)
+    get map_path
 
     assert_select "link[rel=manifest][href='/manifest']"
     assert_includes response.body, "serviceWorker.register('/service-worker.js'"

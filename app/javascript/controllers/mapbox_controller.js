@@ -240,10 +240,10 @@ export default class extends Controller {
 
       var url = ""
       if(this.contributeValue) {
-        url = `/${this.localeValue}/mapping/map`
+        url = "/mapping/map"
       }
       else {
-        url = `/${this.localeValue}/map`
+        url = "/map"
       }
 
       history.replaceState({} , '', url)
@@ -265,7 +265,7 @@ export default class extends Controller {
     this.map.on('click', contributeLayers, (e) => {
       const problems = JSON.parse(e.features[0].properties.problems)
       const html = problems.map(problem => `<div>
-        <a href="/${this.localeValue}/mapping/problems/${problem.id}" target="_blank">${problem.name || ""}</a>
+        <a href="/mapping/problems/${problem.id}" target="_blank">${problem.name || ""}</a>
         <span class="text-gray-400 ml-1">${problem.grade}</span>
 </div>`).join("")
       this.openPopup(e.features[0].geometry.coordinates.slice(), html)
@@ -421,7 +421,7 @@ export default class extends Controller {
 
     const coordinates = [event.detail.lon, event.detail.lat];
     // The result's own path (when present) opens offline too; the redirect needs the server.
-    const href = event.detail.path || `/${this.localeValue}/redirects/new?problem_id=${event.detail.id}`;
+    const href = event.detail.path || `/redirects/new?problem_id=${event.detail.id}`;
     const link = document.createElement("a");
     link.href = href;
     link.target = "_blank";

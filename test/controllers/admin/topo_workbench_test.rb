@@ -44,14 +44,14 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     @mine.problems.create!(name: "Zebra", steepness: "wall", lat: 50.6, lon: -3.9001)
     next_topo = topo(@mine)
 
-    get workbench_admin_topo_path(@topo, locale: :en)
+    get workbench_admin_topo_path(@topo)
     assert_response :success
 
     lines = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-lines-value"])
     assert_equal [ "Drawn" ], lines.map { |l| l["name"] }
     candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
     assert_equal [ "Zebra", "Aardvark" ], candidates.map { |c| c["name"] }
-    assert_select "a[href=?]", workbench_admin_topo_path(next_topo, locale: :en), text: /Next photo/
+    assert_select "a[href=?]", workbench_admin_topo_path(next_topo), text: /Next photo/
   end
 
   test "problems a list put on the photo's boulder come first, even without a location" do
@@ -60,7 +60,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     @mine.problems.create!(name: "Zebra", steepness: "wall", lat: 50.6, lon: -3.90014) # ~3 m off the outline
     @mine.problems.create!(name: "Listed", steepness: "wall", boulder: @boulder)
 
-    get workbench_admin_topo_path(@topo, locale: :en)
+    get workbench_admin_topo_path(@topo)
 
     candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
     assert_equal [ "Listed", "Zebra", "Aardvark" ], candidates.map { |c| c["name"] }
@@ -69,8 +69,8 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   end
 
   test "an unnamed boulder offers a link to name it" do
-    get workbench_admin_topo_path(@topo, locale: :en)
-    assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: @boulder.id, locale: :en), text: "name it"
+    get workbench_admin_topo_path(@topo)
+    assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: @boulder.id), text: "name it"
   end
 
   test "drawing a listed problem with no location places it on the photo's boulder" do
@@ -78,8 +78,8 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     elsewhere = @mine.boulders.create!(name: "Elsewhere")
     other = @mine.problems.create!(name: "Other", steepness: "wall", boulder: elsewhere)
 
-    post admin_lines_path(locale: :en), params: { line: { problem_id: listed.id, topo_id: @topo.id } }, as: :json
-    post admin_lines_path(locale: :en), params: { line: { problem_id: other.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: listed.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: other.id, topo_id: @topo.id } }, as: :json
 
     assert_in_delta 50.5999, listed.reload.lat, 1e-6
     assert_nil other.reload.location, "a problem listed on another boulder isn't moved onto this one"
@@ -91,8 +91,8 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     listed = @mine.problems.create!(name: "Listed", steepness: "wall", boulder: unplaced)
     plain = @mine.problems.create!(name: "Plain", steepness: "wall")
 
-    post admin_lines_path(locale: :en), params: { line: { problem_id: listed.id, topo_id: unmapped.id } }, as: :json
-    post admin_lines_path(locale: :en), params: { line: { problem_id: plain.id, topo_id: unmapped.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: listed.id, topo_id: unmapped.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: plain.id, topo_id: unmapped.id } }, as: :json
 
     assert_in_delta 50.61, listed.reload.lat, 1e-6
     assert_in_delta(-3.91, listed.lon, 1e-6)
@@ -106,7 +106,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   test "problems added to a photo of a mapped boulder are spread along its outline" do
     problems = %w[One Two Three].map { |name| @mine.problems.create!(name: name, steepness: "wall") }
     problems.each do |problem|
-      post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
+      post admin_lines_path, params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
     end
 
     locations = problems.map { |p| p.reload.location }
@@ -124,8 +124,8 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     a = @mine.problems.create!(name: "A", steepness: "wall")
     b = @mine.problems.create!(name: "B", steepness: "wall")
 
-    post admin_lines_path(locale: :en), params: { line: { problem_id: a.id, topo_id: first.id } }, as: :json
-    post admin_lines_path(locale: :en), params: { line: { problem_id: b.id, topo_id: second.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: a.id, topo_id: first.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: b.id, topo_id: second.id } }, as: :json
 
     assert_operator first.metres_between(a.reload.location, b.reload.location), :>=, 1
     assert_operator first.metres_between(b.location, second.gps_location), :<, 3
@@ -142,7 +142,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     elsewhere = @mine.problems.create!(name: "Elsewhere", steepness: "wall", boulder: @mine.boulders.create!(name: "Other"))
 
     [ snatch, elsewhere ].each do |problem|
-      post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: no_gps.id } }, as: :json
+      post admin_lines_path, params: { line: { problem_id: problem.id, topo_id: no_gps.id } }, as: :json
     end
 
     distance = no_gps.metres_between(placed.location, snatch.reload.location)
@@ -155,23 +155,23 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
 
   test "placing an estimated problem by hand clears the estimate" do
     problem = @mine.problems.create!(name: "Guess", steepness: "wall")
-    post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
     assert problem.reload.location_estimated?
 
     problem.update!(name: "Renamed")
     assert problem.reload.location_estimated?, "other edits leave it estimated"
 
-    patch admin_problem_path(problem, locale: :en), params: { problem: { lat: 50.6, lon: -3.9 } }, as: :json
+    patch admin_problem_path(problem), params: { problem: { lat: 50.6, lon: -3.9 } }, as: :json
     assert_response :success
     assert_not problem.reload.location_estimated?
   end
 
   test "the location editor's map marks estimated locations" do
     estimated = @mine.problems.create!(name: "Guess", steepness: "wall")
-    post admin_lines_path(locale: :en), params: { line: { problem_id: estimated.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: estimated.id, topo_id: @topo.id } }, as: :json
     @mine.problems.create!(name: "Placed", steepness: "wall", lat: 50.6, lon: -3.9)
 
-    get admin_map_path(area_id: @mine.id, format: :geojson, locale: :en)
+    get admin_map_path(area_id: @mine.id, format: :geojson)
     flags = JSON.parse(response.body)["features"].select { |f| f["properties"]["problemId"] }.to_h { |f| [ f["properties"]["name"], f["properties"]["estimated"] ] }
     assert_equal true, flags.find { |name, _| name.include?("Guess") }.last
     assert_equal false, flags.find { |name, _| name.include?("Placed") }.last
@@ -184,7 +184,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     lines = [ unlocated, located ].map { |p| Line.create!(problem: p, topo: unmapped) }
 
     lines.each do |line|
-      patch admin_line_path(line, locale: :en), params: { line: { coordinates: POINTS.to_json } }, as: :json
+      patch admin_line_path(line), params: { line: { coordinates: POINTS.to_json } }, as: :json
       assert_response :success
     end
 
@@ -194,7 +194,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   end
 
   test "quick problem on a photo with GPS but no boulder outline uses the photo's GPS" do
-    post quick_problem_admin_topo_path(topo(@mine, "latitude" => 50.61, "longitude" => -3.91), locale: :en),
+    post quick_problem_admin_topo_path(topo(@mine, "latitude" => 50.61, "longitude" => -3.91)),
          params: { name: "Off the map" }, as: :json
 
     assert_response :created
@@ -208,32 +208,32 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     east = topo(@mine)
     Line.create!(problem: @mine.problems.create!(name: "East Side", steepness: "wall", lat: 50.6, lon: -3.8999), topo: east, coordinates: POINTS)
 
-    [ workbench_admin_topo_path(@topo, locale: :en), edit_admin_topo_path(@topo, locale: :en) ].each do |path|
+    [ workbench_admin_topo_path(@topo), edit_admin_topo_path(@topo) ].each do |path|
       get path
-      assert_select "#topo-neighbours a[href=?]", workbench_admin_topo_path(east, locale: :en), text: /East Side →/
+      assert_select "#topo-neighbours a[href=?]", workbench_admin_topo_path(east), text: /East Side →/
       assert_select "#topo-neighbours", text: /← none/
       assert_select "#topo-neighbours", text: /No other photo to the left/
     end
 
-    get workbench_admin_topo_path(topo(@mine), locale: :en)
+    get workbench_admin_topo_path(topo(@mine))
     assert_select "#topo-neighbours", text: /No position/
   end
 
   test "the workbench links back to the area's topos" do
-    get workbench_admin_topo_path(@topo, locale: :en)
+    get workbench_admin_topo_path(@topo)
 
-    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", locale: :en), text: "← Topos at Mine"
-    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", undrawn: 1, locale: :en), text: "Photos to draw"
+    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine"), text: "← Topos at Mine"
+    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", undrawn: 1), text: "Photos to draw"
   end
 
   test "area admins can't open another area's photo" do
-    get workbench_admin_topo_path(topo(@theirs), locale: :en)
-    assert_redirected_to admin_root_path(locale: :en)
+    get workbench_admin_topo_path(topo(@theirs))
+    assert_redirected_to admin_root_path
   end
 
   test "quick problem creates a problem on the boulder and a line for it on the photo" do
     assert_difference -> { @mine.problems.count } do
-      post quick_problem_admin_topo_path(@topo, locale: :en), params: { name: "New one", grade: "6a" }, as: :json
+      post quick_problem_admin_topo_path(@topo), params: { name: "New one", grade: "6a" }, as: :json
     end
     assert_response :created
 
@@ -249,13 +249,13 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   end
 
   test "quick problem without GPS leaves the location for the location editor" do
-    post quick_problem_admin_topo_path(topo(@mine), locale: :en), params: { name: "Somewhere" }, as: :json
+    post quick_problem_admin_topo_path(topo(@mine)), params: { name: "Somewhere" }, as: :json
     assert_response :created
     assert_nil @mine.problems.find_by!(name: "Somewhere").location
   end
 
   test "quick problem validation errors come back as JSON" do
-    post quick_problem_admin_topo_path(@topo, locale: :en), params: { name: "Bad", grade: "11z" }, as: :json
+    post quick_problem_admin_topo_path(@topo), params: { name: "Bad", grade: "11z" }, as: :json
     assert_response :unprocessable_entity
     assert_match "Grade", response.parsed_body["error"]
   end
@@ -263,24 +263,24 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   test "lines can be added, drawn and removed over JSON" do
     problem = @mine.problems.create!(name: "Arete", steepness: "wall")
 
-    post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
+    post admin_lines_path, params: { line: { problem_id: problem.id, topo_id: @topo.id } }, as: :json
     assert_response :created
     line = Line.find(response.parsed_body["id"])
 
-    patch admin_line_path(line, locale: :en), params: { line: { coordinates: POINTS.to_json, start_holds: "", excluded_areas: "" } }, as: :json
+    patch admin_line_path(line), params: { line: { coordinates: POINTS.to_json, start_holds: "", excluded_areas: "" } }, as: :json
     assert_response :success
     assert_equal POINTS, line.reload.coordinates
     assert_equal POINTS, response.parsed_body["coordinates"]
     assert problem.reload.has_line
 
-    patch admin_line_path(line, locale: :en), params: { line: { coordinates: POINTS.first(2).to_json } }, as: :json
+    patch admin_line_path(line), params: { line: { coordinates: POINTS.first(2).to_json } }, as: :json
     assert_response :unprocessable_entity
     assert_match "at least 3 points", response.parsed_body["error"]
 
-    patch admin_line_path(line, locale: :en), params: { line: { coordinates: "{oops" } }, as: :json
+    patch admin_line_path(line), params: { line: { coordinates: "{oops" } }, as: :json
     assert_response :unprocessable_entity
 
-    delete admin_line_path(line, locale: :en), as: :json
+    delete admin_line_path(line), as: :json
     assert_response :no_content
     assert_not Line.exists?(line.id)
   end
@@ -288,16 +288,16 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   test "a line can't put your problem on another area's photo" do
     problem = @mine.problems.create!(name: "Arete", steepness: "wall")
     assert_no_difference -> { Line.count } do
-      post admin_lines_path(locale: :en), params: { line: { problem_id: problem.id, topo_id: topo(@theirs).id } }, as: :json
+      post admin_lines_path, params: { line: { problem_id: problem.id, topo_id: topo(@theirs).id } }, as: :json
     end
-    assert_redirected_to admin_root_path(locale: :en)
+    assert_redirected_to admin_root_path
   end
 
   test "a photo with no area sends you to its edit page" do
     orphan = topo(nil)
     Admin::BaseController.define_method(:current_admin_user) { AdminUser.new(username: "boss", role: "super_admin") }
-    get workbench_admin_topo_path(orphan, locale: :en)
-    assert_redirected_to edit_admin_topo_path(orphan, locale: :en)
+    get workbench_admin_topo_path(orphan)
+    assert_redirected_to edit_admin_topo_path(orphan)
   end
 
   test "a photo can be tied to one of its area's boulders, which then comes first and takes new problems" do
@@ -305,13 +305,13 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     @mine.problems.create!(name: "Aardvark", steepness: "wall")
     @mine.problems.create!(name: "On The List", steepness: "wall", boulder: listed_rock)
 
-    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: listed_rock.id }
-    assert_redirected_to workbench_admin_topo_path(@topo, locale: :en)
+    patch boulder_admin_topo_path(@topo), params: { boulder_id: listed_rock.id }
+    assert_redirected_to workbench_admin_topo_path(@topo)
     assert_equal listed_rock.id, @topo.reload.chosen_boulder_id
     assert_equal listed_rock.id, @topo.matched_boulder_id, "the tie wins over the GPS match"
     assert_equal @boulder.id, @topo.suggested_boulder_id, "the GPS match is kept"
 
-    get workbench_admin_topo_path(@topo, locale: :en)
+    get workbench_admin_topo_path(@topo)
     candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
     assert_equal [ "On The List", "Aardvark" ], candidates.map { |c| c["name"] }
     assert_equal [ true, false ], candidates.map { |c| c["on_boulder"] }
@@ -319,14 +319,14 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_select "select#workbench_boulder_id option[selected][value=?]", listed_rock.id.to_s
     assert_select "p", text: "Tied by hand."
 
-    post quick_problem_admin_topo_path(@topo, locale: :en), params: { name: "Fresh" }, as: :json
+    post quick_problem_admin_topo_path(@topo), params: { name: "Fresh" }, as: :json
     assert_equal listed_rock, @mine.problems.find_by!(name: "Fresh").boulder
   end
 
   test "untying a photo falls back to its GPS match" do
     @topo.choose_boulder!(@mine.boulders.create!(name: "Other"))
 
-    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: "" }
+    patch boulder_admin_topo_path(@topo), params: { boulder_id: "" }
 
     assert_nil @topo.reload.chosen_boulder_id
     assert_equal @boulder.id, @topo.matched_boulder_id
@@ -335,7 +335,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
   test "a photo can't be tied to another area's boulder" do
     theirs = @theirs.boulders.create!(name: "Not Yours")
 
-    patch boulder_admin_topo_path(@topo, locale: :en), params: { boulder_id: theirs.id }
+    patch boulder_admin_topo_path(@topo), params: { boulder_id: theirs.id }
 
     assert_nil @topo.reload.chosen_boulder_id
     assert_equal "That boulder isn't in this photo's area.", flash[:error]
@@ -343,13 +343,13 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
 
   test "area admins can't tie another area's photo" do
     theirs = topo(@theirs)
-    patch boulder_admin_topo_path(theirs, locale: :en), params: { boulder_id: @boulder.id }
-    assert_redirected_to admin_root_path(locale: :en)
+    patch boulder_admin_topo_path(theirs), params: { boulder_id: @boulder.id }
+    assert_redirected_to admin_root_path
     assert_nil theirs.reload.chosen_boulder_id
   end
 
   test "a photo with no boulder hides the suggestions and says how to tie one" do
-    get workbench_admin_topo_path(topo(@mine), locale: :en)
+    get workbench_admin_topo_path(topo(@mine))
     assert_select "[data-topo-workbench-target='suggestions']", count: 0
     assert_select "p", text: /Tie it to a boulder/
   end
@@ -359,10 +359,10 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     @topo.choose_boulder!(named)
     gps_only = topo(@mine, "suggested_boulder_id" => @boulder.id)
 
-    get admin_area_topos_path(area_slug: "mine", locale: :en)
+    get admin_area_topos_path(area_slug: "mine")
 
     assert_select "p[title=?]", "Tied to Cracked" do
-      assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: named.id, locale: :en), text: "Cracked"
+      assert_select "a[href=?]", admin_area_boulder_editor_path(area_slug: "mine", boulder: named.id), text: "Cracked"
       assert_select "span", text: "· tied"
     end
     assert_select "p[title=?]", "Taken near Boulder ##{@boulder.id}", text: /near\s+Boulder ##{@boulder.id}/

@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import {
-  offlineSupported, savedState, isIntact, isOutdated, downloadArea, removeArea, locale
+  offlineSupported, savedState, isIntact, isOutdated, downloadArea, removeArea
 } from "offline_areas"
 
 // The area page's "Save map & photos for offline" button. The download itself lives
@@ -68,7 +68,7 @@ export default class extends Controller {
 
     const warning = state.failedCount > 0
       ? ` <span class="text-amber-600">${state.failedCount} file${state.failedCount === 1 ? "" : "s"} failed to download — try saving again on a better connection.</span> ` +
-        `<a href="/${locale()}/offline-status" class="underline">Details</a> ·`
+        `<a href="/offline-status" class="underline">Details</a> ·`
       : ""
     const update = outdated
       ? ` <span class="text-amber-600">This area has changed since you saved it.</span> ` +
@@ -77,7 +77,7 @@ export default class extends Controller {
     this.statusTarget.innerHTML =
       `Map & ${state.topoCount} photos saved (${date}).${warning}${update}` +
       `<a href="#" data-action="click->offline-download#clear" class="underline">Remove</a> · ` +
-      `<a href="/${locale()}/downloads" class="underline">All downloads</a>`
+      `<a href="/downloads" class="underline">All downloads</a>`
     this.statusTarget.classList.remove("hidden")
   }
 }

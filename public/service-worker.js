@@ -1,5 +1,5 @@
 // Bump on every change so DevTools/offline-status can confirm which version is live.
-const SW_VERSION = '8'
+const SW_VERSION = '9'
 
 const APP_CACHE = 'app-v1'
 const TOPO_CACHE = 'topos-v1'
@@ -56,6 +56,29 @@ async function putInCache(cacheName, request, response) {
   }))
 }
 
+// Addresses used to start with /en (/en/dartmoor/bonehill). Areas saved for offline before
+// that changed are cached under the old addresses, so same-site lookups try the other form.
+function legacyPath(path) {
+  if (path === '/en') return '/'
+  if (path.indexOf('/en/') === 0) return path.slice(3)
+  return path === '/' ? '/en' : '/en' + path
+}
+
+// For a page (asPage), a copy found only under the other address is not served here
+// but redirected to: a page saved before the change runs scripts that work out its
+// cache addresses from the page's own URL, so it must be shown at its old /en address
+// (and a newer copy at its new one).
+function matchCached(request, options, asPage) {
+  return caches.match(request, options).then(cached => {
+    if (cached) return cached
+    const url = new URL(request.url || request)
+    if (url.origin !== self.location.origin) return undefined
+    url.pathname = legacyPath(url.pathname)
+    return caches.match(url.toString(), options).then(other =>
+      other && asPage ? Response.redirect(url.toString(), 302) : other)
+  })
+}
+
 function cacheable(response) {
   // Opaque responses (no-cors <script>/<img> fetches) report status 0 but are
   // still servable from cache; don't cache errors (404 glyphs, 500s).
@@ -91,8 +114,8 @@ function offlinePage() {
     'Reconnect, or save the area for offline from its page.</p>' +
     '<div id="saved" hidden><h2 style="font-size:1rem;margin-top:2rem">Saved for offline</h2>' +
     '<ul id="saved-list" style="list-style:none;padding:0;line-height:2"></ul>' +
-    '<p><a id="map-link" href="/en/map" style="color:#33393D">Open the map</a> · ' +
-    '<a id="downloads-link" href="/en/downloads" style="color:#33393D">My downloads</a></p></div>' +
+    '<p><a href="/map" style="color:#33393D">Open the map</a> · ' +
+    '<a href="/downloads" style="color:#33393D">My downloads</a></p></div>' +
     '<script>' + listSavedAreas.toString() + 'listSavedAreas()</script>' +
     '</body></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
@@ -101,8 +124,6 @@ function offlinePage() {
 
 // Runs inside the offline page (serialised with toString), not in the worker.
 function listSavedAreas() {
-  var locale = location.pathname.split('/')[1] || 'en'
-  if (!/^[a-z]{2}$/.test(locale)) locale = 'en'
   var list = document.getElementById('saved-list')
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i)
@@ -111,15 +132,13 @@ function listSavedAreas() {
     var state = {}
     try { state = JSON.parse(localStorage.getItem(key)) || {} } catch (e) {}
     var link = document.createElement('a')
-    link.href = state.path || '/' + locale + '/dartmoor/' + slug
+    link.href = state.path || '/dartmoor/' + slug
     link.textContent = state.name || slug
     link.style.color = '#33393D'
     var item = document.createElement('li')
     item.appendChild(link)
     list.appendChild(item)
   }
-  document.getElementById('map-link').href = '/' + locale + '/map'
-  document.getElementById('downloads-link').href = '/' + locale + '/downloads'
   if (list.children.length) document.getElementById('saved').hidden = false
 }
 
@@ -136,7 +155,7 @@ function emptyGeojson() {
 // `fallback()` so we never resolve with null (event.respondWith(undefined)
 // throws "Returned response is null"). A slow network response still lands in
 // the cache for next time even after we've already served the cached copy.
-function networkFirst(event, cacheName, fallback) {
+function networkFirst(event, cacheName, fallback, asPage) {
   const fromNetwork = fetch(event.request).then(response => {
     if (cacheable(response)) putInCache(cacheName, event.request, response.clone())
     return response
@@ -144,7 +163,7 @@ function networkFirst(event, cacheName, fallback) {
   fromNetwork.catch(() => {}) // fallback path below; avoid an unhandled rejection
 
   const fromCache = () =>
-    caches.match(event.request, { ignoreVary: true }).then(cached => cached || fallback())
+    matchCached(event.request, { ignoreVary: true }, asPage).then(cached => cached || fallback())
 
   event.respondWith(
     Promise.race([
@@ -199,7 +218,7 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // Map overlay data (localized, e.g. /en/map-data.geojson): network-first,
+  // Map overlay data (/map-data.geojson, /area-labels.geojson): network-first,
   // falling back to the pre-downloaded copy offline
   if (/\/(map-data|area-labels)(\.geojson)?$/.test(url.pathname)) {
     networkFirst(event, MAP_CACHE, emptyGeojson)
@@ -228,17 +247,17 @@ self.addEventListener('fetch', event => {
   // report_form_controller fills the problem in from the URL.
   if (isHtmlRequest(request)) {
     const fallback = isMapPage(url) || isReportForm(url)
-      ? () => caches.match(request, { ignoreSearch: true, ignoreVary: true })
+      ? () => matchCached(request, { ignoreSearch: true, ignoreVary: true }, true)
           .then(cached => cached || offlinePage())
       : offlinePage
-    networkFirst(event, APP_CACHE, fallback)
+    networkFirst(event, APP_CACHE, fallback, true)
   }
 })
 
 function isMapPage(url) {
-  return /^\/[a-z]{2}\/map(\/|$)/.test(url.pathname)
+  return /^(\/en)?\/map(\/|$)/.test(url.pathname)
 }
 
 function isReportForm(url) {
-  return /^\/[a-z]{2}\/reports\/new$/.test(url.pathname)
+  return /^(\/en)?\/reports\/new$/.test(url.pathname)
 }

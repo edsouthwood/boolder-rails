@@ -32,7 +32,7 @@ class TopoSheetTest < ActionDispatch::IntegrationTest
     topo_with([ hidden, 0.5 ], published: false)
     @area.problems.create!(name: "Unlocated", grade: "3", steepness: "slab")
 
-    get area_print_url(@area.slug, locale: :en)
+    get area_print_url(@area.slug)
 
     assert_response :success
     assert_select "h1", "Bonehill"
@@ -50,11 +50,11 @@ class TopoSheetTest < ActionDispatch::IntegrationTest
   end
 
   test "the area page links to the sheet; unpublished areas' sheets are hidden" do
-    get area_url(@area.slug, locale: :en)
-    assert_select "a[href=?]", area_print_path(@area.slug, locale: :en), text: /Print topo sheet/
+    get area_url(@area.slug)
+    assert_select "a[href=?]", area_print_path(@area.slug), text: /Print topo sheet/
 
     hidden = Area.create!(name: "Combestone", slug: "combestone", published: false)
-    get area_print_url(hidden.slug, locale: :en)
+    get area_print_url(hidden.slug)
     assert_response :not_found
   end
 end

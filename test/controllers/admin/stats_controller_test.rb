@@ -32,26 +32,26 @@ class Admin::StatsControllerTest < ActionDispatch::IntegrationTest
 
   test "super admins see visits, top areas and problems, activity and progress" do
     as "super_admin"
-    get admin_stats_path(locale: :en)
+    get admin_stats_path
 
     assert_response :success
-    assert_select "a[href=?]", admin_stats_path(locale: :en), text: "Stats"
+    assert_select "a[href=?]", admin_stats_path, text: "Stats"
     assert_select "p.text-3xl", text: "10"
     assert_select "td a", text: "Bell Tor"
-    assert_select "td a[href=?]", admin_problem_path(@problem, locale: :en), text: "Wall"
+    assert_select "td a[href=?]", admin_problem_path(@problem), text: "Wall"
     assert_select "canvas[data-controller=chart]", count: 7
     assert_select "tr", text: /Bell Tor\s+3\s+1\s+33%\s+1\s+1/ # problems, placed, estimated, no location
 
-    get admin_stats_path(days: 90, locale: :en)
+    get admin_stats_path(days: 90)
     assert_select "p.text-3xl", text: "110"
   end
 
   test "area admins can't open it and don't see the link" do
     as "area_admin", areas: [ "belltor" ]
-    get admin_stats_path(locale: :en)
-    assert_redirected_to admin_root_path(locale: :en)
+    get admin_stats_path
+    assert_redirected_to admin_root_path
 
-    get admin_area_boulders_path(area_slug: "belltor", locale: :en)
+    get admin_area_boulders_path(area_slug: "belltor")
     assert_select "a", text: "Stats", count: 0
   end
 end

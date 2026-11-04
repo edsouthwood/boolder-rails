@@ -2,20 +2,20 @@ require "test_helper"
 
 class ReportsControllerTest < ActionDispatch::IntegrationTest
   test "drops submissions that fill the honeypot" do
-    get new_report_url(locale: :en)
+    get new_report_url
     honeypot = css_select("input[name][tabindex='-1']").map { |input| input["name"] }.find { |name| !name.include?("[") }
     assert honeypot, "form should carry the invisible_captcha honeypot"
 
     travel 10.seconds do
       assert_no_difference "Contribution.count" do
-        post reports_url(locale: :en), params: { honeypot => "spam", contribution: { comment: "Buy now" } }
+        post reports_url, params: { honeypot => "spam", contribution: { comment: "Buy now" } }
       end
     end
   end
 
   # The hidden fields a freshly loaded form carries (spinner etc.), as offline_reports.js sends them.
   def fresh_form_fields(**query)
-    get new_report_url(locale: :en, **query)
+    get new_report_url(**query)
     css_select("form[data-report-form-target=form] input[type=hidden][name]").to_h { |input| [ input["name"], input["value"].to_s ] }
   end
 
@@ -31,15 +31,15 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "problem pages link to a report about that problem" do
-    get area_problem_path(@area, @problem, locale: :en)
-    assert_select "a[href=?]", new_report_path(locale: :en, problem_id: @problem.id)
+    get area_problem_path(@area, @problem)
+    assert_select "a[href=?]", new_report_path(problem_id: @problem.id)
   end
 
   test "a JSON submission saves the report against its problem" do
     fields = fresh_form_fields
     travel 10.seconds do
       assert_difference "Contribution.count", 1 do
-        post reports_url(locale: :en), headers: { "Accept" => "application/json" },
+        post reports_url, headers: { "Accept" => "application/json" },
           params: fields.merge("contribution[comment]" => "Grade is wrong", "contribution[problem_id]" => @problem.id.to_s)
       end
     end
@@ -51,7 +51,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   test "an unknown problem id is ignored rather than failing" do
     fields = fresh_form_fields
     travel 10.seconds do
-      post reports_url(locale: :en), headers: { "Accept" => "application/json" },
+      post reports_url, headers: { "Accept" => "application/json" },
         params: fields.merge("contribution[comment]" => "Hmm", "contribution[problem_id]" => "999999999")
     end
     assert_response :created
@@ -61,7 +61,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   test "JSON says so when the spam checks reject a report" do
     fields = fresh_form_fields
     assert_no_difference "Contribution.count" do
-      post reports_url(locale: :en), headers: { "Accept" => "application/json" },
+      post reports_url, headers: { "Accept" => "application/json" },
         params: fields.merge("contribution[comment]" => "Too quick")
     end
     assert_response :unprocessable_entity

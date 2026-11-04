@@ -61,13 +61,13 @@ class Admin::BouldersIndexTest < ActionDispatch::IntegrationTest
                    [ "Finished", :done ], [ nil, :no_problems ] ], progress.rows.map { [ _1.boulder.name, _1.status ] }
     assert_equal [ "Loose" ], progress.unassigned_problems.map(&:name)
 
-    get admin_area_boulders_path(area_slug: "mine", locale: :en)
+    get admin_area_boulders_path(area_slug: "mine")
     assert_response :success
     assert_select "tbody tr", 3, "the default view hides done boulders and ones without problems"
     assert_select "a", text: "Draw lines →"
     assert_select "summary", text: /1 problem not on any boulder/
 
-    get admin_area_boulders_path(area_slug: "mine", locale: :en, show: "all")
+    get admin_area_boulders_path(area_slug: "mine", show: "all")
     assert_select "tbody tr", 5
   end
 

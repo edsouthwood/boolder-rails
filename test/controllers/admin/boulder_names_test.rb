@@ -33,7 +33,7 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
   end
 
   def name!(boulder, name)
-    patch admin_boulder_path(boulder, locale: :en), params: { name: name }, as: :json
+    patch admin_boulder_path(boulder), params: { name: name }, as: :json
   end
 
   test "naming an outline after a listed boulder takes over its problems" do
@@ -64,7 +64,7 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
   end
 
   test "drawing a listed boulder gives it its outline" do
-    post admin_area_boulders_path(area_slug: "mine", locale: :en), params: { coordinates: RING, boulder_id: @listed.id }, as: :json
+    post admin_area_boulders_path(area_slug: "mine"), params: { coordinates: RING, boulder_id: @listed.id }, as: :json
 
     assert_response :success
     assert_equal({ "id" => @listed.id, "name" => "Photo Arête" }, response.parsed_body)
@@ -72,7 +72,7 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
   end
 
   test "the editor lists the names still to draw and focuses a boulder" do
-    get admin_area_boulder_editor_path(area_slug: "mine", boulder: @outline.id, locale: :en)
+    get admin_area_boulder_editor_path(area_slug: "mine", boulder: @outline.id)
 
     editor = css_select("[data-controller='admin-boulder-editor']").first
     assert_equal [ { "id" => @listed.id, "name" => "Photo Arête", "problems" => 1 } ], JSON.parse(editor["data-admin-boulder-editor-unplaced-value"])
@@ -81,7 +81,7 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
 
   test "the editor's map data carries boulder names" do
     @outline.update!(name: "Named")
-    get admin_map_path(area_id: @mine.id, format: :geojson, locale: :en)
+    get admin_map_path(area_id: @mine.id, format: :geojson)
 
     names = JSON.parse(response.body)["features"].filter_map { |f| f.dig("properties", "name") if f.dig("geometry", "type") == "Polygon" }
     assert_equal [ "Named" ], names
@@ -96,11 +96,11 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
   end
 
   test "a problem's boulder can be set on its edit form, but only to one in its area" do
-    patch admin_problem_path(@problem, locale: :en), params: { problem: { boulder_id: @outline.id } }
+    patch admin_problem_path(@problem), params: { problem: { boulder_id: @outline.id } }
     assert_equal @outline, @problem.reload.boulder
 
     other = @theirs.boulders.create!(name: "Away")
-    patch admin_problem_path(@problem, locale: :en), params: { problem: { boulder_id: other.id } }
+    patch admin_problem_path(@problem), params: { problem: { boulder_id: other.id } }
     assert_equal @outline, @problem.reload.boulder
   end
 end

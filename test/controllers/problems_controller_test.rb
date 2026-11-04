@@ -12,18 +12,18 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the breadcrumb names the problem's boulder when it has one" do
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
     assert_select "div", text: "Photo Arête", count: 0
 
     @problem.update!(boulder: @area.boulders.create!(name: "Photo Arête"))
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
     assert_select "div", text: "Photo Arête"
   end
 
   test "shows start hold markers when the line has them" do
     @line.update!(start_holds: [ { "x" => 0.18, "y" => 0.86 }, { "x" => 0.25, "y" => 0.84 } ])
 
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
 
     assert_response :success
     assert_select "[title='Start hold']", 2
@@ -32,7 +32,7 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "shows no start hold markers when the line has none" do
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
 
     assert_response :success
     assert_select "[title='Start hold']", 0
@@ -42,14 +42,14 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
   test "shades not-in areas when the line has them" do
     @line.update!(excluded_areas: [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ])
 
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
 
     assert_select "svg[aria-label='Not in'] polygon[points='40.0,30.0 120.0,30.0 80.0,120.0']"
     assert_match "Not in", response.body
   end
 
   test "shows no not-in shading when the line has none" do
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
 
     assert_select "svg[aria-label='Not in']", 0
   end
@@ -62,7 +62,7 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     hidden.problems.create!(name: "Secret", grade: "5", steepness: "wall", lat: 50.6, lon: -3.9)
     @area.problems.create!(name: "Harder", grade: "6b", steepness: "wall", lat: 50.6, lon: -3.9)
 
-    get problems_url(locale: :en, grade: "5")
+    get problems_url(grade: "5")
 
     assert_response :success
     assert_select "h1", "Problems by grade"
@@ -77,7 +77,7 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
 
   test "browse by grade falls back to a grade that has problems" do
     @problem.update!(lat: 50.6, lon: -3.9)
-    get problems_url(locale: :en, grade: "9c")
+    get problems_url(grade: "9c")
     assert_response :success
     assert_select "option[selected][value='5']"
   end
@@ -93,15 +93,15 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     topo.save!
     Line.create!(problem: east, topo: topo, coordinates: @line.coordinates)
 
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
 
     assert_select "a[data-topo-nav-target=right][href=?][title=?]",
-                  area_problem_path(@area, east, locale: :en), "Photo to the right: East Face"
+                  area_problem_path(@area, east), "Photo to the right: East Face"
     assert_select "a[data-topo-nav-target=left]", count: 0
   end
 
   test "no arrows when the photo's direction can't be worked out" do
-    get area_problem_url(@area.slug, @problem, locale: :en)
+    get area_problem_url(@area.slug, @problem)
     assert_response :success
     assert_select "a[data-topo-nav-target]", count: 0
   end

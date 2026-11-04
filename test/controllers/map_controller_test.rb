@@ -4,14 +4,14 @@ class MapControllerTest < ActionDispatch::IntegrationTest
   test "an area with nothing mapped yet opens the map at the default view" do
     Area.create!(name: "Empty Tor", slug: "empty-tor", published: true)
 
-    get "/en/map/empty-tor"
+    get "/map/empty-tor"
 
     assert_response :success
     assert_match "southWestLat", response.body
   end
 
   test "the grade filter knows which stored grades each display grade covers" do
-    get "/en/map"
+    get "/map"
 
     assert_response :success
     groups = JSON.parse(css_select("[data-controller=mapbox]").first["data-mapbox-grade-groups-value"])

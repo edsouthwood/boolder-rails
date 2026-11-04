@@ -29,7 +29,7 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the paste form loads" do
-    get admin_area_problem_list_path(area_slug: "mine", locale: :en)
+    get admin_area_problem_list_path(area_slug: "mine")
 
     assert_response :success
     assert_select "textarea[name=text]"
@@ -37,7 +37,7 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
 
   test "preview shows what would change and saves nothing" do
     assert_no_difference -> { Boulder.count + Problem.count } do
-      post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: LIST }
+      post admin_area_problem_list_preview_path(area_slug: "mine"), params: { text: LIST }
     end
 
     assert_response :success
@@ -51,16 +51,16 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
 
   test "a list can be uploaded as a file" do
     file = Rack::Test::UploadedFile.new(StringIO.new(LIST.dup), "text/plain", original_filename: "list.txt")
-    post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { file: file }
+    post admin_area_problem_list_preview_path(area_slug: "mine"), params: { file: file }
 
     assert_response :success
     assert_select "h2", text: /South Block/
   end
 
   test "importing creates the boulders and problems and assigns the matches" do
-    post admin_area_problem_list_path(area_slug: "mine", locale: :en), params: { text: LIST }
+    post admin_area_problem_list_path(area_slug: "mine"), params: { text: LIST }
 
-    assert_redirected_to admin_area_boulders_path(area_slug: "mine", locale: :en)
+    assert_redirected_to admin_area_boulders_path(area_slug: "mine")
     assert_match "Imported: 2 boulders, 2 new problems, and 1 problem put on a boulder.", flash[:notice]
     north = @mine.boulders.find_by!(name: "North Block")
     assert_equal north, @old.reload.boulder
@@ -73,7 +73,7 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
     import = CragListImport.new(@mine, LIST)
     key = import.preview.first.rows.find { _1.row.name == "New Arête" }.row.key
 
-    post admin_area_problem_list_path(area_slug: "mine", locale: :en),
+    post admin_area_problem_list_path(area_slug: "mine"),
       params: { text: LIST, update_grades: [ @old.id ], choices: { key => "skip" } }
 
     assert_equal "4", @old.reload.grade
@@ -82,12 +82,12 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
 
   test "the preview has a hide box per row, ticked for problems already hidden, and import applies it" do
     @old.update!(hidden: true)
-    post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: LIST }
+    post admin_area_problem_list_preview_path(area_slug: "mine"), params: { text: LIST }
     assert_select "input[type=checkbox][name='hide[]']", 3
     assert_select "input[type=checkbox][name='hide[]'][checked]", 1
 
     key = CragListImport.new(@mine, LIST).preview.flat_map(&:rows).find { _1.row.name == "Slab" }.row.key
-    post admin_area_problem_list_path(area_slug: "mine", locale: :en), params: { text: LIST, hide: [ key ] }
+    post admin_area_problem_list_path(area_slug: "mine"), params: { text: LIST, hide: [ key ] }
 
     assert_match "1 problem hidden, and 1 problem shown again", flash[:notice]
     assert @mine.problems.find_by!(name: "Slab").hidden
@@ -95,24 +95,24 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an empty paste is sent back with a message" do
-    post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: "  " }
+    post admin_area_problem_list_preview_path(area_slug: "mine"), params: { text: "  " }
 
-    assert_redirected_to admin_area_problem_list_path(area_slug: "mine", locale: :en)
+    assert_redirected_to admin_area_problem_list_path(area_slug: "mine")
     assert_equal "Paste a list or choose a file first.", flash[:error]
   end
 
   test "text with no boulder names is sent back with a message" do
-    post admin_area_problem_list_preview_path(area_slug: "mine", locale: :en), params: { text: "\t\tOnly\tf4\n" }
+    post admin_area_problem_list_preview_path(area_slug: "mine"), params: { text: "\t\tOnly\tf4\n" }
 
-    assert_redirected_to admin_area_problem_list_path(area_slug: "mine", locale: :en)
+    assert_redirected_to admin_area_problem_list_path(area_slug: "mine")
     assert_match "No boulder names found", flash[:error]
   end
 
   test "area admins can't import into someone else's area" do
-    post admin_area_problem_list_path(area_slug: "theirs", locale: :en), params: { text: LIST }
+    post admin_area_problem_list_path(area_slug: "theirs"), params: { text: LIST }
 
     assert_response :redirect
-    assert_not_equal admin_area_boulders_path(area_slug: "theirs", locale: :en), URI(response.location).path
+    assert_not_equal admin_area_boulders_path(area_slug: "theirs"), URI(response.location).path
     assert_equal 0, @theirs.boulders.count
   end
 end

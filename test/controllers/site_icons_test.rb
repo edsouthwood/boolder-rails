@@ -7,7 +7,7 @@ class SiteIconsTest < ActionDispatch::IntegrationTest
     v = "?v=#{ApplicationHelper::ICON_VERSION}"
     area = Area.create!(name: "Bonehill", slug: "bonehill", published: true)
 
-    [ root_localized_url(locale: :en), area_url(area.slug, locale: :en), map_url(locale: :en), area_print_url(area.slug, locale: :en) ].each do |url|
+    [ root_url, area_url(area.slug), map_url, area_print_url(area.slug) ].each do |url|
       get url
       assert_select "link[rel=icon][href=?]", "/icon.svg#{v}", 1, url
       assert_select "link[rel=icon][href=?]", "/favicon.ico#{v}", 1, url

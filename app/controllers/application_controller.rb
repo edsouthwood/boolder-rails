@@ -3,12 +3,9 @@ class ApplicationController < ActionController::Base
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_404
 
-  def default_url_options
-    { locale: I18n.locale }
-  end
-
   def switch_locale(&action)
-    # Unscoped routes (e.g. /search) take ?locale= unconstrained; ignore unknown values.
+    # The site is English only (addresses have no /en prefix); ?locale= is still honoured
+    # if it names an available locale.
     locale = params[:locale].presence_in(I18n.available_locales.map(&:to_s)) || I18n.default_locale
     I18n.with_locale(locale, &action)
   end

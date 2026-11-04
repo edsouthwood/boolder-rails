@@ -18,7 +18,7 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
 
   test "boulders that aren't drawn yet are left out" do
     @area_a.boulders.create!(name: "Not drawn")
-    get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
+    get map_data_url(format: :geojson, area_id: @area_a.id)
 
     assert_response :success
     features = JSON.parse(response.body)["features"]
@@ -28,7 +28,7 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
 
   test "named boulders carry their name for the map labels" do
     @boulder_a.update!(name: "Photo Arête")
-    get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
+    get map_data_url(format: :geojson, area_id: @area_a.id)
 
     boulder = JSON.parse(response.body)["features"].find { |f| f.dig("properties", "boulderId") == @boulder_a.id }
     assert_equal "Photo Arête", boulder.dig("properties", "boulderName")
@@ -36,7 +36,7 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "scopes boulders to the requested area" do
-    get map_data_url(locale: :en, format: :geojson, area_id: @area_a.id)
+    get map_data_url(format: :geojson, area_id: @area_a.id)
     assert_response :success
 
     boulder_ids = JSON.parse(response.body)["features"]
@@ -48,7 +48,7 @@ class MapDataControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns all published areas when no area_id is given" do
-    get map_data_url(locale: :en, format: :geojson)
+    get map_data_url(format: :geojson)
     assert_response :success
 
     boulder_ids = JSON.parse(response.body)["features"]

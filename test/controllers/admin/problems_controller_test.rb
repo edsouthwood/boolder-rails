@@ -31,28 +31,28 @@ class Admin::ProblemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "lists problems by popularity by default" do
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en)
+    get admin_area_problems_url(area_slug: @area.slug)
     assert_equal %w[alpha Charlie Bravo Delta], listed_names
   end
 
   test "sorts by name, case-insensitively" do
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en, sort: "name")
+    get admin_area_problems_url(area_slug: @area.slug, sort: "name")
     assert_equal %w[alpha Bravo Charlie Delta], listed_names
 
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en, sort: "name", dir: "desc")
+    get admin_area_problems_url(area_slug: @area.slug, sort: "name", dir: "desc")
     assert_equal %w[Delta Charlie Bravo alpha], listed_names
   end
 
   test "sorts by grade with ungraded problems last either way" do
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en, sort: "grade")
+    get admin_area_problems_url(area_slug: @area.slug, sort: "grade")
     assert_equal %w[Bravo Charlie alpha Delta], listed_names
 
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en, sort: "grade", dir: "desc")
+    get admin_area_problems_url(area_slug: @area.slug, sort: "grade", dir: "desc")
     assert_equal %w[alpha Charlie Bravo Delta], listed_names
   end
 
   test "sort headers toggle direction and keep the missing filter" do
-    get admin_area_problems_url(area_slug: @area.slug, locale: :en, sort: "grade", missing: "location")
+    get admin_area_problems_url(area_slug: @area.slug, sort: "grade", missing: "location")
     assert_select "th a[href*='sort=grade'][href*='dir=desc'][href*='missing=location']", text: "Grade ▲"
     assert_select "th a[href*='sort=name'][href*='dir=asc']", text: "Name"
   end
@@ -64,7 +64,7 @@ class Admin::ProblemsControllerTest < ActionDispatch::IntegrationTest
     line = Line.create!(problem: @easy, topo: topo,
       coordinates: [ { "x" => 0.2, "y" => 0.9 }, { "x" => 0.3, "y" => 0.5 }, { "x" => 0.4, "y" => 0.1 } ])
 
-    get admin_problem_url(@easy, locale: :en)
+    get admin_problem_url(@easy)
 
     assert_select "a[href=?][title='Edit this line']", edit_admin_line_path(line)
     assert_match "Click the photo to edit the line", response.body

@@ -14,7 +14,8 @@
 //   bin/rails server                          # in another terminal
 //   node script/offline_check.mjs [areaSlug]  # default slug: Smallacomberocks
 //
-// Env: BASE_URL (default http://localhost:3000), LOCALE (default en).
+// Env: BASE_URL (default http://localhost:3000), PATH_PREFIX (default none; "/en" checks
+// the old addresses, which redirect).
 // REPORT_SEND=1 also checks that a report queued offline is sent once back online —
 // this creates a real report and emails staff, so don't set it against production.
 // Needs the `playwright` npm package resolvable (e.g. `npm i -g playwright`,
@@ -30,15 +31,15 @@ const require = createRequire(import.meta.url)
 const { chromium } = require("playwright")
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000"
-const LOCALE = process.env.LOCALE || "en"
+const PREFIX = process.env.PATH_PREFIX || ""
 const SLUG = process.argv[2] || "Smallacomberocks"
 // A second area, ideally near the first (overlapping map tiles), saved and removed
 // via "My downloads" to prove removal keeps files the first area still needs.
 const SECOND_SLUG = process.argv[3] || "belltor"
-const DOWNLOADS_URL = `${BASE_URL}/${LOCALE}/downloads`
-const AREA_URL = `${BASE_URL}/${LOCALE}/dartmoor/${SLUG}`
-const MAP_URL = `${BASE_URL}/${LOCALE}/map/${SLUG}`
-const STATUS_URL = `${BASE_URL}/${LOCALE}/offline-status`
+const DOWNLOADS_URL = `${BASE_URL}${PREFIX}/downloads`
+const AREA_URL = `${BASE_URL}${PREFIX}/dartmoor/${SLUG}`
+const MAP_URL = `${BASE_URL}${PREFIX}/map/${SLUG}`
+const STATUS_URL = `${BASE_URL}${PREFIX}/offline-status`
 const ARTIFACT_DIR = process.env.ARTIFACT_DIR || join(tmpdir(), "offline-check-artifacts")
 
 // SwiftShader keeps WebGL (needed by MapLibre) working in headless Chromium.
@@ -82,7 +83,7 @@ async function checkViewportRoundTrip(page, label, pid, problemPath) {
     .catch(() => check(false, `${label}: "Back to the map" control is shown`))
   check(page.url().endsWith(`#map=${body}`),
         `${label}: fragment survives to the problem page (${page.url().split("/").pop()})`)
-  check((await back.getAttribute("href")).endsWith(`/${LOCALE}/map#${body}`),
+  check((await back.getAttribute("href")).endsWith(`/map#${body}`),
         `${label}: back control targets the bare map with the bare hash`)
   check((await page.textContent('[data-map-return-target="seeOnMapLabel"]')).trim() === "Back to the map",
         `${label}: "See on the map" is relabelled`)
@@ -92,7 +93,7 @@ async function checkViewportRoundTrip(page, label, pid, problemPath) {
   check(!(await page.content()).includes("You're offline"), `${label}: returned map is not the offline fallback`)
   // MapLibre rewrites the canonical hash on the moveend its own jumpTo(hash) fires, so a
   // surviving zoom-20 hash proves the view was restored, not merely that a URL was typed.
-  check(page.url().startsWith(`${BASE_URL}/${LOCALE}/map#20/`),
+  check(page.url().startsWith(`${BASE_URL}/map#20/`),
         `${label}: map restored the saved viewport (#${page.url().split("#")[1]})`)
 }
 
@@ -174,7 +175,7 @@ async function checkDownloadsPage(page, state) {
 async function checkOfflineSearch(page, state) {
   const problemPath = state.problemUrls[0]
   const name = await page.evaluate(async path => {
-    const cached = await caches.match(`/${location.pathname.split("/")[1]}/map-data.geojson`)
+    const cached = (await caches.match("/map-data.geojson")) || (await caches.match("/en/map-data.geojson"))
     const feature = cached && (await cached.json()).features.find(f => f.properties.path === path)
     return feature?.properties.name
   }, problemPath)
@@ -197,7 +198,7 @@ async function checkOfflineSearch(page, state) {
     .catch(() => check(false, `offline search: result opens the problem page (at ${page.url()})`))
   check(!(await page.content()).includes("You're offline"), "offline search: problem page is the saved copy")
 
-  await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load", timeout: 30000 })
+  await page.goto(`${BASE_URL}${PREFIX}/`, { waitUntil: "load", timeout: 30000 })
   await search("zzqxv nothing")
   check((await page.textContent('[data-search-target="offlineNote"]')).includes("no matches"),
     "offline search: reports no matches")
@@ -322,7 +323,7 @@ try {
   check(served.overlay > 0, "problem overlay geojson served from cache")
   await page.screenshot({ path: join(ARTIFACT_DIR, "offline-map.png") })
 
-  // "See on the map" from a problem page: /en/map/<slug>?pid=<id>. The bare map
+  // "See on the map" from a problem page: /map/<slug>?pid=<id>. The bare map
   // page is served from cache (ignoreSearch) and the pid resolved client-side.
   const pidResponse = await page.goto(`${MAP_URL}?pid=${pid}`, { waitUntil: "load", timeout: 30000 })
   check(pidResponse.ok(), `"See on the map" page served offline (status ${pidResponse.status()})`)
@@ -331,8 +332,8 @@ try {
     .then(() => check(true, "problem popup opens offline from ?pid link"))
     .catch(() => check(false, "problem popup opens offline from ?pid link"))
 
-  // The header "Map" link (bare /en/map) is pre-cached too.
-  const bareMapResponse = await page.goto(`${BASE_URL}/${LOCALE}/map`, { waitUntil: "load", timeout: 30000 })
+  // The header "Map" link (bare /map) is pre-cached too.
+  const bareMapResponse = await page.goto(`${BASE_URL}${PREFIX}/map`, { waitUntil: "load", timeout: 30000 })
   check(bareMapResponse.ok(), `bare map page served offline (status ${bareMapResponse.status()})`)
   check(!(await page.content()).includes("You're offline"), "bare map page is not the offline fallback")
 
@@ -356,7 +357,7 @@ try {
     if (res.url().includes("/rails/active_storage/")) homeImages.push(res.ok())
   }
   page.on("response", onHomeImage)
-  const homeResponse = await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load", timeout: 30000 })
+  const homeResponse = await page.goto(`${BASE_URL}${PREFIX}/`, { waitUntil: "load", timeout: 30000 })
   check(homeResponse.ok(), `home page (app start screen) served offline (status ${homeResponse.status()})`)
   check(!(await page.content()).includes("You're offline"), "home page is not the offline fallback")
   await page.waitForSelector(`[data-saved-areas-target="list"] a[href="${state.path}"]`, { timeout: 10000 })
@@ -371,7 +372,7 @@ try {
   await checkOfflineSearch(page, state)
 
   // A page that was never saved gets the offline fallback, which links saved areas.
-  await page.goto(`${BASE_URL}/${LOCALE}/never-saved-page`, { waitUntil: "load", timeout: 30000 })
+  await page.goto(`${BASE_URL}${PREFIX}/never-saved-page`, { waitUntil: "load", timeout: 30000 })
   check((await page.content()).includes("You're offline"), "unsaved page shows the offline fallback")
   await page.waitForSelector(`#saved-list a[href="${state.path}"]`, { timeout: 5000 })
     .then(() => check(true, "offline fallback links the saved area"))
@@ -409,7 +410,7 @@ try {
     console.log("\nPhase C (online again): sending the queued report")
     context = await chromium.launchPersistentContext(profileDir, { headless: true, args: COMMON_ARGS })
     page = context.pages()[0] || await context.newPage()
-    await page.goto(`${BASE_URL}/${LOCALE}`, { waitUntil: "load" })
+    await page.goto(`${BASE_URL}${PREFIX}/`, { waitUntil: "load" })
     await page.waitForFunction(() => !localStorage.getItem("queued_reports"), null, { timeout: 30000 })
       .then(() => check(true, "queued report sent once back online"))
       .catch(() => check(false, "queued report sent once back online"))

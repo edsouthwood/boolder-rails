@@ -3,6 +3,6 @@ class Admin::SessionsController < Admin::BaseController
   def destroy
     end_admin_session
     session[:admin_signed_out] = true
-    redirect_to root_localized_path, notice: "Signed out of admin"
+    redirect_to root_path, notice: "Signed out of admin"
   end
 end

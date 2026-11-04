@@ -33,13 +33,13 @@ class Admin::PhotosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "upload page" do
-    get new_admin_area_photo_path(area_slug: "mine", locale: :en)
+    get new_admin_area_photo_path(area_slug: "mine")
     assert_response :success
   end
 
   test "creates a topo in the area and matches it to the nearest boulder" do
     assert_difference -> { Topo.count } do
-      post admin_area_photos_path(area_slug: "mine", locale: :en),
+      post admin_area_photos_path(area_slug: "mine"),
            params: { photo: photo, lat: "50.6002", lon: "-3.9", heading: "182.5" }
     end
     assert_response :created
@@ -53,36 +53,36 @@ class Admin::PhotosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "no boulder suggestion when the photo is too far away or has no GPS" do
-    post admin_area_photos_path(area_slug: "mine", locale: :en), params: { photo: photo, lat: "50.61", lon: "-3.9" }
+    post admin_area_photos_path(area_slug: "mine"), params: { photo: photo, lat: "50.61", lon: "-3.9" }
     assert_response :created
     assert_nil response.parsed_body["suggested_boulder_id"]
 
-    post admin_area_photos_path(area_slug: "mine", locale: :en), params: { photo: photo, lat: "nonsense" }
+    post admin_area_photos_path(area_slug: "mine"), params: { photo: photo, lat: "nonsense" }
     assert_response :created
     assert_equal({ "source" => "inbox" }, Topo.last.metadata)
   end
 
   test "rejects non-images" do
     assert_no_difference -> { Topo.count } do
-      post admin_area_photos_path(area_slug: "mine", locale: :en), params: { photo: photo("image/svg+xml") }
+      post admin_area_photos_path(area_slug: "mine"), params: { photo: photo("image/svg+xml") }
     end
     assert_response :unprocessable_entity
   end
 
   test "area admins can't upload to other areas" do
     assert_no_difference -> { Topo.count } do
-      post admin_area_photos_path(area_slug: "theirs", locale: :en), params: { photo: photo }
+      post admin_area_photos_path(area_slug: "theirs"), params: { photo: photo }
     end
-    assert_redirected_to admin_root_path(locale: :en)
+    assert_redirected_to admin_root_path
   end
 
   test "inbox photos show in the area's topos and the undrawn queue until a line is drawn" do
-    post admin_area_photos_path(area_slug: "mine", locale: :en), params: { photo: photo }
+    post admin_area_photos_path(area_slug: "mine"), params: { photo: photo }
     topo = Topo.last
 
     assert_includes Topo.in_area(@mine), topo
     assert_includes Topo.undrawn, topo
-    get admin_area_topos_path(area_slug: "mine", locale: :en, undrawn: 1)
+    get admin_area_topos_path(area_slug: "mine", undrawn: 1)
     assert_response :success
     assert_select "p", text: /Topo ##{topo.id}/
 
@@ -94,7 +94,7 @@ class Admin::PhotosControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes Topo.undrawn, topo
 
     # Area admins can now open it (it belongs to their area even before it had lines)
-    get edit_admin_topo_path(topo, locale: :en)
+    get edit_admin_topo_path(topo)
     assert_response :success
   end
 
