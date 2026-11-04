@@ -1,0 +1,42 @@
+<% add_breadcrumb "My account", nil, class: "active" %>
+<% input = "block w-full rounded-md border-gray-300 text-sm focus:border-granite focus:ring-granite" %>
+<% user = current_admin_user %>
+
+<div class="my-4 space-y-6 max-w-2xl">
+  <div class="bg-white shadow sm:rounded-lg p-5 text-sm space-y-1">
+    <p><span class="text-gray-500">Signed in as</span> <strong><%= user.username %></strong></p>
+    <p><span class="text-gray-500">Role:</span> <%= user.super_admin? ? "Super admin (every area)" : "Area admin: #{user.accessible_area_slugs.join(", ")}" %></p>
+    <% if current_admin_user.super_admin? %>
+      <p class="pt-2"><%= link_to "Manage admin accounts →", admin_accounts_path, class: "text-granite font-medium hover:underline" %></p>
+    <% end %>
+  </div>
+
+  <% if current_account %>
+    <%= form_with url: admin_profile_path, method: :patch, class: "bg-white shadow sm:rounded-lg p-5 space-y-4" do %>
+      <p class="font-medium text-gray-800">Change your password</p>
+      <% if @errors.present? %>
+        <div class="rounded-md bg-red-50 p-3 text-sm text-red-800"><% @errors.each do |message| %><p><%= message %></p><% end %></div>
+      <% end %>
+      <div>
+        <%= label_tag :current_password, "Current password", class: "block text-sm font-medium text-gray-700" %>
+        <%= password_field_tag :current_password, nil, class: "mt-1 #{input}", autocomplete: "current-password", required: true %>
+      </div>
+      <div>
+        <%= label_tag :password, "New password", class: "block text-sm font-medium text-gray-700" %>
+        <%= password_field_tag :password, nil, class: "mt-1 #{input}", autocomplete: "new-password", required: true, minlength: AdminAccount::MIN_PASSWORD_LENGTH %>
+        <p class="mt-1 text-xs text-gray-500">At least <%= AdminAccount::MIN_PASSWORD_LENGTH %> characters. A few random words works well.</p>
+      </div>
+      <div>
+        <%= label_tag :password_confirmation, "New password again", class: "block text-sm font-medium text-gray-700" %>
+        <%= password_field_tag :password_confirmation, nil, class: "mt-1 #{input}", autocomplete: "new-password", required: true %>
+      </div>
+      <p class="text-xs text-gray-500">You'll stay signed in here; any other browsers or devices are signed out. Your browser may ask for the new password next time.</p>
+      <button type="submit" class="btn">Change password</button>
+    <% end %>
+  <% else %>
+    <div class="bg-white shadow sm:rounded-lg p-5 text-sm text-gray-700">
+      Your login comes from the server's credentials file, so its password can't be changed here.
+      <% if current_admin_user.super_admin? %>Once admin accounts are set up under <%= link_to "Accounts", admin_accounts_path, class: "text-granite hover:underline" %>, sign in with one of those instead.<% end %>
+    </div>
+  <% end %>
+</div>

@@ -9,6 +9,8 @@ Rails.application.routes.draw do
       get "map", to: "maps#show"
       delete "session", to: "sessions#destroy", as: :session
       get "stats", to: "stats#show", as: :stats
+      resources :accounts, except: :show
+      resource :profile, only: [ :show, :update ], path: "my-account"
       resources :areas, param: :slug do
         resources :problems, only: :index
         resources :topos,    only: :index

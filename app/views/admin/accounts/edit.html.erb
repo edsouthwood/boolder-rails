@@ -1,0 +1,16 @@
+<% add_breadcrumb "Accounts", admin_accounts_path %>
+<% add_breadcrumb @account.username, nil, class: "active" %>
+<div class="my-4 space-y-6">
+  <%= render "form", account: @account %>
+
+  <% if @account.disabled_at_was.present? %>
+    <%= form_with url: admin_account_path(@account), method: :delete, class: "max-w-2xl rounded-lg border border-red-200 bg-white p-5 space-y-3" do %>
+      <p class="text-sm font-medium text-red-800">Delete <%= @account.username %></p>
+      <p class="text-xs text-gray-600">Removes the account for good. Their past edits stay in the audit log under their name.</p>
+      <%= password_field_tag :current_password, nil, placeholder: "Your own password", autocomplete: "current-password", required: true,
+            class: "block w-full rounded-md border-gray-300 text-sm focus:border-red-500 focus:ring-red-500", id: "delete_current_password" %>
+      <button type="submit" class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+              data-turbo-confirm="Delete <%= @account.username %> for good?">Delete account</button>
+    <% end %>
+  <% end %>
+</div>
