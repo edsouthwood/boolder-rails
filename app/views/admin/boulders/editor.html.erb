@@ -54,16 +54,18 @@
           <label class="block text-xs font-medium text-gray-600">
             Name
             <span class="flex gap-1 mt-0.5">
-              <input type="text" list="boulder-editor-names" autocomplete="off" placeholder="No name"
+              <input type="text" autocomplete="off" placeholder="No name"
                      data-admin-boulder-editor-target="nameInput"
-                     data-action="keydown.enter->admin-boulder-editor#saveName"
+                     data-action="keydown.enter->admin-boulder-editor#saveName input->admin-boulder-editor#renderNameOptions"
                      class="flex-1 min-w-0 px-2 py-1 text-sm rounded border border-gray-300 focus:border-granite focus:ring-granite">
               <button type="button" data-action="click->admin-boulder-editor#saveName"
                       class="px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100">Set</button>
             </span>
-            <datalist id="boulder-editor-names" data-admin-boulder-editor-target="nameOptions"></datalist>
           </label>
-          <p class="text-xs text-gray-400 -mt-1">Pick a name from your problem list to give this outline its problems.</p>
+          <div data-admin-boulder-editor-target="nameOptionsBox" class="hidden -mt-1">
+            <p class="text-xs text-gray-500 mb-1">Names from your problem list (click one to give this outline its problems):</p>
+            <div data-admin-boulder-editor-target="nameOptions" class="max-h-40 overflow-y-auto rounded border border-gray-200 bg-white divide-y divide-gray-100"></div>
+          </div>
           <button
             data-action="click->admin-boulder-editor#useLidarOutline"
             data-admin-boulder-editor-target="useLidarBtn"

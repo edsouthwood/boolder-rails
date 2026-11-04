@@ -8,7 +8,7 @@ export default class extends Controller {
     'status', 'count', 'countSuffix', 'boulderList', 'basemapBtn', 'attribution',
     'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
     'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
-    'nameInput', 'nameOptions', 'unplacedSection', 'unplacedList',
+    'nameInput', 'nameOptions', 'nameOptionsBox', 'unplacedSection', 'unplacedList',
   ]
   static values = {
     geojsonUrl: String,
@@ -578,11 +578,34 @@ export default class extends Controller {
   fillNameField(boulderId) {
     const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)
     this.nameInputTarget.value = feature?.properties.name || ''
-    this.nameOptionsTarget.replaceChildren(...this.unplaced.map(u => {
-      const option = document.createElement('option')
-      option.value = u.name
-      option.label = `${u.problems} problem${u.problems === 1 ? '' : 's'}, not on the map yet`
-      return option
+    this.renderNameOptions()
+  }
+
+  // The listed names (from a problem list, not on the map yet) shown under the Name box,
+  // narrowed by what's typed. A visible list rather than a <datalist>, which some browsers
+  // (Safari, iPad) show badly or not at all.
+  renderNameOptions() {
+    const query = this.nameInputTarget.value.trim().toLowerCase()
+    const current = this.bouldersGeoJSON?.features.find(f => f.properties.boulderId == this.selectedBoulderId)?.properties.name
+    const typing = query && query !== (current || '').toLowerCase()
+    const matches = this.unplaced.filter(u => !typing || u.name.toLowerCase().includes(query))
+
+    this.nameOptionsBoxTarget.classList.toggle('hidden', this.unplaced.length === 0)
+    if (!matches.length) {
+      this.nameOptionsTarget.replaceChildren(this.element_('p', 'px-2 py-1.5 text-xs text-gray-400 italic', 'No listed name matches. Set saves it as a new name.'))
+      return
+    }
+    this.nameOptionsTarget.replaceChildren(...matches.map(u => {
+      const row = this.element_('button', 'flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs text-gray-800 hover:bg-amber-50')
+      row.type = 'button'
+      row.title = `Name this outline ${u.name}`
+      row.append(this.element_('span', 'flex-1 min-w-0 truncate font-medium', u.name))
+      row.append(this.element_('span', 'text-gray-400 shrink-0', `${u.problems} problem${u.problems === 1 ? '' : 's'}`))
+      row.addEventListener('click', () => {
+        this.nameInputTarget.value = u.name
+        this.saveName()
+      })
+      return row
     }))
   }
 
