@@ -6,6 +6,7 @@
 <% add_breadcrumb "Dartmoor", admin_areas_path %>
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug) %>
 <% add_breadcrumb "Boulder Editor", nil, class: "active" %>
+<% area_toolbar @area, :outlines %>
 
 <div
   data-controller="admin-boulder-editor"
@@ -22,7 +23,7 @@
   <% if @place_id %>data-admin-boulder-editor-place-id-value="<%= @place_id %>"<% end %>
 >
   <%# Side by side from md up; on phones the sidebar sits above the map so the map gets the full width %>
-  <div class="flex flex-col md:flex-row border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 12rem)">
+  <div class="flex flex-col md:flex-row border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 15rem)">
 
     <%# Sidebar %>
     <div class="w-full md:w-64 max-h-[45%] md:max-h-none flex-shrink-0 flex flex-col border-b md:border-b-0 md:border-r overflow-y-auto md:overflow-hidden bg-gray-50">

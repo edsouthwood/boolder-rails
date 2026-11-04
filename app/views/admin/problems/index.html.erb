@@ -1,23 +1,7 @@
 <% add_breadcrumb "Dartmoor", admin_areas_path %>
 <% add_breadcrumb "#{@area.name} ##{@area.id}", nil, class: "active" %>
 
-<% content_for :options do %>
-  <% items = [] %>
-  <% items << { text: "New problem", link: new_admin_problem_path(area_id: @area.id) } %>
-  <% items << { text: "Edit area", link: edit_admin_area_path(@area) } %>
-  <% if params[:circuit_id].to_i > 0 %>
-    <% items << { text: "Edit circuit", link: edit_admin_circuit_path(id: params[:circuit_id]) } %>
-  <% end %>
-  <% items << { text: "Topos", link: admin_area_topos_path(area_slug: @area.slug) } %>
-  <% items << { text: "Upload photos", link: new_admin_area_photo_path(area_slug: @area.slug) } %>
-  <% items << { text: "Location editor", link: admin_area_map_editor_path(area_slug: @area.slug) } %>
-  <% items << { text: "Boulder editor", link: admin_area_boulder_editor_path(area_slug: @area.slug) } %>
-  <% items << { text: "Boulders", link: admin_area_boulders_path(area_slug: @area.slug) } %>
-  <% items << { text: "Import problem list", link: admin_area_problem_list_path(area_slug: @area.slug) } %>
-  <% items << { text: "Map download", link: geojson_source_url(@area, download: true) } %>
-  <% items << { text: "Map import", link: new_admin_import_path } %>
-  <%= render "shared/dot_menu", items: items %>
-<% end %>
+<% area_toolbar @area, :problems %>
 
 <% if @area.published %>
   <% if @missing_grade.any? %>

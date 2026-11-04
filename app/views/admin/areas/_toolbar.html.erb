@@ -1,0 +1,38 @@
+<%# locals: (area:, current: nil) -%>
+<% counts = area_tool_counts(area) %>
+<div class="mt-3 -mb-4 flex items-end gap-2 border-t border-gray-100" id="area-toolbar">
+  <nav class="flex-1 min-w-0 overflow-x-auto" aria-label="<%= area.name %> tools">
+    <ul class="flex gap-6 whitespace-nowrap">
+      <% area_tool_tabs(area).each do |key, label, path, waiting| %>
+        <% count = counts[key] %>
+        <li>
+          <%= link_to path, class: "inline-flex items-center gap-1.5 py-3 border-b-2 text-sm font-medium #{key == current ? "border-granite text-granite" : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"}",
+                aria: { current: (key == current ? "page" : nil) }, title: (count.to_i.positive? ? "#{count} #{waiting}" : nil) do %>
+            <%= label %>
+            <% if count.to_i.positive? %>
+              <span class="rounded-full bg-amber-100 text-amber-800 px-1.5 text-xs font-semibold tabular-nums"><%= count %><span class="hidden sm:inline font-normal"> <%= waiting %></span></span>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+
+  <div class="flex items-center gap-1 pb-2 shrink-0">
+    <details class="relative" data-controller="dismiss">
+      <summary class="list-none cursor-pointer select-none px-3 py-1.5 rounded-md bg-granite text-white text-sm font-medium hover:bg-granite-dark [&::-webkit-details-marker]:hidden">+ Add</summary>
+      <div class="absolute right-0 z-50 mt-2 w-52 rounded-md shadow-lg bg-white ring-1 ring-black/5 py-1" role="menu">
+        <%= link_to "Upload photos", new_admin_area_photo_path(area_slug: area.slug), class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" %>
+        <%= link_to "Import problem list", admin_area_problem_list_path(area_slug: area.slug), class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" %>
+        <%= link_to "New problem", new_admin_problem_path(area_id: area.id), class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" %>
+      </div>
+    </details>
+    <% rare = [ { text: "Edit area", link: edit_admin_area_path(area) } ] %>
+    <% if params[:circuit_id].to_i > 0 && current == :problems %>
+      <% rare << { text: "Edit circuit", link: edit_admin_circuit_path(id: params[:circuit_id]) } %>
+    <% end %>
+    <% rare << { text: "Map download", link: geojson_source_url(area, download: true) } %>
+    <% rare << { text: "Map import", link: new_admin_import_path } %>
+    <%= render "shared/dot_menu", items: rare %>
+  </div>
+</div>
