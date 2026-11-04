@@ -47,7 +47,7 @@ CI (`.github/workflows/ci.yml`) runs rubocop, brakeman, importmap audit and the 
 **Geospatial:** PostGIS extensions via the `rgeo` / `activerecord-postgis-adapter` gems. Boulders and areas store geometries; viewport bounds are derived from boulder hull geometry. The `FACTORY` constant (initializer) creates RGeo point/polygon objects.
 
 **Route structure** (`config/routes.rb`):
-- Localized public routes under `/:locale` (areas, problems, circuits, map, search, proxy)
+- Public routes have no locale prefix (English only); old `/en/...` and `/fr/...` addresses 301-redirect without it. Areas, problems, circuits, map, search, proxy
 - `/mapping` — community contribution interface
 - `/admin` — HTTP-basic-auth protected admin namespace (ActiveAdmin-style but custom controllers)
 - `/api/v1` — deprecated JSON API (topos endpoint only)

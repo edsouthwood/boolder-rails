@@ -14,22 +14,22 @@ class OfflineSearchDataTest < ActionDispatch::IntegrationTest
   test "search results carry their page path" do
     get search_url(query: "Xylophone", locale: "en")
     problem = response.parsed_body.find { |r| r["type"] == "Problem" }
-    assert_equal "/en/dartmoor/quartzite-tor/#{@problem.id}-xylophone-crack", problem["path"]
+    assert_equal "/dartmoor/quartzite-tor/#{@problem.id}-xylophone-crack", problem["path"]
 
     get search_url(query: "Quartzite", locale: "en")
     area = response.parsed_body.find { |r| r["type"] == "Area" }
-    assert_equal "/en/dartmoor/quartzite-tor", area["path"]
+    assert_equal "/dartmoor/quartzite-tor", area["path"]
   end
 
   test "map data problems carry their area name" do
-    get map_data_url(locale: :en, format: :geojson)
+    get map_data_url(format: :geojson)
     feature = JSON.parse(response.body)["features"].find { |f| f.dig("properties", "id") == @problem.id }
     assert_equal "Quartzite Tor", feature.dig("properties", "areaName")
   end
 
   test "area labels carry the area page path" do
-    get area_labels_url(locale: :en, format: :geojson)
+    get area_labels_url(format: :geojson)
     feature = JSON.parse(response.body)["features"].find { |f| f["id"] == @area.id }
-    assert_equal "/en/dartmoor/quartzite-tor", feature.dig("properties", "path")
+    assert_equal "/dartmoor/quartzite-tor", feature.dig("properties", "path")
   end
 end

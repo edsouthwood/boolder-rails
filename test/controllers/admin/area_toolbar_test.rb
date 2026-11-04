@@ -33,14 +33,14 @@ class Admin::AreaToolbarTest < ActionDispatch::IntegrationTest
 
   test "every area page has the tool bar, with the current tab marked" do
     {
-      admin_area_problems_path(area_slug: "mine", locale: :en) => "Problems",
-      admin_area_boulders_path(area_slug: "mine", locale: :en) => "Boulders",
-      admin_area_topos_path(area_slug: "mine", locale: :en) => "Photos",
-      new_admin_area_photo_path(area_slug: "mine", locale: :en) => "Photos",
-      admin_area_map_editor_path(area_slug: "mine", locale: :en) => "Map",
-      admin_area_boulder_editor_path(area_slug: "mine", locale: :en) => "Outlines",
-      admin_area_problem_list_path(area_slug: "mine", locale: :en) => nil,
-      edit_admin_area_path(@area, locale: :en) => nil
+      admin_area_problems_path(area_slug: "mine") => "Problems",
+      admin_area_boulders_path(area_slug: "mine") => "Boulders",
+      admin_area_topos_path(area_slug: "mine") => "Photos",
+      new_admin_area_photo_path(area_slug: "mine") => "Photos",
+      admin_area_map_editor_path(area_slug: "mine") => "Map",
+      admin_area_boulder_editor_path(area_slug: "mine") => "Outlines",
+      admin_area_problem_list_path(area_slug: "mine") => nil,
+      edit_admin_area_path(@area) => nil
     }.each do |path, current|
       get path
       assert_response :success, path
@@ -51,13 +51,13 @@ class Admin::AreaToolbarTest < ActionDispatch::IntegrationTest
         assert_select "#area-toolbar a[aria-current=page]", count: 0
       end
       assert_select "#area-toolbar summary", text: "+ Add"
-      assert_select "#area-toolbar a[href=?]", new_admin_area_photo_path(area_slug: "mine", locale: :en), text: "Upload photos"
-      assert_select "#area-toolbar a[href=?]", edit_admin_area_path(@area, locale: :en), text: "Edit area"
+      assert_select "#area-toolbar a[href=?]", new_admin_area_photo_path(area_slug: "mine"), text: "Upload photos"
+      assert_select "#area-toolbar a[href=?]", edit_admin_area_path(@area), text: "Edit area"
     end
   end
 
   test "tabs show what's waiting: photos to draw, problems to place, boulders needing work" do
-    get admin_area_problems_path(area_slug: "mine", locale: :en)
+    get admin_area_problems_path(area_slug: "mine")
 
     assert_select "#area-toolbar a[title=?]", "1 to draw", text: /Photos/
     assert_select "#area-toolbar a[title=?]", "2 to place", text: /Map/ # unlocated + estimated, not hidden
@@ -65,10 +65,10 @@ class Admin::AreaToolbarTest < ActionDispatch::IntegrationTest
   end
 
   test "the areas list links straight to each area's tools with counts" do
-    get admin_areas_path(locale: :en)
+    get admin_areas_path
 
-    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", undrawn: 1, locale: :en), text: /Photos\s*1/
-    assert_select "a[href=?]", admin_area_map_editor_path(area_slug: "mine", locale: :en), text: /Map\s*2/
-    assert_select "a[href=?]", admin_area_boulders_path(area_slug: "mine", locale: :en), text: "Boulders"
+    assert_select "a[href=?]", admin_area_topos_path(area_slug: "mine", undrawn: 1), text: /Photos\s*1/
+    assert_select "a[href=?]", admin_area_map_editor_path(area_slug: "mine"), text: /Map\s*2/
+    assert_select "a[href=?]", admin_area_boulders_path(area_slug: "mine"), text: "Boulders"
   end
 end

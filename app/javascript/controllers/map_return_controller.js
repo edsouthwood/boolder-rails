@@ -10,7 +10,7 @@ const STORAGE_KEY = 'boolder.mapReturn'
 // `#map=<zoom>/<lat>/<lng>[/<bearing>[/<pitch>]]` (mapbox_controller#problemPopupHtml).
 // The map itself is built with `hash: true`, which parses only the BARE
 // `#<zoom>/<lat>/<lng>` form, so this controller strips the `map=` prefix when building
-// the return URL. The target is always the bare /:locale/map: any slug or ?pid= makes
+// the return URL. The target is always the bare /map: any slug or ?pid= makes
 // MapController set bounds/problem values, and mapbox_controller#centerMap then flies
 // over the hash.
 export default class extends Controller {

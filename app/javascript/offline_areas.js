@@ -51,8 +51,18 @@ export async function reachable(timeoutMs = 4000) {
   }
 }
 
-export function locale() {
-  return window.location.pathname.split("/")[1] || "en"
+// Addresses used to start with /en (e.g. /en/dartmoor/bonehill). Areas saved for offline
+// before that changed have their pages and map data cached under the old addresses, so
+// cache lookups try the other form too.
+export function legacyUrl(path) {
+  if (path === "/en") return "/"
+  if (path.startsWith("/en/")) return path.slice(3)
+  return path === "/" ? "/en" : `/en${path}`
+}
+
+// caches.match for a same-site path, falling back to its old (or new) /en form
+export async function matchCached(path, options = { ignoreVary: true }) {
+  return (await caches.match(path, options)) || caches.match(legacyUrl(path), options)
 }
 
 export function savedState(slug) {
@@ -76,7 +86,7 @@ export function savedAreas() {
       ...state,
       slug,
       name: state.name || slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-      path: state.path || `/${locale()}/dartmoor/${slug}`
+      path: state.path || `/dartmoor/${slug}`
     })
   }
   return areas.sort((a, b) => a.name.localeCompare(b.name))
@@ -278,12 +288,12 @@ class AreaDownloader {
     // the map page for the JS/CSS assets it needs (MapLibre, app bundle, stylesheets).
     const pageImageUrls = [
       ...this.parsePageImages(await this.cachePage(appCache, data.area_url)),
-      ...this.parsePageImages(await this.cachePage(appCache, `/${locale()}`))
+      ...this.parsePageImages(await this.cachePage(appCache, "/"))
     ]
-    await this.cachePage(appCache, `/${locale()}/downloads`)
+    await this.cachePage(appCache, "/downloads")
     // "Report a mistake" from a problem page works offline (queued by offline_reports.js).
-    await this.cachePage(appCache, `/${locale()}/reports/new`)
-    await this.cachePage(appCache, `/${locale()}/offline-status`)
+    await this.cachePage(appCache, "/reports/new")
+    await this.cachePage(appCache, "/offline-status")
     if (data.map_index_url) await this.cachePage(appCache, data.map_index_url)
     const shellUrls = await this.cacheMapPage(appCache, data.map_url)
 
@@ -545,13 +555,13 @@ function lat2tile(lat, z) {
 // when the server can't be reached. Returns results shaped like /search's JSON, plus
 // `path`, limited to pages actually saved on this device (an unsaved one would only
 // open the "You're offline" page).
-export async function searchOffline(query, localeCode = locale()) {
+export async function searchOffline(query) {
   const terms = normalize(query).split(" ").filter(Boolean)
   if (terms.length === 0) return []
 
   const [problems, areas] = await Promise.all([
-    cachedFeatures(`/${localeCode}/map-data.geojson`),
-    cachedFeatures(`/${localeCode}/area-labels.geojson`)
+    cachedFeatures("/map-data.geojson"),
+    cachedFeatures("/area-labels.geojson")
   ])
 
   const areaResults = rank(areas.filter(f => f.properties.path), terms).slice(0, 10)
@@ -585,7 +595,7 @@ export async function searchOffline(query, localeCode = locale()) {
 
 async function cachedFeatures(url) {
   try {
-    const cached = await caches.match(url, { ignoreVary: true })
+    const cached = await matchCached(url)
     return cached ? ((await cached.json()).features || []).filter(f => f.properties?.name) : []
   } catch (_) {
     return []

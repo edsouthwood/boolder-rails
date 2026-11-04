@@ -42,23 +42,23 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     boulder = @theirs.boulders.create!(polygon: FACTORY.polygon(FACTORY.linear_ring(square.map { |x, y| FACTORY.point(x, y) })))
 
     assert_no_difference "Boulder.count" do
-      post admin_area_boulders_url(area_slug: @theirs.slug, locale: :en), params: { coordinates: square }, as: :json
+      post admin_area_boulders_url(area_slug: @theirs.slug), params: { coordinates: square }, as: :json
     end
     assert_redirected_to admin_root_path
 
-    patch admin_boulder_url(boulder, locale: :en), params: { coordinates: square(1) }, as: :json
+    patch admin_boulder_url(boulder), params: { coordinates: square(1) }, as: :json
     assert_redirected_to admin_root_path
     assert_equal boulder.polygon, boulder.reload.polygon
 
     assert_no_difference "Boulder.count" do
-      delete admin_boulder_url(boulder, locale: :en), as: :json
+      delete admin_boulder_url(boulder), as: :json
     end
     assert_redirected_to admin_root_path
   end
 
   test "area admin can create boulders in their own area" do
     assert_difference "Boulder.count", 1 do
-      post admin_area_boulders_url(area_slug: @mine.slug, locale: :en), params: { coordinates: square }, as: :json
+      post admin_area_boulders_url(area_slug: @mine.slug), params: { coordinates: square }, as: :json
     end
     assert_response :success
   end
@@ -68,7 +68,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin cannot move their problem into another area" do
     problem = @mine.problems.create!(steepness: "slab")
 
-    patch admin_problem_url(problem, locale: :en), params: { problem: { area_id: @theirs.id } }
+    patch admin_problem_url(problem), params: { problem: { area_id: @theirs.id } }
     assert_redirected_to admin_root_path
     assert_equal @mine, problem.reload.area
   end
@@ -76,7 +76,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin can update their own problem" do
     problem = @mine.problems.create!(steepness: "slab")
 
-    patch admin_problem_url(problem, locale: :en), params: { problem: { name: "Renamed", area_id: @mine.id } }
+    patch admin_problem_url(problem), params: { problem: { name: "Renamed", area_id: @mine.id } }
     assert_response :redirect
     assert_not_equal admin_root_url, response.location
     assert_equal "Renamed", problem.reload.name
@@ -85,7 +85,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   # --- audits ---
 
   test "area admin cannot see the audit log" do
-    get admin_audits_url(locale: :en)
+    get admin_audits_url
     assert_redirected_to admin_root_path
   end
 
@@ -94,7 +94,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     problem = @mine.problems.create!(steepness: "slab", name: "<script>alert(1)</script>")
     problem.update!(name: "Safe")
 
-    get admin_audits_url(locale: :en)
+    get admin_audits_url
     assert_response :success
     assert_no_match "<script>alert(1)", response.body
     assert_match "&lt;script&gt;", response.body
@@ -105,10 +105,10 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin cannot review a contribution for another area's problem" do
     contribution = Contribution.create!(state: "pending", problem: @their_problem, comment: "x")
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_redirected_to admin_root_path
 
-    patch admin_contribution_url(contribution, locale: :en), params: { contribution: { state: "closed" } }
+    patch admin_contribution_url(contribution), params: { contribution: { state: "closed" } }
     assert_redirected_to admin_root_path
     assert contribution.reload.pending?
   end
@@ -116,11 +116,11 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin cannot review an unlisted contribution" do
     contribution = Contribution.create!(state: "pending", problem_name: "New slab")
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_redirected_to admin_root_path
 
     assert_no_difference "Problem.count" do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
         params: { problem: { area_id: @mine.id, name: "New slab", steepness: "slab" } }
     end
     assert_redirected_to admin_root_path
@@ -129,7 +129,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin cannot bulk close contributions" do
     contribution = Contribution.create!(state: "pending", problem: @their_problem, comment: "x")
 
-    post bulk_close_admin_contributions_url(locale: :en), params: { contribution_ids: [ contribution.id ] }
+    post bulk_close_admin_contributions_url, params: { contribution_ids: [ contribution.id ] }
     assert_redirected_to admin_root_path
     assert contribution.reload.pending?
   end
@@ -137,18 +137,18 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin can review a contribution in their own area" do
     contribution = Contribution.create!(state: "pending", problem: @mine.problems.create!(steepness: "slab"), comment: "x")
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_response :success
   end
 
   # --- contribution requests ---
 
   test "area admin cannot request contributions for another area's problem" do
-    get new_admin_contribution_request_url(problem_id: @their_problem.id, locale: :en)
+    get new_admin_contribution_request_url(problem_id: @their_problem.id)
     assert_redirected_to admin_root_path
 
     assert_no_difference "ContributionRequest.count" do
-      post admin_contribution_requests_url(locale: :en), params: { contribution_request: { problem_id: @their_problem.id } }
+      post admin_contribution_requests_url, params: { contribution_request: { problem_id: @their_problem.id } }
     end
     assert_redirected_to admin_root_path
   end
@@ -156,10 +156,10 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   # --- poi routes ---
 
   test "area admin cannot add a poi route to another area" do
-    get new_admin_poi_route_url(area_id: @theirs.id, locale: :en)
+    get new_admin_poi_route_url(area_id: @theirs.id)
     assert_redirected_to admin_root_path
 
-    get admin_poi_routes_url(locale: :en)
+    get admin_poi_routes_url
     assert_redirected_to admin_root_path
   end
 
@@ -170,7 +170,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
     topo.save!
 
-    get edit_admin_topo_url(topo, locale: :en)
+    get edit_admin_topo_url(topo)
     assert_redirected_to admin_root_path
   end
 
@@ -181,7 +181,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     topo.save!
     Line.create!(problem: @their_problem, topo: topo)
 
-    delete admin_topo_url(topo, locale: :en)
+    delete admin_topo_url(topo)
     assert_redirected_to admin_area_problems_path(area_slug: @theirs.slug, circuit_id: "first")
   end
 
@@ -190,7 +190,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin can review an unlisted contribution sent from their own area's list" do
     contribution = Contribution.create!(state: "pending", problem_name: "New One", area: @mine)
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_response :success
     assert_select "input[name=new_area_name]", count: 0
   end
@@ -198,7 +198,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
   test "area admin cannot review an unlisted contribution with no area" do
     contribution = Contribution.create!(state: "pending", problem_name: "Nowhere")
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_redirected_to admin_root_path
   end
 
@@ -206,7 +206,7 @@ class Admin::AreaAdminAccessTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem_name: "New One", area: @mine)
 
     assert_no_difference -> { Area.count } do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
            params: { new_area_name: "Sneaky Tor", problem: { area_id: @mine.id, name: "New One", steepness: "wall" } }
     end
     assert_redirected_to admin_root_path

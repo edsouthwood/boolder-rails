@@ -4,7 +4,7 @@ import {
   reachable
 } from "offline_areas"
 
-// "My downloads" (/[locale]/downloads): every published area with its offline state —
+// "My downloads" (/downloads): every published area with its offline state —
 // save, update (when it changed since saving) or remove it, or save/update them all.
 // `areas` comes from the server ([{ slug, name, version, problemCount, dataUrl,
 // areaUrl }]); offline (no server reachable), only the areas saved on this device are

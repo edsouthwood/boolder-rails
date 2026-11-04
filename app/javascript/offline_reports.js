@@ -40,11 +40,11 @@ export function queueReport(report) {
 
 // Sends one report. Resolves { ok: true } or { ok: false, errors: [...] } (rejected —
 // retrying won't help); throws RetryLater when the server can't be reached.
-export async function sendReport(report, localeCode = "en") {
+export async function sendReport(report) {
   const started = Date.now()
   let html
   try {
-    const res = await fetch(`/${localeCode}/reports/new?sw-bypass=${started}`, {
+    const res = await fetch(`/reports/new?sw-bypass=${started}`, {
       cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     })
     if (!res.ok) throw new RetryLater(`report form: ${res.status}`)
@@ -92,7 +92,7 @@ let flushing = false
 
 // Sends queued reports, oldest first; stops at the first one that can't get through.
 // Returns { sent, rejected } (rejected: refused by the server, so dropped).
-export async function flushQueuedReports(localeCode = "en") {
+export async function flushQueuedReports() {
   const sent = []
   const rejected = []
   if (flushing || queuedReports().length === 0 || navigator.onLine === false) return { sent, rejected }
@@ -101,7 +101,7 @@ export async function flushQueuedReports(localeCode = "en") {
     for (const report of queuedReports()) {
       let result
       try {
-        result = await sendReport(report, localeCode)
+        result = await sendReport(report)
       } catch (error) {
         if (error instanceof RetryLater) break
         throw error

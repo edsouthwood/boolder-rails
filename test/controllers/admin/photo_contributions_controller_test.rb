@@ -38,7 +38,7 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
     photo_contribution(@theirs, contributor_name: "Zed")
     photo_contribution(contributor_name: "Old").close!(reviewed_by: "x")
 
-    get admin_photo_contributions_path(locale: :en)
+    get admin_photo_contributions_path
 
     assert_response :success
     assert_select "li", text: /Ann/
@@ -54,7 +54,7 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
     photo_contribution(boulder: egg, boulder_chosen: true, gps_boulder: other)
     photo_contribution(boulder: other, gps_boulder: other)
 
-    get admin_photo_contributions_path(locale: :en)
+    get admin_photo_contributions_path
 
     assert_select "li", text: /The Egg\s+\(chosen, not on map\)/
     assert_select "li", text: /GPS puts it at Other Block/, count: 1
@@ -68,11 +68,11 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_emails 1 do
       assert_difference -> { Topo.count }, 3 do
-        post review_admin_photo_contributions_path(locale: :en), params: { decision: "accept", ids: [ a.id, b.id, c.id ] }
+        post review_admin_photo_contributions_path, params: { decision: "accept", ids: [ a.id, b.id, c.id ] }
       end
     end
 
-    assert_redirected_to admin_photo_contributions_path(locale: :en)
+    assert_redirected_to admin_photo_contributions_path
     assert [ a, b, c ].all? { |pc| pc.reload.accepted? && pc.topo.present? }
     assert_equal "local", a.reviewed_by
     assert_match "Photos to draw at Mine", flash[:notice]
@@ -82,7 +82,7 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
     a = photo_contribution
     b = photo_contribution
 
-    post review_admin_photo_contributions_path(locale: :en, only_id: a.id), params: { decision: "close", ids: [ a.id, b.id ] }
+    post review_admin_photo_contributions_path(only_id: a.id), params: { decision: "close", ids: [ a.id, b.id ] }
 
     assert a.reload.closed?
     assert b.reload.pending?
@@ -93,7 +93,7 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_email_with PhotoContributionMailer, :reviewed_email,
         params: { contributor_email: "ann@example.com", contributor_name: nil, accepted: 0, closed: 1, note: "Too dark" } do
-      post review_admin_photo_contributions_path(locale: :en), params: { decision: "close", ids: [ a.id ], moderator_note: "Too dark" }
+      post review_admin_photo_contributions_path, params: { decision: "close", ids: [ a.id ], moderator_note: "Too dark" }
     end
     assert_equal "Too dark", a.reload.moderator_note
   end
@@ -102,11 +102,11 @@ class Admin::PhotoContributionsControllerTest < ActionDispatch::IntegrationTest
     mine = photo_contribution
     theirs = photo_contribution(@theirs)
 
-    post review_admin_photo_contributions_path(locale: :en), params: { decision: "", ids: [ mine.id ] }
+    post review_admin_photo_contributions_path, params: { decision: "", ids: [ mine.id ] }
     assert mine.reload.pending?
 
     assert_no_difference -> { Topo.count } do
-      post review_admin_photo_contributions_path(locale: :en), params: { decision: "accept", ids: [ theirs.id ] }
+      post review_admin_photo_contributions_path, params: { decision: "accept", ids: [ theirs.id ] }
     end
     assert theirs.reload.pending?
   end

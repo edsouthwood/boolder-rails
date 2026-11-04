@@ -219,7 +219,7 @@ through larger responses. That is a router NAT artefact, not a site fault. Bypas
 it by pointing curl straight at Caddy:
 
 ```bash
-curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com/en
+curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com/
 ```
 
 ### Uptime monitoring {#uptime-monitoring}
@@ -229,7 +229,7 @@ A GitHub Actions workflow, `.github/workflows/uptime.yml`, checks the live site 
 or its internet connection is down. It runs `script/uptime_check.sh`, which checks that:
 
 - `https://bowda.edsouthwood.com/up` returns 200
-- `/en` returns 200 and contains "Bouldering on Dartmoor", so a Caddy error page or a parked
+- `/` returns 200 and contains "Bouldering on Dartmoor", so a Caddy error page or a parked
   domain doesn't count as up
 - the HTTPS certificate has at least 14 days left (Caddy normally renews at 30)
 
@@ -278,7 +278,7 @@ journalctl --user -u boolder-rails --since "7 days ago" | grep "\[CSP\]"
 ```
 
 Each line names the rule, what was blocked and the page, e.g.
-`[CSP] img-src blocked https://tiles.example.com/... on https://bowda.edsouthwood.com/en/map`.
+`[CSP] img-src blocked https://tiles.example.com/... on https://bowda.edsouthwood.com/map`.
 A legitimate new service (a new tile provider, say) means adding its host to the policy;
 anything unfamiliar is worth a closer look. Once a stretch of real traffic reports nothing
 unexpected, enforce it by setting `content_security_policy_report_only = false`.
@@ -511,7 +511,7 @@ lines.
 
 ### Importing a problem list
 
-Area tool bar **+ Add → Import problem list** (`/en/admin/areas/<slug>/problem-list`). Paste a list or
+Area tool bar **+ Add → Import problem list** (`/admin/areas/<slug>/problem-list`). Paste a list or
 choose a `.txt` file in this shape: each boulder's name on its own line, then its problems one
 per line, each starting with a tab, then the problem's name, a tab and its grade (`f6B`, `6b`,
 `f4+` and `5` all work):
@@ -561,7 +561,7 @@ Admins can still open a hidden problem's public page, with a notice that it's hi
 
 ### The Boulders list
 
-Area tool bar → **Boulders** tab (`/en/admin/areas/<slug>/boulders`) lists every boulder, most urgent
+Area tool bar → **Boulders** tab (`/admin/areas/<slug>/boulders`) lists every boulder, most urgent
 first:
 
 | Status | Meaning | Next step |
@@ -628,7 +628,7 @@ Each photo on the area's Topos page shows its boulder's name under the topo numb
 
 ## Boulder Photos from Visitors {#boulder-photos}
 
-Visitors can send photos of boulders without picking a problem first, from **Add boulder photos** (`/en/mapping/photos/new`). It's linked at the top of the Contribute page, the Mapping page and each area's "Problems to map" list.
+Visitors can send photos of boulders without picking a problem first, from **Add boulder photos** (`/mapping/photos/new`). It's linked at the top of the Contribute page, the Mapping page and each area's "Problems to map" list.
 
 **What the visitor does**
 
@@ -1000,7 +1000,7 @@ A problem page's photo has **‹ ›** buttons that step to the nearest photo to
 **Checking them while you work:** the topo workbench sidebar and the admin topo page show **Photo to the left / right** for that photo: the problem each arrow goes to (click to open that photo's workbench), or the reason there's no arrow ("No facing direction…", "No position…", "No other photo to the left within 150 m"). It works in unpublished areas too, as a preview of what visitors will see.
 
 ### Deleting a topo
-Navigate to the topo's edit page directly via `/en/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
+Navigate to the topo's edit page directly via `/admin/topos/<ID>` (find the ID from the problem's show page). Click the red **Delete topo** button and confirm. This permanently deletes the topo and all its associated lines.
 
 ---
 
@@ -1211,10 +1211,22 @@ To test on the server: `RAILS_ENV=production bin/rails runner 'ContributeMailer.
 ## Language Support
 
 The site is **English-only** (June 2026). The French locale inherited from upstream was
-removed because its translations described Fontainebleau, not Dartmoor. Old `/fr/...` URLs
-301-redirect to their `/en/...` equivalents. URLs keep the `/en/` prefix so existing links
-stay valid. The Fontainebleau "circuit 7a" feature and the upstream mobile-app page were
-removed at the same time (`/en/app` now redirects to the map).
+removed because its translations described Fontainebleau, not Dartmoor. The Fontainebleau
+"circuit 7a" feature and the upstream mobile-app page were removed at the same time (`/app`
+now redirects to the map).
+
+**Addresses have no language prefix** (November 2026): pages are at `/dartmoor/bonehill`,
+`/map`, `/admin` and so on. Old `/en/...` and `/fr/...` addresses (bookmarks, search results,
+links in old emails) 301-redirect to the same page without the prefix, keeping any query
+string, so search engines move their listings across.
+
+Areas saved for offline before the change are cached under their old `/en/...` addresses.
+The service worker looks up the other form when a page or map file isn't cached under the
+address asked for. A *page* found only under the other form is redirected to rather than
+served: a page saved before the change runs scripts that work out cache addresses from the
+page's own URL, so it has to be shown at its old address. Re-saving an area (or "Update")
+moves it to the new addresses. `script/offline_check.mjs` checks the new addresses by
+default; `PATH_PREFIX=/en` runs it through the old ones.
 
 ### Boolder Credit in the Footer {#boolder-credit}
 
@@ -1225,7 +1237,7 @@ main links:
 > Thank you to the original Boolder team ♥
 
 "Boolder" links to https://www.boolder.com (new tab); the thank-you links to the
-"Thank you, Boolder" section of the About page (`/en/about#thanks`). To change the wording,
+"Thank you, Boolder" section of the About page (`/about#thanks`). To change the wording,
 edit `views.layout.footer.boolder_credit_html` and `boolder_thanks` in `config/locales/en.yml`.
 
 ---
@@ -1278,9 +1290,9 @@ Sizes are small — a single area is on the order of a few MB. A timestamp and a
 link appear once saved; **Remove** clears that area's tiles and photos again. If any files
 fail to download, the saved message says how many — re-save on a better connection.
 
-### My downloads: /en/downloads
+### My downloads: /downloads
 
-**My downloads** (`/en/downloads` — footer link "Offline downloads", "Manage downloads" under
+**My downloads** (`/downloads` — footer link "Offline downloads", "Manage downloads" under
 the home page's saved list, "All downloads" next to a saved area) lists every published
 area with its offline state:
 
@@ -1325,7 +1337,7 @@ Search results now link straight to the problem/area page (online too), instead 
 through `/redirects/new`, which needs the server.
 
 For developers: `searchOffline` in `app/javascript/offline_areas.js` reads the cached
-`/en/map-data.geojson` (problems now include `areaName`) and `/en/area-labels.geojson` (areas
+`/map-data.geojson` (problems now include `areaName`) and `/area-labels.geojson` (areas
 now include `path`). `Area::OFFLINE_FORMAT` is part of the offline version hash: bump it
 whenever what a saved area contains changes shape, so every saved copy shows
 "Update available" and picks up the new data (it was bumped to 2 for this).
@@ -1378,9 +1390,9 @@ layouts); the prompt is `install_prompt_controller.js` + `shared/_install_prompt
 is `saved_areas_controller.js`. iOS uses `public/apple-touch-icon.png` (opaque — iOS turns
 transparency black).
 
-### Checking what's saved: /en/offline-status
+### Checking what's saved: /offline-status
 
-The **offline status page** (`/en/offline-status`, linked as "Details" next to a saved
+The **offline status page** (`/offline-status`, linked as "Details" next to a saved
 area) is a diagnostic read-out: the service worker version, how many entries each cache
 holds, which base-map tile snapshot is pinned, and — per saved area — how many of its topo
 photos, problem pages and map files are actually present. Each area is marked
@@ -1412,7 +1424,7 @@ unchanged: there is no back control and the link under the photo still reads
   case on the moor) fetch can hang for tens of seconds, which would make cached pages look
   broken.
 - **`/admin` is never intercepted.** The worker's `fetch` handler returns early for any
-  path under `/admin` or `/:locale/admin`, so those navigations go straight to the browser.
+  path under `/admin` (or the old `/admin`), so those navigations go straight to the browser.
   Admin is online-only and behind HTTP basic auth: routing it through network-first meant a
   slow-but-working connection tripped the 3.5 s timeout and served the synthetic "You're
   offline" page, and a 401 challenge mediated by `respondWith` doesn't reliably raise the
@@ -1455,7 +1467,7 @@ unchanged: there is no back control and the link under the photo still reads
   (the Cache API matches query strings exactly). The worker serves map pages with
   `ignoreSearch` as a fallback, and `mapbox_controller` re-resolves the `pid`
   client-side from the cached map-data GeoJSON to fly to the problem and open its
-  popup. The bare `/en/map` page (the header link) is pre-cached too.
+  popup. The bare `/map` page (the header link) is pre-cached too.
 - The service worker never resolves a navigation with `null`; uncached pages fall back to a
   small "You're offline" page (and the overlay GeoJSON to an empty FeatureCollection), so
   visiting something you didn't download degrades gracefully instead of erroring.
@@ -1468,7 +1480,7 @@ fallback page rather than erroring.
 
 ## Problems by Grade and Map Grade Filters {#problems-by-grade}
 
-**Problems by grade** (`/en/dartmoor/problems`, linked from a card on the Dartmoor areas page) lists every published problem of one grade across all areas. Problems with a topo photo come first, then by area and name. The menu only offers grades that have problems, with a count for each. Problems need a location on the map to appear.
+**Problems by grade** (`/dartmoor/problems`, linked from a card on the Dartmoor areas page) lists every published problem of one grade across all areas. Problems with a topo photo come first, then by area and name. The menu only offers grades that have problems, with a count for each. Problems need a location on the map to appear.
 
 Grades below 6a are entered in simplified form (`4`, `4+`). Older detailed grades still match: `4` covers 4a to 4b, and `4+` covers 4b+ to 4c+. The same grouping drives the map's grade filters (level buttons and the custom min–max range), so no problems are left out.
 
@@ -1476,7 +1488,7 @@ Grades below 6a are entered in simplified form (`4`, `4+`). Older detailed grade
 
 ## Printable Topo Sheets {#topo-sheets}
 
-Every published area has a printable sheet at `/en/dartmoor/<area>/print`, linked as
+Every published area has a printable sheet at `/dartmoor/<area>/print`, linked as
 **Print topo sheet** under the area's problem list. It shows the area's warning and
 description, then every published photo with all its lines drawn and numbered (left to
 right, photos in boulder order), each followed by a numbered list of name, grade, sit start
@@ -1497,7 +1509,7 @@ left off. Unpublished areas' sheets return "not found" like their other pages.
 - **Admin edits, last 30 days**: who changed what, with a link to the full audit log.
 
 ### How visits are counted
-Visits are anonymous daily totals in the `page_views` table: one row per day and page (home, an area, a problem, or the map), holding only a count. No IP address, cookie, browser details or visitor ID is stored, so visits can't be linked to anyone; the [privacy policy](/en/privacy) says so. Counting started on the day this was deployed (4 November 2026), so earlier periods are empty.
+Visits are anonymous daily totals in the `page_views` table: one row per day and page (home, an area, a problem, or the map), holding only a count. No IP address, cookie, browser details or visitor ID is stored, so visits can't be linked to anyone; the [privacy policy](/privacy) says so. Counting started on the day this was deployed (4 November 2026), so earlier periods are empty.
 
 Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) or by following a link (Turbo). Not counted: Turbo's prefetch when hovering over a link, offline downloads (which fetch every problem page in the background), pages opened while signed in as an admin, bots and scripts (by user agent), error and "not found" pages, and pages served from the offline cache with no connection. Code: `CountsPageViews` (controller concern), `PageView`, `AdminStats`.
 

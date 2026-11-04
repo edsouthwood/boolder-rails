@@ -4,140 +4,145 @@ Rails.application.routes.draw do
 
   get "/manifest", to: "pwa/manifests#show", defaults: { format: :json }, as: :pwa_manifest
 
-  scope "/:locale", locale: /#{I18n.available_locales.join('|')}/ do
-    namespace :admin do
-      get "map", to: "maps#show"
-      delete "session", to: "sessions#destroy", as: :session
-      get "stats", to: "stats#show", as: :stats
-      resources :accounts, except: :show
-      resource :profile, only: [ :show, :update ], path: "my-account"
-      resources :areas, param: :slug do
-        resources :problems, only: :index
-        resources :topos,    only: :index
-        resources :photos,   only: [ :new, :create ]
-        get  "map-editor",     to: "problems#map_editor",   as: :map_editor
-        get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
-        post "boulders",       to: "boulders#create",       as: :boulders
-        get  "boulders",       to: "boulders#index"
-        get  "problem-list",         to: "problem_lists#new",     as: :problem_list
-        post "problem-list/preview", to: "problem_lists#preview", as: :problem_list_preview
-        post "problem-list",         to: "problem_lists#create"
-      end
-      resources :problems, except: :index do
-        patch :visibility, on: :member
-      end
-      resources :boulders, only: [ :update, :destroy ]
-      resources :circuits
-      resources :imports do
-        get "apply", on: :member
-      end
-      resources :topos do
-        member do
-          get   :workbench
-          post  :quick_problem
-          patch :boulder, action: :choose_boulder
-        end
-      end
-      resources :problem_imports
-      resources :bleau_problems do
-        member do
-          post :toggle_ignore
-        end
-      end
-      resources :lines
-      resources :pois
-      resources :poi_routes
-      resources :contribution_requests
-      resources :contributions do
-        member do
-          post :create_problem
-        end
-        collection do
-          post :bulk_close
-        end
-      end
-      resources :photo_contributions, path: "photo-contributions", only: :index do
-        post :review, on: :collection
-      end
-      resources :audits
-      resources :redirects, only: :new
-      resources :bulk_uploads, only: [ :new, :create ]
+  # Old addresses had a language prefix (/en/...): send them, and any bookmarks or search
+  # results, to the same page without it. Permanent (301) so search engines move across.
+  get "/en", to: redirect(status: 301) { |_params, req| req.query_string.present? ? "/?#{req.query_string}" : "/" }
+  get "/en/*path", format: false, to: redirect(status: 301) { |params, req|
+    "/#{params[:path]}#{"?#{req.query_string}" if req.query_string.present?}"
+  }
 
-      get "mapping", to: "mapping#dashboard"
-      get "docs", to: "docs#index"
-
-      root "areas#index"
+  namespace :admin do
+    get "map", to: "maps#show"
+    delete "session", to: "sessions#destroy", as: :session
+    get "stats", to: "stats#show", as: :stats
+    resources :accounts, except: :show
+    resource :profile, only: [ :show, :update ], path: "my-account"
+    resources :areas, param: :slug do
+      resources :problems, only: :index
+      resources :topos,    only: :index
+      resources :photos,   only: [ :new, :create ]
+      get  "map-editor",     to: "problems#map_editor",   as: :map_editor
+      get  "boulder-editor", to: "boulders#editor",       as: :boulder_editor
+      post "boulders",       to: "boulders#create",       as: :boulders
+      get  "boulders",       to: "boulders#index"
+      get  "problem-list",         to: "problem_lists#new",     as: :problem_list
+      post "problem-list/preview", to: "problem_lists#preview", as: :problem_list_preview
+      post "problem-list",         to: "problem_lists#create"
     end
-
-    scope "articles" do
-      scope "beginners-guide" do
-        get "/", to: "articles#beginners_guide", as: :beginners_guide
-        get "equipment", to: "articles#equipment", as: :equipment
-        get "choose-area", to: "articles#choose_area", as: :choose_area
-        get "choose-problems", to: "articles#choose_problems", as: :choose_problems
-        get "climb-safely", to: "articles#climb_safely", as: :climb_safely
-        get "rules", to: "articles#rules", as: :rules
-        get "ticks", to: "articles#ticks", as: :ticks
+    resources :problems, except: :index do
+      patch :visibility, on: :member
+    end
+    resources :boulders, only: [ :update, :destroy ]
+    resources :circuits
+    resources :imports do
+      get "apply", on: :member
+    end
+    resources :topos do
+      member do
+        get   :workbench
+        post  :quick_problem
+        patch :boulder, action: :choose_boulder
       end
-      scope "top-areas" do
-        get "/", to: redirect("/%{locale}/dartmoor")
-        get "level", to: redirect("/%{locale}/dartmoor"), as: :legacy_top_areas_level
-        get "groups", to: redirect("/%{locale}/dartmoor"), as: :legacy_top_areas_groups
-        get "beginner", to: redirect("/%{locale}/articles/beginners-guide/choose-area"), as: :legacy_top_areas_beginner
-        get "train", to: "articles#top_areas_train", as: :top_areas_train
-        get "dry_fast", to: "articles#top_areas_dry_fast", as: :top_areas_dry_fast
-        get "sheltered", to: "articles#top_areas_sheltered", as: :top_areas_sheltered
+    end
+    resources :problem_imports
+    resources :bleau_problems do
+      member do
+        post :toggle_ignore
       end
-      root to: redirect("/%{locale}/articles/beginners-guide"), as: :articles
     end
-
-    resources :reports
-
-    namespace :mapping do
-      resources :problems, only: [ :show, :index ]
-      resources :contributions, only: [ :show, :new, :create ]
-      resources :photo_contributions, path: "photos", only: [ :new, :create ]
-      resources :requests, controller: "contribution_requests", only: [ :index ]
-      get "map(/:slug)", to: "/map#index", as: :map, defaults: { contribute: true }
-      get "/", to: "areas#index"
+    resources :lines
+    resources :pois
+    resources :poi_routes
+    resources :contribution_requests
+    resources :contributions do
+      member do
+        post :create_problem
+      end
+      collection do
+        post :bulk_close
+      end
     end
-    get "contribute/map", to: redirect("/%{locale}/mapping/map"), as: :map_contribute_legacy_redirect # can be removed as soon as 2024-01-01
-
-    scope "dartmoor" do
-      resources :circuits, only: [ :show, :index ]
-      resources :problems, only: [ :index ]
-
-      get "/levels", to: "areas#levels", as: :areas_levels
-
-      get ":slug/offline-data", to: "areas/offline_data#show", as: :area_offline_data
-      get ":slug/:id", to: "problems#show", as: :area_problem, id: /\d.*/
-      get ":slug/map", to: redirect("/%{locale}/map/%{slug}"), as: :map_area_legacy_redirect
-      get ":slug/problems", to: "areas#problems", as: :area_problems
-      get ":slug/print", to: "areas#print", as: :area_print
-      get ":slug", to: "areas#show", as: :area
-
-      get "/", to: "areas#index", as: :areas
+    resources :photo_contributions, path: "photo-contributions", only: :index do
+      post :review, on: :collection
     end
+    resources :audits
+    resources :redirects, only: :new
+    resources :bulk_uploads, only: [ :new, :create ]
 
-    get "map(/:slug)", to: "map#index", as: :map
-    # The old "app" page advertised the upstream (Fontainebleau-only) mobile apps.
-    get "app", to: redirect("/%{locale}/map")
-    get "privacy", to: "pages#privacy", as: :privacy
-    # Debug page for the offline feature: shows service worker + cache state so
-    # field failures can be reported with a single screenshot.
-    get "offline-status", to: "pages#offline_status", as: :offline_status
-    # "My downloads": save, update and remove areas for offline use.
-    get "downloads", to: "pages#downloads", as: :downloads
-    get "about", to: "pages#about", as: :about
-    get "ethics", to: "pages#ethics", as: :ethics
-    get "contribute", to: "pages#contribute", as: :contribute
-    get "map-data", to: "map_data#index", as: :map_data
-    get "area-labels", to: "area_labels#index", as: :area_labels
-    resources :redirects, only: :new # useful for redirects where we only know the problem_id or area_id, eg. mapbox
+    get "mapping", to: "mapping#dashboard"
+    get "docs", to: "docs#index"
 
-    # Permalinks (don't remove!)
-    get "/p/:id", to: "welcome#problem_permalink", as: :problem_permalink # used by the apps to redirect to a problem webpage
+    root "areas#index"
   end
+
+  scope "articles" do
+    scope "beginners-guide" do
+      get "/", to: "articles#beginners_guide", as: :beginners_guide
+      get "equipment", to: "articles#equipment", as: :equipment
+      get "choose-area", to: "articles#choose_area", as: :choose_area
+      get "choose-problems", to: "articles#choose_problems", as: :choose_problems
+      get "climb-safely", to: "articles#climb_safely", as: :climb_safely
+      get "rules", to: "articles#rules", as: :rules
+      get "ticks", to: "articles#ticks", as: :ticks
+    end
+    scope "top-areas" do
+      get "/", to: redirect("/dartmoor")
+      get "level", to: redirect("/dartmoor"), as: :legacy_top_areas_level
+      get "groups", to: redirect("/dartmoor"), as: :legacy_top_areas_groups
+      get "beginner", to: redirect("/articles/beginners-guide/choose-area"), as: :legacy_top_areas_beginner
+      get "train", to: "articles#top_areas_train", as: :top_areas_train
+      get "dry_fast", to: "articles#top_areas_dry_fast", as: :top_areas_dry_fast
+      get "sheltered", to: "articles#top_areas_sheltered", as: :top_areas_sheltered
+    end
+    root to: redirect("/articles/beginners-guide"), as: :articles
+  end
+
+  resources :reports
+
+  namespace :mapping do
+    resources :problems, only: [ :show, :index ]
+    resources :contributions, only: [ :show, :new, :create ]
+    resources :photo_contributions, path: "photos", only: [ :new, :create ]
+    resources :requests, controller: "contribution_requests", only: [ :index ]
+    get "map(/:slug)", to: "/map#index", as: :map, defaults: { contribute: true }
+    get "/", to: "areas#index"
+  end
+  get "contribute/map", to: redirect("/mapping/map"), as: :map_contribute_legacy_redirect # can be removed as soon as 2024-01-01
+
+  scope "dartmoor" do
+    resources :circuits, only: [ :show, :index ]
+    resources :problems, only: [ :index ]
+
+    get "/levels", to: "areas#levels", as: :areas_levels
+
+    get ":slug/offline-data", to: "areas/offline_data#show", as: :area_offline_data
+    get ":slug/:id", to: "problems#show", as: :area_problem, id: /\d.*/
+    get ":slug/map", to: redirect("/map/%{slug}"), as: :map_area_legacy_redirect
+    get ":slug/problems", to: "areas#problems", as: :area_problems
+    get ":slug/print", to: "areas#print", as: :area_print
+    get ":slug", to: "areas#show", as: :area
+
+    get "/", to: "areas#index", as: :areas
+  end
+
+  get "map(/:slug)", to: "map#index", as: :map
+  # The old "app" page advertised the upstream (Fontainebleau-only) mobile apps.
+  get "app", to: redirect("/map")
+  get "privacy", to: "pages#privacy", as: :privacy
+  # Debug page for the offline feature: shows service worker + cache state so
+  # field failures can be reported with a single screenshot.
+  get "offline-status", to: "pages#offline_status", as: :offline_status
+  # "My downloads": save, update and remove areas for offline use.
+  get "downloads", to: "pages#downloads", as: :downloads
+  get "about", to: "pages#about", as: :about
+  get "ethics", to: "pages#ethics", as: :ethics
+  get "contribute", to: "pages#contribute", as: :contribute
+  get "map-data", to: "map_data#index", as: :map_data
+  get "area-labels", to: "area_labels#index", as: :area_labels
+  resources :redirects, only: :new # useful for redirects where we only know the problem_id or area_id, eg. mapbox
+
+  # Permalinks (don't remove!)
+  get "/p/:id", to: "welcome#problem_permalink", as: :problem_permalink # used by the apps to redirect to a problem webpage
 
   # Open data: full problems dataset as CSV. Non-localized so the URL is stable.
   # Development-only until the contributors have agreed the CC0 license — do not
@@ -148,7 +153,7 @@ Rails.application.routes.draw do
 
   # French support was removed (the translations described Fontainebleau, not Dartmoor).
   # Send any old /fr links to the English equivalent.
-  get "/fr(/*path)", to: redirect { |params, _req| "/en/#{params[:path]}".chomp("/") }, format: false
+  get "/fr(/*path)", to: redirect(status: 301) { |params, _req| "/#{params[:path]}" }, format: false
 
   # Deprecated
   namespace :api do
@@ -161,8 +166,7 @@ Rails.application.routes.draw do
   end
 
   get "search", to: "search#search", as: :search
-  get "/:locale", to: "welcome#index", locale: /#{I18n.available_locales.join('|')}/, as: :root_localized
-  root to: "welcome#root"
+  root to: "welcome#index"
 
   # =============
   # Proxy routes

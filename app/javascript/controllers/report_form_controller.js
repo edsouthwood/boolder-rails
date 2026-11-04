@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { sendReport, queueReport, queuedReports, RetryLater } from "offline_reports"
-import { locale } from "offline_areas"
+import { matchCached } from "offline_areas"
 
 // "Report a mistake" form. Sends via offline_reports.js; with no connection the
 // report is kept on the phone and sent automatically later. Offline, this page is the
@@ -22,7 +22,7 @@ export default class extends Controller {
     this.aboutAreaTarget.textContent = ""
     this.aboutTarget.classList.remove("hidden")
 
-    const cached = "caches" in window && await caches.match(`/${locale()}/map-data.geojson`).catch(() => null)
+    const cached = "caches" in window && await matchCached("/map-data.geojson").catch(() => null)
     if (!cached) return
     const feature = ((await cached.json()).features || []).find(f => String(f.properties?.id) === problemId)
     if (!feature) return
@@ -54,10 +54,10 @@ export default class extends Controller {
     this.setBusy(true)
     this.setStatus("Sending…", "text-gray-500")
     try {
-      const result = await sendReport(report, locale())
+      const result = await sendReport(report)
       if (result.ok) {
         // The server set the "Thank you" flash for the next page.
-        window.location.href = `/${locale()}/contribute`
+        window.location.href = "/contribute"
         return
       }
       this.setStatus(`Couldn't send: ${result.errors.join(", ")}`, "text-red-600")

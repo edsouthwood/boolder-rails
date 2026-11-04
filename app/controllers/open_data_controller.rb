@@ -19,7 +19,7 @@ class OpenDataController < ApplicationController
         rows << [
           problem.id, problem.name, problem.grade, problem.steepness,
           problem.lat, problem.lon, problem.area.name,
-          problem_permalink_url(id: problem.id, locale: :en)
+          problem_permalink_url(id: problem.id)
         ]
       end
     end

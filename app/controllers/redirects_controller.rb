@@ -11,7 +11,7 @@ class RedirectsController < ApplicationController
         redirect_to root_path
       end
     else
-      redirect_to root_localized_path
+      redirect_to root_path
     end
   end
 end

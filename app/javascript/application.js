@@ -16,8 +16,7 @@ document.addEventListener('turbo:before-visit', function(event) {
 // any page loads with one, or the device comes back online.
 
 async function sendQueuedReports() {
-  const locale = window.location.pathname.split("/")[1] || "en"
-  const { sent, rejected } = await flushQueuedReports(/^[a-z]{2}$/.test(locale) ? locale : "en")
+  const { sent, rejected } = await flushQueuedReports()
   if (sent.length > 0) {
     showToast(sent.length === 1
       ? `Your saved report${sent[0].problemLabel ? ` about ${sent[0].problemLabel}` : ""} has been sent. Thank you!`

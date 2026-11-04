@@ -27,12 +27,12 @@ class HiddenProblemsTest < ActionDispatch::IntegrationTest
   end
 
   def sign_in_admin
-    get admin_docs_url(locale: :en),
+    get admin_docs_url,
         headers: { "Authorization" => ActionController::HttpAuthentication::Basic.encode_credentials("admin", "correct-password") }
     assert_response :success
   end
 
-  def problem_page(problem) = area_problem_path(@area.slug, problem, locale: :en)
+  def problem_page(problem) = area_problem_path(@area.slug, problem)
 
   test "a hidden problem's page is a 404 to the public but open to admins, with a notice" do
     get problem_page(@junk)
@@ -45,19 +45,19 @@ class HiddenProblemsTest < ActionDispatch::IntegrationTest
   end
 
   test "hidden problems are left off the map data, area pages, grade list and search" do
-    get map_data_url(locale: :en, format: :geojson)
+    get map_data_url(format: :geojson)
     names = JSON.parse(response.body)["features"].filter_map { |f| f.dig("properties", "name") }
     assert_includes names, "Photo Wall"
     assert_not_includes names, "Dirty Crack"
 
-    get area_problems_path(@area.slug, locale: :en)
+    get area_problems_path(@area.slug)
     assert_match "Photo Wall", response.body
     assert_no_match "Dirty Crack", response.body
 
-    get problems_path(locale: :en, grade: "5")
+    get problems_path(grade: "5")
     assert_no_match "Dirty Crack", response.body
 
-    get search_path(locale: :en, query: "Dirty Crack", format: :json)
+    get search_path(query: "Dirty Crack", format: :json)
     assert_no_match "Dirty Crack", response.body
   end
 
@@ -73,7 +73,7 @@ class HiddenProblemsTest < ActionDispatch::IntegrationTest
 
   test "the Boulders list counts only shown problems, lists hidden ones, and can hide and show them" do
     sign_in_admin
-    get admin_area_boulders_path(area_slug: "belltor", locale: :en, show: "all")
+    get admin_area_boulders_path(area_slug: "belltor", show: "all")
 
     row = BoulderProgress.new(@area).rows.first
     assert_equal [ @kept ], row.problems
@@ -81,13 +81,13 @@ class HiddenProblemsTest < ActionDispatch::IntegrationTest
     assert_select "summary", text: /\(1 hidden\)/
     assert_select "a.line-through", text: "Dirty Crack"
 
-    patch visibility_admin_problem_path(@kept, locale: :en),
-      params: { hidden: "1", return_to: admin_area_boulders_path(area_slug: "belltor", open: @boulder.id, locale: :en) }
-    assert_redirected_to admin_area_boulders_path(area_slug: "belltor", open: @boulder.id, locale: :en)
+    patch visibility_admin_problem_path(@kept),
+      params: { hidden: "1", return_to: admin_area_boulders_path(area_slug: "belltor", open: @boulder.id) }
+    assert_redirected_to admin_area_boulders_path(area_slug: "belltor", open: @boulder.id)
     assert @kept.reload.hidden
 
-    patch visibility_admin_problem_path(@junk, locale: :en), params: { hidden: "0", return_to: "https://evil.example/" }
-    assert_redirected_to admin_problem_path(@junk, locale: :en)
+    patch visibility_admin_problem_path(@junk), params: { hidden: "0", return_to: "https://evil.example/" }
+    assert_redirected_to admin_problem_path(@junk)
     assert_not @junk.reload.hidden
   end
 
@@ -97,7 +97,7 @@ class HiddenProblemsTest < ActionDispatch::IntegrationTest
     topo.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
     topo.save!
 
-    get workbench_admin_topo_path(topo, locale: :en)
+    get workbench_admin_topo_path(topo)
     candidates = JSON.parse(css_select("[data-controller='topo-workbench']").first["data-topo-workbench-candidates-value"])
     assert_equal [ "Photo Wall" ], candidates.map { |c| c["name"] }
   end

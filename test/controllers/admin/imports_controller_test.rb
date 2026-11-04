@@ -31,7 +31,7 @@ class Admin::ImportsControllerTest < ActionDispatch::IntegrationTest
     deleted_id = deleted.id
     Boulder.find(deleted_id).destroy! # deleted later, outside the import
 
-    get admin_import_path(import, locale: :en)
+    get admin_import_path(import)
 
     assert_response :success
     assert_select "td", text: "Boulder ##{kept.id}"
@@ -43,7 +43,7 @@ class Admin::ImportsControllerTest < ActionDispatch::IntegrationTest
     boulder = boulder_from(import, offset: 0)
     boulder.destroy! # still carries the import, so this audit is associated with it
 
-    get admin_import_path(import, locale: :en)
+    get admin_import_path(import)
 
     assert_response :success
     assert_select "span", text: "deleted"

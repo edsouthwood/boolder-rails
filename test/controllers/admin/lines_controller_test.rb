@@ -36,7 +36,7 @@ class Admin::LinesControllerTest < ActionDispatch::IntegrationTest
   end
 
   def update_line(line, start_holds)
-    patch admin_line_url(line, locale: :en), params: { line: { coordinates: COORDINATES.to_json, start_holds: start_holds } }
+    patch admin_line_url(line), params: { line: { coordinates: COORDINATES.to_json, start_holds: start_holds } }
   end
 
   test "saves start holds" do
@@ -70,7 +70,7 @@ class Admin::LinesControllerTest < ActionDispatch::IntegrationTest
 
   test "saves not-in areas" do
     areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ]
-    patch admin_line_url(@line, locale: :en), params: { line: { coordinates: COORDINATES.to_json, start_holds: "", excluded_areas: areas.to_json } }
+    patch admin_line_url(@line), params: { line: { coordinates: COORDINATES.to_json, start_holds: "", excluded_areas: areas.to_json } }
 
     assert_redirected_to edit_admin_line_path(@line)
     assert_equal areas, @line.reload.excluded_areas

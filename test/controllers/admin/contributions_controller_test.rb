@@ -28,7 +28,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
 
   test "index renders with the bulk-close form" do
     Contribution.create!(state: "pending", problem: @problem, comment: "a")
-    get admin_contributions_url(locale: :en)
+    get admin_contributions_url
     assert_response :success
     assert_select "form[action=?]", bulk_close_admin_contributions_path
     assert_select "input[type=checkbox][name='contribution_ids[]']"
@@ -36,7 +36,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
 
   test "edit of an unlisted contribution renders the create-problem form" do
     contribution = Contribution.create!(state: "pending", comment: "new", problem_name: "Secret Slab")
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
     assert_response :success
     assert_select "form[action=?]", create_problem_admin_contribution_path(contribution)
     assert_select "select[name='problem[area_id]']"
@@ -50,7 +50,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem: @problem,
       existing_topo_id: topo.id, line_coordinates: '[{"x":0.1,"y":0.1}]')
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
 
     assert_response :success
     assert_match "Line on Topo ##{topo.id}", response.body
@@ -60,7 +60,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   test "edit shows nothing-to-import notes for a comment-only contribution" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "just a note")
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
 
     assert_response :success
     assert_match "No photo or line to import", response.body
@@ -72,7 +72,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   test "accepting a contribution stamps accepted_at and reviewer" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "nice")
 
-    patch admin_contribution_url(contribution, locale: :en), params: { contribution: { state: "accepted" } }
+    patch admin_contribution_url(contribution), params: { contribution: { state: "accepted" } }
 
     contribution.reload
     assert_equal "accepted", contribution.state
@@ -83,7 +83,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   test "closing a contribution stamps closed_at and reviewer" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "spam")
 
-    patch admin_contribution_url(contribution, locale: :en), params: { contribution: { state: "closed" } }
+    patch admin_contribution_url(contribution), params: { contribution: { state: "closed" } }
 
     contribution.reload
     assert_equal "closed", contribution.state
@@ -101,7 +101,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
       existing_topo_id: topo.id, line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
 
     assert_difference -> { topo.lines.count }, 1 do
-      patch admin_contribution_url(contribution, locale: :en),
+      patch admin_contribution_url(contribution),
             params: { contribution: { state: "accepted", apply_photo: "1", apply_gps: "1" } }
     end
 
@@ -121,7 +121,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
       location: point, line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
 
     Line.stub(:create!, ->(*) { raise ActiveRecord::RecordInvalid.new(Line.new) }) do
-      patch admin_contribution_url(contribution, locale: :en),
+      patch admin_contribution_url(contribution),
             params: { contribution: { state: "accepted", apply_photo: "1", apply_gps: "1" } }
     end
 
@@ -134,7 +134,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   test "closing redirects to the contributions list" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "spam")
 
-    patch admin_contribution_url(contribution, locale: :en), params: { contribution: { state: "closed" } }
+    patch admin_contribution_url(contribution), params: { contribution: { state: "closed" } }
 
     assert_redirected_to admin_contributions_path
     follow_redirect!
@@ -144,7 +144,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
   test "an update without a state change stays on the edit page" do
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "hi")
 
-    patch admin_contribution_url(contribution, locale: :en),
+    patch admin_contribution_url(contribution),
           params: { contribution: { state: "pending", moderator_note: "checking" } }
 
     assert_redirected_to edit_admin_contribution_path(contribution)
@@ -157,7 +157,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", comment: "new line", problem_name: "Secret Slab", location: point)
 
     assert_difference -> { Problem.count }, 1 do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
            params: { problem: { area_id: @area.id, name: "Secret Slab", grade: "5", steepness: "slab" } }
     end
 
@@ -174,7 +174,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem_name: "Secret Slab", location: f.point(-3.9001, 50.58))
     other = Contribution.create!(state: "pending", problem_name: "Next Door", location: f.point(-3.9002, 50.58))
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
 
     assert_select "select[name='problem[area_id]'] option[selected][value=?]", @area.id.to_s
     assert_match "nearest area to the GPS point", response.body
@@ -186,7 +186,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     point = RGeo::Geographic.spherical_factory(srid: 4326).point(-3.5, 50.3)
     contribution = Contribution.create!(state: "pending", problem_name: "Far Out", area_name: "Lost Tor", location: point)
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
 
     assert_match "may be a new crag", response.body
     assert_select "input[name=new_area_name][value=?]", "Lost Tor"
@@ -196,7 +196,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem_name: "Far Out", area_name: "Lost Tor")
 
     assert_difference -> { Area.count } => 1, -> { Problem.count } => 1 do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
            params: { new_area_name: "Lost Tor", problem: { area_id: @area.id, name: "Far Out", steepness: "wall" } }
     end
 
@@ -211,7 +211,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem_name: "Far Out")
 
     assert_no_difference -> { Area.count } do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
            params: { new_area_name: "Lost Tor", problem: { name: "Far Out", steepness: "not-a-steepness" } }
     end
     assert_match "Could not create problem", flash[:error]
@@ -221,7 +221,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem: @problem, comment: "x")
 
     assert_no_difference -> { Problem.count } do
-      post create_problem_admin_contribution_url(contribution, locale: :en),
+      post create_problem_admin_contribution_url(contribution),
            params: { problem: { area_id: @area.id, name: "Dup", steepness: "slab" } }
     end
   end
@@ -233,7 +233,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     b = Contribution.create!(state: "pending", problem: @problem, comment: "b")
     keep = Contribution.create!(state: "pending", problem: @problem, comment: "keep")
 
-    post bulk_close_admin_contributions_url(locale: :en),
+    post bulk_close_admin_contributions_url,
          params: { contribution_ids: [ a.id, b.id ], moderator_note: "Out of scope" }
 
     assert_equal "closed", a.reload.state
@@ -250,7 +250,7 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     contribution = Contribution.create!(state: "pending", problem: @problem, existing_topo_id: topo.id,
       start_holds: '[{"x":0.2,"y":0.8}]', excluded_areas: '[[{"x":0.1,"y":0.1},{"x":0.3,"y":0.1},{"x":0.2,"y":0.4}]]')
 
-    get edit_admin_contribution_url(contribution, locale: :en)
+    get edit_admin_contribution_url(contribution)
 
     assert_response :success
     assert_select "[data-line-preview-excluded-areas-value]"
