@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_221244) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_145723) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -201,6 +201,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_221244) do
     t.json "excluded_areas"
     t.index ["problem_id"], name: "index_lines_on_problem_id"
     t.index ["topo_id"], name: "index_lines_on_topo_id"
+  end
+
+  create_table "page_views", force: :cascade do |t|
+    t.date "day", null: false
+    t.string "kind", null: false
+    t.bigint "area_id", default: 0, null: false
+    t.bigint "problem_id", default: 0, null: false
+    t.integer "views", default: 0, null: false
+    t.index ["area_id", "day"], name: "index_page_views_on_area_id_and_day"
+    t.index ["day", "kind", "area_id", "problem_id"], name: "index_page_views_on_day_and_page", unique: true
   end
 
   create_table "photo_contributions", force: :cascade do |t|

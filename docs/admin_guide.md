@@ -30,6 +30,7 @@
 24. [Offline Use (Map & Photos)](#offline-use)
 25. [Problems by Grade and Map Grade Filters](#problems-by-grade)
 26. [Printable Topo Sheets](#topo-sheets)
+27. [Stats](#stats)
 
 ---
 
@@ -1490,4 +1491,21 @@ right, photos in boulder order), each followed by a numbered list of name, grade
 and a short description. Problems with a map location but no photo yet are listed in a table
 at the end. Lines are drawn on the server, so they print without any animation; site menus are
 left off. Unpublished areas' sheets return "not found" like their other pages.
+
+---
+
+## Stats {#stats}
+
+**Admin → Stats** (super admins only) shows how the site is used and how mapping is going. Pick a period (7, 30, 90 or 365 days) at the top.
+
+- **Visits**: page views in the period (with the change on the previous period once there's enough data), split into home, area, problem and map pages; a daily chart; the most viewed areas (area page, its problems and its map) and problems.
+- **Activity, last 12 weeks**: problems added, lines drawn, photos added, contributions and reports, photos from visitors and admin edits, per week.
+- **Community**: contributions/reports and visitor photos waiting, accepted and closed, and the typical wait for a decision over the last 90 days.
+- **Mapping progress**: per area, problems placed by hand, estimated, with no location and with a line, photos and photos still to draw, and boulders on the map. Click an area for its Boulders list.
+- **Admin edits, last 30 days**: who changed what, with a link to the full audit log.
+
+### How visits are counted
+Visits are anonymous daily totals in the `page_views` table: one row per day and page (home, an area, a problem, or the map), holding only a count. No IP address, cookie, browser details or visitor ID is stored, so visits can't be linked to anyone; the [privacy policy](/en/privacy) says so. Counting started on the day this was deployed (4 November 2026), so earlier periods are empty.
+
+Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) or by following a link (Turbo). Not counted: Turbo's prefetch when hovering over a link, offline downloads (which fetch every problem page in the background), pages opened while signed in as an admin, bots and scripts (by user agent), error and "not found" pages, and pages served from the offline cache with no connection. Code: `CountsPageViews` (controller concern), `PageView`, `AdminStats`.
 

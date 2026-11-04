@@ -1,4 +1,7 @@
 class WelcomeController < ApplicationController
+  include CountsPageViews
+  count_page_views :home, only: :index
+
   layout false, only: [ :soon ]
 
   def index

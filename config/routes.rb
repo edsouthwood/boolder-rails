@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     namespace :admin do
       get "map", to: "maps#show"
       delete "session", to: "sessions#destroy", as: :session
+      get "stats", to: "stats#show", as: :stats
       resources :areas, param: :slug do
         resources :problems, only: :index
         resources :topos,    only: :index

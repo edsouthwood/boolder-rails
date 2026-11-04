@@ -1,4 +1,7 @@
 class ProblemsController < ApplicationController
+  include CountsPageViews
+  count_page_views(:problem, only: :show) { { area: @problem&.area, problem: @problem } }
+
   def show
     @problem = Problem.find(params[:id])
     return if hide_unpublished_area(@problem.area)
