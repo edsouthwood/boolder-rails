@@ -119,6 +119,18 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "photos taken from the same spot don't stack their problems on one point" do
+    first, second = 2.times.map { topo(@mine, "latitude" => 50.61, "longitude" => -3.91) }
+    a = @mine.problems.create!(name: "A", steepness: "wall")
+    b = @mine.problems.create!(name: "B", steepness: "wall")
+
+    post admin_lines_path(locale: :en), params: { line: { problem_id: a.id, topo_id: first.id } }, as: :json
+    post admin_lines_path(locale: :en), params: { line: { problem_id: b.id, topo_id: second.id } }, as: :json
+
+    assert_operator first.metres_between(a.reload.location, b.reload.location), :>=, 1
+    assert_operator first.metres_between(b.location, second.gps_location), :<, 3
+  end
+
   test "on a photo with no GPS, a problem takes a spot next to one already placed on it" do
     no_gps = topo(@mine)
     @topo.choose_boulder!(nil)
