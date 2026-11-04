@@ -1,6 +1,7 @@
 <% add_breadcrumb "Dartmoor", admin_areas_path %>
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Upload photos", nil, class: "active" %>
+<% area_toolbar @area, :photos %>
 
 <h1 class="my-3">Upload photos to <%= @area.name %></h1>
 

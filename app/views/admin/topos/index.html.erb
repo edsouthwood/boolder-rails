@@ -1,6 +1,7 @@
 <% add_breadcrumb "Dartmoor", admin_areas_path %>
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Topos", nil, class: "active" %>
+<% area_toolbar @area, :photos %>
 
 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 my-4 text-sm">
   <p class="text-gray-500"><%= pluralize(@topos.size, "topo") %></p>

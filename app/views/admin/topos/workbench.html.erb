@@ -2,6 +2,7 @@
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Photos", admin_area_topos_path(area_slug: @area.slug, undrawn: 1) %>
 <% add_breadcrumb "Topo ##{@topo.id}", nil, class: "active" %>
+<% area_toolbar @area, :photos %>
 
 <div class="my-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]"
      data-controller="topo-workbench"

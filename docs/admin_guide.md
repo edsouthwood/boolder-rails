@@ -441,6 +441,15 @@ problem, unpublished search results) also disappear when the login ends.
 
 Areas are the top-level geographical groupings. Each area has problems, boulders, circuits, and POI routes.
 
+### The area tool bar
+Every admin page for an area has a tool bar under the breadcrumbs:
+- **Tabs** for the working views: **Problems** (the problem list), **Boulders** (progress list), **Photos** (topos; click one for the workbench), **Map** (location editor) and **Outlines** (boulder editor). The one you're on is underlined.
+- **Counts** on the tabs show what's waiting: boulders that need photos or lines, photos with lines still to draw, and problems to place (no location yet, or only an estimated one).
+- **+ Add**: Upload photos, Import problem list, New problem.
+- **⋮** for rarer actions: Edit area, Edit circuit (on a circuit's problem list), Map download, Map import.
+
+The **Areas** list has the same shortcuts in its **Tools** column (Boulders, Photos, Map, with the photo and map counts). Photos opens on "Photos to draw" when there are any.
+
 ### Creating an area (super admin only)
 1. Go to **Admin → Areas → New area**
 2. Fill in `name`, `slug` (URL-friendly, e.g. `bonehill-rocks`), `short_name`, priority, and descriptions
@@ -509,7 +518,7 @@ lines.
 
 ### Importing a problem list
 
-Area ⋯ menu → **Import problem list** (`/en/admin/areas/<slug>/problem-list`). Paste a list or
+Area tool bar **+ Add → Import problem list** (`/en/admin/areas/<slug>/problem-list`). Paste a list or
 choose a `.txt` file in this shape: each boulder's name on its own line, then its problems one
 per line, each starting with a tab, then the problem's name, a tab and its grade (`f6B`, `6b`,
 `f4+` and `5` all work):
@@ -559,7 +568,7 @@ Admins can still open a hidden problem's public page, with a notice that it's hi
 
 ### The Boulders list
 
-Area ⋯ menu → **Boulders** (`/en/admin/areas/<slug>/boulders`) lists every boulder, most urgent
+Area tool bar → **Boulders** tab (`/en/admin/areas/<slug>/boulders`) lists every boulder, most urgent
 first:
 
 | Status | Meaning | Next step |
@@ -607,7 +616,7 @@ names as "Update available".
 
 The quickest way to get a batch of topo photos onto the site. Any admin for the area can use it.
 
-1. Open the area, then **⋯ → Upload photos** (or **Upload photos** on the area's Topos page)
+1. Open the area, then **+ Add → Upload photos** (or **Upload photos** on the area's Topos page)
 2. Drop in as many photos as you like, or click to choose them. JPEG, PNG or WebP, up to 25 MB each
 3. They upload one at a time, each with a status line: whether it had GPS, and the boulder it was matched to. Keep the tab open until they finish; the browser warns you if you try to leave early
 
@@ -712,7 +721,7 @@ After importing, visit each problem in admin to draw the line on the topo photo.
 
 The location editor lets you set GPS coordinates for unlocated problems directly in the browser, without editing GeoJSON files externally.
 
-**Admin → Areas → [area] → dot menu → Location editor**
+**Admin → Areas → [area] → Map** tab (or **Map** on the Areas list)
 
 ### How to use
 
@@ -787,7 +796,7 @@ All features in the file must belong to the same area.
 
 The boulder editor lets you trace boulder outlines directly in the browser over a satellite image. No GeoJSON export/import needed.
 
-**Admin → Areas → [area] → dot menu → Boulder editor**
+**Admin → Areas → [area] → Outlines** tab
 
 ### Drawing a new boulder
 

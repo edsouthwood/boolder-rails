@@ -2,13 +2,7 @@
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Boulders", nil, class: "active" %>
 
-<% content_for :options do %>
-  <%= render "shared/dot_menu", items: [
-        { text: "Import problem list", link: admin_area_problem_list_path(area_slug: @area.slug) },
-        { text: "Upload photos", link: new_admin_area_photo_path(area_slug: @area.slug) },
-        { text: "Boulder editor", link: admin_area_boulder_editor_path(area_slug: @area.slug) },
-      ] %>
-<% end %>
+<% area_toolbar @area, :boulders %>
 
 <% rows = @progress.rows %>
 <% shown = @show_all ? rows : rows.select(&:needs_topos?) %>

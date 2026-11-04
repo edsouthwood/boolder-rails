@@ -2,6 +2,7 @@
 <% add_breadcrumb @area.name, admin_area_problems_path(area_slug: @area.slug, circuit_id: "first") %>
 <% add_breadcrumb "Import problem list", admin_area_problem_list_path(area_slug: @area.slug) %>
 <% add_breadcrumb "Preview", nil, class: "active" %>
+<% area_toolbar @area %>
 
 <% plans = @import.preview %>
 <% rows = plans.flat_map(&:rows) %>
