@@ -31,6 +31,7 @@
 25. [Problems by Grade and Map Grade Filters](#problems-by-grade)
 26. [Printable Topo Sheets](#topo-sheets)
 27. [Stats](#stats)
+28. [Search engines](#search-engines)
 
 ---
 
@@ -1512,4 +1513,13 @@ left off. Unpublished areas' sheets return "not found" like their other pages.
 Visits are anonymous daily totals in the `page_views` table: one row per day and page (home, an area, a problem, or the map), holding only a count. No IP address, cookie, browser details or visitor ID is stored, so visits can't be linked to anyone; the [privacy policy](/privacy) says so. Counting started on the day this was deployed (4 November 2026), so earlier periods are empty.
 
 Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) or by following a link (Turbo). Not counted: Turbo's prefetch when hovering over a link, offline downloads (which fetch every problem page in the background), pages opened while signed in as an admin, bots and scripts (by user agent), error and "not found" pages, and pages served from the offline cache with no connection. Code: `CountsPageViews` (controller concern), `PageView`, `AdminStats`.
+
+---
+
+## Search engines {#search-engines}
+
+- **`/sitemap.xml`** lists every public page for search engines: home, map, the areas page, each published area and its problem list, every shown problem with a location, and circuits. It's built from the database when requested (cached for an hour), so new problems appear straight away and hidden problems and unpublished areas never do. Each entry carries the date the page last changed. Code: `SitemapsController`.
+- **`public/robots.txt`** points crawlers at `https://bowda.edsouthwood.com/sitemap.xml`. Change it if the site's address changes.
+- **Preferred addresses**: problem, area, area problem-list, areas and map pages tell search engines their canonical address, so the same page reached another way (old `/en/` links, extra query strings) is counted once.
+- To see what's indexed, add the site to **Google Search Console** and **Bing Webmaster Tools** (verify by DNS record or an uploaded file) and submit the sitemap address there.
 
