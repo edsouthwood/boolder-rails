@@ -594,6 +594,13 @@ its edit form.
   problems, and the name leaves the "Not on the map yet" list. Typing any other name just renames
   the outline; clearing the box removes the name. A name already used by another outline is
   refused.
+- **Picked the wrong listed name?** Picking a second listed name for an outline that already has
+  one asks first. **OK** swaps: the outline takes the new name and its problems, and the old name
+  goes back on the "Not on the map yet" list with its problems, ready for the right outline.
+  **Cancel** then offers to merge both lots of problems onto the outline instead, for a list that
+  split one boulder in two; cancel again to change nothing.
+- Photos tied to a listed boulder in the workbench (and visitor photos of it) move to the outline
+  that takes over its name. Deleting an outline clears photo ties to it.
 - **Not on the map yet** (sidebar) lists listed names without an outline, with their number of
   problems. Click one, then draw its outline as usual; it's saved onto that boulder.
 - **LiDAR suggestions**: a suggestion's popup also has **Add as a listed boulder…**, to turn it

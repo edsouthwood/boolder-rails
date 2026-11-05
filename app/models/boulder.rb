@@ -49,14 +49,16 @@ class Boulder < ApplicationRecord
     polygon.present?
   end
 
-  # Takes over another boulder (usually an unplaced name from a problem list): its problems
-  # and name move onto this one, then it's deleted. Photos follow on the next recompute.
+  # Takes over another boulder (usually an unplaced name from a problem list): its problems,
+  # name and photo ties (workbench ties, visitor photos) move onto this one, then it's
+  # deleted. Linked topos follow on the next recompute.
   def absorb!(other)
     raise ArgumentError, "can't absorb itself" if other.id == id
     raise ArgumentError, "boulders are in different areas" if other.area_id != area_id
 
     transaction do
       other.problems.update_all(boulder_id: id)
+      Boulder.repoint_photo_ties(from: other.id, to: id, area_id: area_id)
       new_name = other.name
       other.destroy!
       update!(name: new_name) if new_name.present?
@@ -64,7 +66,39 @@ class Boulder < ApplicationRecord
     Boulder.recompute_topos_later(boulder_ids: [ id ])
     self
   end
-  after_destroy -> { Topo.where(boulder_id: id).update_all(boulder_id: nil, position: nil) }
+  after_destroy -> {
+    Topo.where(boulder_id: id).update_all(boulder_id: nil, position: nil)
+    Boulder.repoint_photo_ties(from: id, to: nil, area_id: area_id)
+  }
+
+  # Workbench ties and inbox/visitor GPS matches are ids in topo metadata, and visitor photos
+  # name a boulder too: move them to another boulder, or clear them (to: nil)
+  def self.repoint_photo_ties(from:, to:, area_id:)
+    Topo.where(area_id: area_id).where("metadata::jsonb ->> 'chosen_boulder_id' = :id OR metadata::jsonb ->> 'suggested_boulder_id' = :id", id: from.to_s).find_each do |topo|
+      data = topo.metadata.dup
+      %w[chosen_boulder_id suggested_boulder_id].each do |key|
+        next unless data[key].to_s == from.to_s
+        to ? data[key] = to : data.delete(key)
+      end
+      topo.update_columns(metadata: data)
+    end
+    PhotoContribution.where(boulder_id: from).update_all(boulder_id: to)
+    PhotoContribution.where(gps_boulder_id: from).update_all(gps_boulder_id: to)
+  end
+
+  # Puts this boulder's problems back on the list as an unplaced boulder with its name, and
+  # clears the name here. Used when an outline was given the wrong listed name.
+  def relist!
+    raise ArgumentError, "only a named boulder can go back on the list" if name.blank?
+
+    transaction do
+      listed_name = name
+      update!(name: nil)
+      listed = Boulder.create!(area_id: area_id, name: listed_name)
+      problems.update_all(boulder_id: listed.id)
+      listed
+    end
+  end
 
   # Enqueue a topo recompute for the given boulders and for every boulder containing
   # any of the given points, once the current transaction has committed (the job
