@@ -17,6 +17,7 @@
 </script>
 <% end %>
 <% set_meta_tags description: t("views.areas.show.metas.description", area: @area.name) %>
+<% set_meta_tags canonical: area_url(@area) %>
 
 <% if @area.cover.persisted? %>
   <% set_meta_tags og: { type: "website", image: cdn_image_url(@area.cover.variant(:medium)) } %>

@@ -166,6 +166,7 @@ Rails.application.routes.draw do
   end
 
   get "search", to: "search#search", as: :search
+  get "sitemap.xml", to: "sitemaps#show", as: :sitemap, format: false, defaults: { format: :xml }
   root to: "welcome#index"
 
   # =============
