@@ -35,12 +35,15 @@ class Admin::BouldersController < Admin::BaseController
   # Saves the outline and/or the name. Naming an outline after a listed boulder that isn't
   # drawn yet merges the two: the outline takes over that boulder's problems.
   def update
-    absorbed = nil
+    absorbed = relisted = nil
     Boulder.transaction do
       @boulder.update!(polygon: build_polygon(params[:coordinates])) if params.key?(:coordinates)
-      absorbed = rename(params[:name]) if params.key?(:name)
+      absorbed, relisted = rename(params[:name], params[:merge]) if params.key?(:name)
     end
-    render json: { ok: true, name: @boulder.name, absorbed_id: absorbed&.id }
+    render json: { ok: true, name: @boulder.name, absorbed_id: absorbed&.id,
+                   relisted: relisted && { id: relisted.id, name: relisted.name, problems: relisted.problems.count } }.compact
+  rescue NeedsChoice => e
+    render json: e.details, status: :conflict
   rescue => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -54,7 +57,15 @@ class Admin::BouldersController < Admin::BaseController
 
   private
 
-  def rename(raw)
+  # Renaming an outline that already has a listed name's problems to another listed name:
+  # the admin has to say whether to swap names or merge both lots of problems
+  class NeedsChoice < StandardError
+    attr_reader :details
+    def initialize(details) = (@details = details) && super("needs a choice")
+  end
+
+  # Returns [absorbed boulder, relisted boulder]; merge: nil (ask if it matters), "swap" or "merge"
+  def rename(raw, merge = nil)
     name = raw.to_s.squish.presence
     namesake = name && @boulder.area.boulders.where.not(id: @boulder.id).where("lower(name) = ?", name.downcase).first
     unless namesake
@@ -63,8 +74,17 @@ class Admin::BouldersController < Admin::BaseController
     end
     raise ArgumentError, "#{namesake.display_name} is already on the map with that name" if namesake.placed?
 
+    relisted = nil
+    if @boulder.name.present? && @boulder.problems.exists?
+      case merge
+      when "swap" then relisted = @boulder.relist!
+      when "merge" then nil
+      else raise NeedsChoice.new(needs_choice: true, current: @boulder.name, current_problems: @boulder.problems.count,
+                                 target: namesake.name, target_problems: namesake.problems.count)
+      end
+    end
     @boulder.absorb!(namesake)
-    namesake
+    [ namesake, relisted ]
   end
 
   def set_area_from_slug

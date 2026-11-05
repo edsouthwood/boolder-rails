@@ -611,21 +611,38 @@ export default class extends Controller {
 
   // Names the selected outline. A listed name (not on the map yet) merges into it, bringing
   // that boulder's problems with it.
-  saveName(event) {
+  // Renaming an outline that already has a listed name's problems to another listed name
+  // asks first (the server replies 409 with needs_choice): swap the names, putting the old
+  // one back on the list with its problems, or merge both lots of problems onto this outline.
+  saveName(event, merge = null) {
     event?.preventDefault()
     if (!this.selectedBoulderId) return
     const boulderId = this.selectedBoulderId
     const url = this.updateUrlTemplateValue.replace('BOULDER_ID', boulderId)
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    const plural = n => `${n} problem${n === 1 ? '' : 's'}`
 
     fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrfToken },
-      body: JSON.stringify({ name: this.nameInputTarget.value }),
+      body: JSON.stringify({ name: this.nameInputTarget.value, ...(merge ? { merge } : {}) }),
     })
       .then(r => r.json())
       .then(data => {
+        if (data.needs_choice) {
+          if (window.confirm(`This outline is "${data.current}", with ${plural(data.current_problems)}.\n\n` +
+              `OK: rename it "${data.target}" (with its ${plural(data.target_problems)}) and put "${data.current}" back on the list of names to draw.\n\n` +
+              `Cancel: choose something else.`)) return this.saveName(null, 'swap')
+          if (window.confirm(`Or keep both: give this outline the problems of "${data.current}" and "${data.target}" ` +
+              `(${plural(data.current_problems + data.target_problems)}), named "${data.target}"?`)) return this.saveName(null, 'merge')
+          this.fillNameField(boulderId)
+          return
+        }
         if (data.error) { this.showToast(data.error, true); return }
+        if (data.relisted) {
+          this.unplaced = [...this.unplaced, data.relisted].sort((a, b) => a.name.localeCompare(b.name))
+          this.renderUnplaced()
+        }
         const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)
         if (feature) feature.properties.name = data.name || null
         const absorbed = this.unplaced.find(u => u.id === data.absorbed_id)
@@ -639,7 +656,8 @@ export default class extends Controller {
           this.setStatus(`${this.labelFor(boulderId)} selected`)
         }
         this.showToast(absorbed
-          ? `Named ${data.name}: ${absorbed.problems} problem${absorbed.problems === 1 ? '' : 's'} now on #${boulderId}`
+          ? `Named ${data.name}: ${absorbed.problems} problem${absorbed.problems === 1 ? '' : 's'} now on #${boulderId}` +
+            (data.relisted ? `. ${data.relisted.name} is back on the list to draw` : '')
           : (data.name ? `Named ${data.name}` : `Boulder #${boulderId} has no name`))
       })
       .catch(() => this.showToast('Network error — not saved', true))
