@@ -20,6 +20,15 @@
     <% end %>
   </div>
 <% end %>
+<% if !@problem.hidden && @problem.boulder&.hidden %>
+  <div class="mb-4">
+    <%= warning_box do %>
+      <span class="font-bold">Boulder hidden:</span> <%= @problem.boulder.display_name %> is set aside, so this problem is off the public site too.
+      <%= button_to "Show the boulder again", visibility_admin_boulder_path(@problem.boulder), method: :patch, params: { hidden: "0", return_to: admin_problem_path(@problem) },
+            form_class: "inline ml-2", class: "underline font-medium" %>
+    <% end %>
+  </div>
+<% end %>
 
 <div class="mb-3 md:grid md:grid-cols-6 md:gap-6">
   <div class="md:col-span-4">

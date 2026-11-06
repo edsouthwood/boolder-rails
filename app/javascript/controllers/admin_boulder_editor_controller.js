@@ -9,12 +9,14 @@ export default class extends Controller {
     'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
     'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
     'nameInput', 'nameOptions', 'nameOptionsBox', 'unplacedSection', 'unplacedList',
+    'hideBtn', 'hiddenNote',
   ]
   static values = {
     geojsonUrl: String,
     createUrl: String,
     updateUrlTemplate: String,
     deleteUrlTemplate: String,
+    visibilityUrlTemplate: String,
     bounds: Object,
     maptilerKey: String,
     azureKey: String,
@@ -126,9 +128,11 @@ export default class extends Controller {
           'case',
           ['boolean', ['feature-state', 'selected'], false],
           '#3b82f6', // blue when selected
+          ['boolean', ['get', 'hidden'], false],
+          '#f59e0b', // amber when hidden from the public site
           '#888888'  // grey otherwise
         ],
-        'fill-opacity': 0.5,
+        'fill-opacity': ['case', ['boolean', ['get', 'hidden'], false], 0.2, 0.5],
       },
       filter: ['==', ['geometry-type'], 'Polygon'],
     })
@@ -143,6 +147,8 @@ export default class extends Controller {
           'case',
           ['boolean', ['feature-state', 'selected'], false],
           '#1d4ed8',
+          ['boolean', ['get', 'hidden'], false],
+          '#b45309',
           '#444444'
         ],
         'line-width': 2,
@@ -386,6 +392,7 @@ export default class extends Controller {
     this.selectedActionsTarget.classList.remove('hidden')
     this.setStatus(`${this.labelFor(boulderId)} selected`)
     this.fillNameField(boulderId)
+    this.renderHiddenState(boulderId)
 
     // Find the feature and place draggable vertex markers
     const feature = this.bouldersGeoJSON.features.find(
@@ -517,6 +524,41 @@ export default class extends Controller {
       .catch(() => this.showToast('Network error — not deleted', true))
   }
 
+  // Hide the selected boulder (outline and problems) from the public site, or bring it back
+  toggleHidden() {
+    if (!this.selectedBoulderId) return
+    const boulderId = this.selectedBoulderId
+    const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)
+    if (!feature) return
+    const hidden = !feature.properties.hidden
+    const url = this.visibilityUrlTemplateValue.replace('BOULDER_ID', boulderId)
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+    fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ hidden }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { this.showToast(data.error, true); return }
+        feature.properties.hidden = data.hidden
+        this.map.getSource('boulders').setData(this.bouldersGeoJSON)
+        this.renderBoulderList()
+        if (this.selectedBoulderId == boulderId) this.renderHiddenState(boulderId)
+        this.showToast(data.hidden
+          ? `${this.labelFor(boulderId)} hidden: it and its problems are off the public site`
+          : `${this.labelFor(boulderId)} is back on the public site`)
+      })
+      .catch(() => this.showToast('Network error — not changed', true))
+  }
+
+  renderHiddenState(boulderId) {
+    const hidden = !!this.bouldersGeoJSON.features.find(f => f.properties.boulderId == boulderId)?.properties.hidden
+    if (this.hasHideBtnTarget) this.hideBtnTarget.textContent = hidden ? 'Show on the public site again' : 'Hide boulder from the public site'
+    if (this.hasHiddenNoteTarget) this.hiddenNoteTarget.classList.toggle('hidden', !hidden)
+  }
+
   // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
   // Named boulders first (alphabetically), then unnamed ones by id
@@ -535,6 +577,10 @@ export default class extends Controller {
     features.forEach(f => {
       const row = this.element_('div', 'py-1 cursor-pointer hover:text-granite-dark', this.labelFor(f.properties.boulderId))
       if (f.properties.name) row.classList.add('text-gray-800')
+      if (f.properties.hidden) {
+        row.classList.add('text-gray-400')
+        row.append(this.element_('span', 'ml-1 text-xs text-amber-700', 'hidden'))
+      }
       row.dataset.boulderId = f.properties.boulderId
       row.dataset.action = 'click->admin-boulder-editor#sidebarClick'
       this.boulderListTarget.append(row)

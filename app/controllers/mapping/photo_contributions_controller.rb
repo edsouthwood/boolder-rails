@@ -75,7 +75,7 @@ class Mapping::PhotoContributionsController < ApplicationController
   end
 
   def published_boulders
-    Boulder.joins(:area).merge(Area.published)
+    Boulder.shown.joins(:area).merge(Area.published)
   end
 
   def notify

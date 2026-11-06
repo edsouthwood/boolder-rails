@@ -38,7 +38,7 @@ class BoulderProgress
       problems = all_problems.reject(&:hidden).group_by(&:boulder_id)
       hidden = all_problems.select(&:hidden).group_by(&:boulder_id)
       topos_by_boulder, undrawn = photos_by_boulder
-      area.boulders.to_a.map do |boulder|
+      area.boulders.shown.to_a.map do |boulder|
         photos = topos_by_boulder[boulder.id] || []
         # Where to draw next: a photo still waiting for lines, else the latest photo (the
         # workbench adds lines for the boulder's other problems to it)
@@ -50,12 +50,20 @@ class BoulderProgress
     end
   end
 
+  # Boulders set aside with "Hide boulder": not in the rows above, listed separately so they
+  # can be brought back. Each with how many problems it holds.
+  def hidden_boulders
+    @hidden_boulders ||= area.boulders.where(hidden: true).
+      left_joins(:problems).group(:id).select("boulders.*, count(problems.id) AS problems_count").
+      sort_by { |boulder| [ boulder.name ? 0 : 1, boulder.name.to_s.downcase, boulder.id ] }
+  end
+
   def unassigned_problems
     @unassigned_problems ||= area.problems.where(boulder_id: nil).order(:name).to_a
   end
 
   def hidden_count
-    @hidden_count ||= area.problems.where(hidden: true).count
+    @hidden_count ||= area.problems.on_shown_boulder.where(hidden: true).count
   end
 
   private

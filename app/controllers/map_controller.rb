@@ -18,7 +18,7 @@ class MapController < ApplicationController
       }.with_indifferent_access
     end
 
-    if params[:pid] && (problem = Problem.find(params[:pid])) && !problem.hidden
+    if params[:pid] && (problem = Problem.find(params[:pid])) && !problem.hidden_from_public?
       location = if params[:contribute]
         problem.contribution_requests.first&.location_estimated
       else

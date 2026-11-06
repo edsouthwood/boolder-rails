@@ -579,6 +579,23 @@ photos; its own page is a 404 to the public) and out of the Boulders list counts
 
 Admins can still open a hidden problem's public page, with a notice that it's hidden.
 
+#### Hiding a whole boulder
+
+**Hide boulder** sets a boulder aside for now, for example when it's out of scope. Its outline
+and every problem on it leave the public site: the map, area pages, search, offline downloads,
+the photo-contribution boulder list, and the problem pages (a 404 to the public). Nothing is
+deleted, and each problem's own hidden setting is left alone, so showing the boulder again puts
+things back exactly as they were. Problems added to a hidden boulder later are hidden with it.
+
+- **In the boulder editor**, select the outline and click **Hide boulder from the public site**.
+  Hidden outlines are drawn faint amber and marked "hidden" in the sidebar list. The same button
+  then reads **Show on the public site again**.
+- **On the Boulders list**, expand a boulder and click **Hide boulder**. Hidden boulders leave the
+  list and its counts, and appear under **Hidden boulders** at the bottom, with **Show again**.
+- **Mapping progress** (Admin → Mapping) only counts problems that are on the public site.
+- A problem on a hidden boulder has a "Boulder hidden" banner on its admin page, with **Show the
+  boulder again**.
+
 ### The Boulders list
 
 Area tool bar → **Boulders** tab (`/admin/areas/<slug>/boulders`) lists every boulder, most urgent

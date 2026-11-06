@@ -11,6 +11,8 @@ class Boulder < ApplicationRecord
   # have an outline to draw, match or measure.
   scope :placed, -> { where.not(polygon: nil) }
   scope :unplaced, -> { where(polygon: nil) }
+  # Hidden boulders (set aside, e.g. out of scope) and their problems stay off the public site
+  scope :shown, -> { where(hidden: false) }
 
   audited associated_with: :import
   attr_accessor :import # used by audited associated_with: :import

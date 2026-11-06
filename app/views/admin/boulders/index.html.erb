@@ -54,11 +54,17 @@
                   <%= boulder.display_name %>
                   <% if row.hidden.any? %><span class="font-normal text-xs text-gray-400">(<%= row.hidden.size %> hidden)</span><% end %>
                 </summary>
-                <% if boulder.placed? %>
-                  <%= link_to "Show in boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "ml-4 text-xs text-granite hover:underline" %>
-                <% end %>
+                <% return_to = admin_area_boulders_path(area_slug: @area.slug, show: params[:show], open: boulder.id, anchor: "boulder-#{boulder.id}") %>
+                <div class="ml-4 flex flex-wrap items-center gap-x-3 text-xs">
+                  <% if boulder.placed? %>
+                    <%= link_to "Show in boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "text-granite hover:underline" %>
+                  <% end %>
+                  <%= button_to "Hide boulder", visibility_admin_boulder_path(boulder), method: :patch,
+                        params: { hidden: "1", return_to: admin_area_boulders_path(area_slug: @area.slug, show: params[:show], anchor: "hidden-boulders") },
+                        form_class: "inline", title: "Leave the outline and all its problems off the public site and this list until you bring it back",
+                        class: "text-gray-400 hover:text-red-600 hover:underline" %>
+                </div>
                 <ul class="mt-1 ml-4 text-gray-700">
-                  <% return_to = admin_area_boulders_path(area_slug: @area.slug, show: params[:show], open: boulder.id, anchor: "boulder-#{boulder.id}") %>
                   <% row.problems.each do |problem| %>
                     <li class="group flex items-center gap-1">
                       <%= problem.has_line ? "✓" : "·" %>
@@ -112,6 +118,31 @@
     <%= pluralize(@progress.hidden_count, "problem is", plural: "problems are") %> hidden: left off the public site and these counts.
     They're listed, struck through, under their boulder, with <strong>Show again</strong>.
   </p>
+<% end %>
+
+<% hidden_boulders = @progress.hidden_boulders %>
+<% if hidden_boulders.any? %>
+  <details class="mt-6 text-sm" id="hidden-boulders" open>
+    <summary class="cursor-pointer text-gray-700">
+      <%= pluralize(hidden_boulders.size, "hidden boulder") %>
+      <span class="text-xs text-gray-400">(off the public site with their problems)</span>
+    </summary>
+    <p class="mt-1 text-gray-600">Set aside for now, for example because they're out of scope. Nothing is deleted: <strong>Show again</strong> puts the outline and its problems back.</p>
+    <ul class="mt-1 ml-4 text-gray-700">
+      <% hidden_boulders.each do |boulder| %>
+        <li class="flex flex-wrap items-center gap-x-2">
+          <span class="text-gray-500"><%= boulder.display_name %></span>
+          <span class="text-xs text-gray-400"><%= pluralize(boulder.problems_count, "problem") %><%= ", not on the map" unless boulder.placed? %></span>
+          <% if boulder.placed? %>
+            <%= link_to "Boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "text-xs text-granite hover:underline" %>
+          <% end %>
+          <%= button_to "Show again", visibility_admin_boulder_path(boulder), method: :patch,
+                params: { hidden: "0", return_to: admin_area_boulders_path(area_slug: @area.slug, show: params[:show], open: boulder.id, anchor: "boulder-#{boulder.id}") },
+                form_class: "inline", class: "text-xs text-granite hover:underline" %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
 <% end %>
 
 <% unassigned, unassigned_hidden = @progress.unassigned_problems.partition { |problem| !problem.hidden } %>

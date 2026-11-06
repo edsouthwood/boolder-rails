@@ -7,9 +7,11 @@ class Admin::MappingController < Admin::BaseController
 
     @areas_with_stats = Area.published.
       map { |a|
-        total        = a.problems.count.to_f
-        total_ascents = a.problems.sum(:ascents)
-        missing_arel = filtered.call(a.problems, @missing)
+        # Hidden problems and problems on hidden boulders are set aside, so they don't count
+        problems     = a.problems.shown
+        total        = problems.count.to_f
+        total_ascents = problems.sum(:ascents)
+        missing_arel = filtered.call(problems, @missing)
 
         if total_ascents > 0
           completion          = 1 - missing_arel.sum(:ascents).to_f / total_ascents.to_f
