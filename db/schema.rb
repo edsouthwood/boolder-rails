@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_160443) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -137,8 +137,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_160443) do
     t.bigint "area_id"
     t.boolean "ignore_for_area_hull", default: false, null: false
     t.string "name"
+    t.boolean "hidden", default: false, null: false
     t.index "area_id, lower((name)::text)", name: "index_boulders_on_area_id_and_lower_name", unique: true, where: "(name IS NOT NULL)"
     t.index ["area_id"], name: "index_boulders_on_area_id"
+    t.index ["hidden"], name: "index_boulders_on_hidden", where: "hidden"
   end
 
   create_table "circuits", force: :cascade do |t|

@@ -28,6 +28,7 @@ class Admin::MapsController < Admin::BaseController
       hash = {}.with_indifferent_access
       hash[:boulder_id] = boulder.id
       hash[:name] = boulder.name
+      hash[:hidden] = boulder.hidden
       hash[:updated_at] = boulder.updated_at
       hash.deep_transform_keys! { |key| key.camelize(:lower) }
 

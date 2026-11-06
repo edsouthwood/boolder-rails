@@ -1,6 +1,6 @@
 class Admin::BouldersController < Admin::BaseController
   before_action :set_area_from_slug, only: [ :index, :editor, :create ]
-  before_action :set_boulder,        only: [ :update, :destroy ]
+  before_action :set_boulder,        only: [ :update, :destroy, :visibility ]
   before_action -> { require_area_access((@area || @boulder.area).slug) }
 
   # Which boulders still need photos or lines (most urgent first)
@@ -46,6 +46,19 @@ class Admin::BouldersController < Admin::BaseController
     render json: e.details, status: :conflict
   rescue => e
     render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # Hide a whole boulder (outline and problems) from the public site, or bring it back.
+  # JSON from the boulder editor; a form post from the Boulders list.
+  def visibility
+    @boulder.update!(hidden: ActiveModel::Type::Boolean.new.cast(params[:hidden]))
+    respond_to do |format|
+      format.json { render json: { ok: true, hidden: @boulder.hidden } }
+      format.html do
+        flash[:notice] = "#{@boulder.display_name} #{@boulder.hidden ? "hidden: it and its problems are off the public site" : "shown again"}"
+        redirect_to url_from(params[:return_to]) || admin_area_boulders_path(area_slug: @boulder.area.slug)
+      end
+    end
   end
 
   def destroy

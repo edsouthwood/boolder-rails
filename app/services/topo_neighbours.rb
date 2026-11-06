@@ -123,7 +123,7 @@ class TopoNeighbours
 
   def landing_problems
     @landing_problems ||= begin
-      lines = Line.where(topo_id: placements.keys).includes(problem: :area).to_a
+      lines = Line.where(topo_id: placements.keys).includes(problem: [ :area, :boulder ]).to_a
       problem_ids = lines.map(&:problem_id).uniq
       # A problem page shows the problem's first published line (Line's default order)
       page_topo = Line.unscoped.joins(:topo).where(topos: { published: true }, problem_id: problem_ids).
@@ -132,7 +132,7 @@ class TopoNeighbours
 
       lines.group_by(&:topo_id).to_h do |topo_id, topo_lines|
         landing = topo_lines.map(&:problem).uniq.
-          select { |p| !p.hidden && page_topo[p.id] == topo_id }.
+          select { |p| !p.hidden_from_public? && page_topo[p.id] == topo_id }.
           max_by { |p| [ p.ascents.to_i, -p.id ] }
         [ topo_id, landing ]
       end
@@ -150,6 +150,7 @@ class TopoNeighbours
         SELECT l.topo_id, ST_Centroid(ST_Collect(p.location::geometry)) AS pos
         FROM lines l JOIN problems p ON p.id = l.problem_id
         WHERE l.topo_id IN (?) AND p.location IS NOT NULL AND p.hidden = false
+          AND (p.boulder_id IS NULL OR NOT EXISTS (SELECT 1 FROM boulders hb WHERE hb.id = p.boulder_id AND hb.hidden))
         GROUP BY l.topo_id
       )
       SELECT positions.topo_id, ST_Y(pos) AS lat, ST_X(pos) AS lon,

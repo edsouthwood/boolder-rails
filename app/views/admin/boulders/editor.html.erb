@@ -14,6 +14,7 @@
   data-admin-boulder-editor-create-url-value="<%= admin_area_boulders_path(area_slug: @area.slug) %>"
   data-admin-boulder-editor-update-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
   data-admin-boulder-editor-delete-url-template-value="<%= admin_boulder_path('BOULDER_ID') %>"
+  data-admin-boulder-editor-visibility-url-template-value="<%= visibility_admin_boulder_path('BOULDER_ID') %>"
   data-admin-boulder-editor-bounds-value="<%= @area.serialized_bounds.to_json %>"
   data-admin-boulder-editor-maptiler-key-value="<%= @maptiler_key %>"
   data-admin-boulder-editor-azure-key-value="<%= @azure_maps_key %>"
@@ -73,11 +74,22 @@
           >
             Use LiDAR outline
           </button>
+          <p data-admin-boulder-editor-target="hiddenNote" class="hidden text-xs px-2 py-1 rounded bg-amber-50 text-amber-800">
+            Hidden: this outline and its problems are off the public site.
+          </p>
           <button
             data-action="click->admin-boulder-editor#saveSelected"
             class="w-full px-3 py-2 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
             Save changes
+          </button>
+          <button
+            data-action="click->admin-boulder-editor#toggleHidden"
+            data-admin-boulder-editor-target="hideBtn"
+            title="Keeps the outline and its problems, but leaves them off the public map, area pages and search until you bring it back"
+            class="w-full px-3 py-2 text-sm font-medium rounded border border-amber-500 bg-white text-amber-700 hover:bg-amber-50 transition-colors"
+          >
+            Hide boulder from the public site
           </button>
           <button
             data-action="click->admin-boulder-editor#deleteSelected"

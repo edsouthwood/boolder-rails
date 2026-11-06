@@ -118,7 +118,12 @@ class Problem < ApplicationRecord
 
   scope :with_location, -> { where.not(location: nil) }
   # Hidden problems are kept for later but left off the public site and admin to-do lists
-  scope :shown, -> { where(hidden: false) }
+  # Not on a boulder that's been hidden ("Hide boulder")
+  scope :on_shown_boulder, -> {
+    where("problems.boulder_id IS NULL OR NOT EXISTS (SELECT 1 FROM boulders hb WHERE hb.id = problems.boulder_id AND hb.hidden)")
+  }
+  # On the public site: not hidden itself, and not on a hidden boulder
+  scope :shown, -> { where(hidden: false).on_shown_boulder }
   scope :without_location, -> { where(location: nil) }
   scope :with_line, -> { where(has_line: true) }
   scope :without_line, -> { where(has_line: false) }
@@ -223,9 +228,14 @@ class Problem < ApplicationRecord
     end
   end
 
+  # Left off the public site: hidden itself, or on a hidden boulder (the `shown` scope's rule)
+  def hidden_from_public?
+    hidden || !!boulder&.hidden
+  end
+
   def variants
     if parent
-      ([ parent ] + parent.children - [ self ]).reject(&:hidden)
+      ([ parent ] + parent.children - [ self ]).reject(&:hidden_from_public?)
     else
       children.shown
     end

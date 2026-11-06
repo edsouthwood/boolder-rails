@@ -88,7 +88,7 @@ class Area < ApplicationRecord
 
   def bounds
     @bounds ||=
-      bounds_from(boulders.placed.where(ignore_for_area_hull: false), :polygon) ||
+      bounds_from(boulders.placed.shown.where(ignore_for_area_hull: false), :polygon) ||
       bounds_from(problems.with_location, :location) ||
       { south_west: nil, north_east: nil }
   end

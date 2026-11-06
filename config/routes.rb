@@ -32,7 +32,9 @@ Rails.application.routes.draw do
     resources :problems, except: :index do
       patch :visibility, on: :member
     end
-    resources :boulders, only: [ :update, :destroy ]
+    resources :boulders, only: [ :update, :destroy ] do
+      patch :visibility, on: :member
+    end
     resources :circuits
     resources :imports do
       get "apply", on: :member
