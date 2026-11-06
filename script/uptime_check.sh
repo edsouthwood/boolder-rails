@@ -2,13 +2,13 @@
 # Checks that the live site is up. Run every 15 minutes by .github/workflows/uptime.yml
 # (GitHub emails you when a run fails); also usable by hand:
 #
-#   script/uptime_check.sh                         # checks https://bowda.edsouthwood.com
+#   script/uptime_check.sh                         # checks https://bowda.rocks
 #   UPTIME_RESOLVE=127.0.0.1 script/uptime_check.sh  # from the server itself (skips the NAT hairpin)
 #
 # Each check is retried before it counts as a failure, so a momentary blip doesn't alert.
 set -uo pipefail
 
-HOST="${UPTIME_HOST:-bowda.edsouthwood.com}"
+HOST="${UPTIME_HOST:-bowda.rocks}"
 BASE="https://${HOST}"
 ATTEMPTS="${UPTIME_ATTEMPTS:-3}"
 RETRY_DELAY="${UPTIME_RETRY_DELAY:-30}"

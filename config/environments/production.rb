@@ -24,9 +24,13 @@ Rails.application.configure do
   require Rails.root.join("lib/static_cache_control")
   config.middleware.insert_before ActionDispatch::Static, StaticCacheControl
 
+  # The site's public address (APP_HOST in .env). It was bowda.edsouthwood.com until
+  # November 2026; Caddy now 301s that address to bowda.rocks.
+  app_host = ENV.fetch("APP_HOST", "bowda.rocks")
+
   # Serve assets and Active Storage proxy URLs (see the cdn_image direct route)
   # from our own host. Upstream pointed this at their CDN (assets.boolder.com).
-  config.asset_host = "bowda.edsouthwood.com"
+  config.asset_host = app_host
 
   # Uploaded files live on local disk (backed up by bin/backup). The :amazon
   # service in storage.yml points at the upstream project's S3 bucket.
@@ -67,7 +71,7 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "bowda.edsouthwood.com", protocol: "https" }
+  config.action_mailer.default_url_options = { host: app_host, protocol: "https" }
 
   # Outgoing mail server, configured under the `smtp` key in Rails credentials
   # (address, port, username, password, from). See "Email Setup" in the admin guide.
@@ -96,8 +100,9 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # localhost is allowed so the app can be smoke-tested directly on the box.
-  config.hosts = [ "bowda.edsouthwood.com", "localhost", "127.0.0.1" ]
+  # localhost is allowed so the app can be smoke-tested directly on the box. Both
+  # public addresses stay allowed so switching APP_HOST needs no code change.
+  config.hosts = [ app_host, "bowda.rocks", "bowda.edsouthwood.com", "localhost", "127.0.0.1" ].uniq
 
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }

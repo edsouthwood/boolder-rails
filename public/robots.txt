@@ -1,2 +1,2 @@
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
-Sitemap: https://bowda.edsouthwood.com/sitemap.xml
+Sitemap: https://bowda.rocks/sitemap.xml
