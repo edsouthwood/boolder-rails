@@ -28,7 +28,7 @@ jobs:
           sparse-checkout: script/uptime_check.sh
           sparse-checkout-cone-mode: false
 
-      - name: Check https://bowda.edsouthwood.com
+      - name: Check https://bowda.rocks
         run: |
           set -o pipefail
           script/uptime_check.sh | tee result.txt

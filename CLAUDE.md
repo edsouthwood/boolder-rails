@@ -71,6 +71,8 @@ ADMIN_PASSWORD=<password>
 
 Optional: `CONTRIBUTION_EMAILS` (comma-separated) sets who receives "new contribution" staff
 alerts; falls back to the `contribution_emails` credential, then the Dartmoor team address.
+`APP_HOST` (production) is the public address, default `bowda.rocks`; the old bowda.edsouthwood.com
+is 301-redirected by Caddy.
 `SUPPORT_URL` (or the `support_url` credential) is where the /support page's donate button links;
 unset hides the button.
 

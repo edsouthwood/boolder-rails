@@ -4,6 +4,7 @@
 1. [Project Structure](#project-structure)
 2. [Development Server](#development-server)
 3. [Moving to Production (Runbook)](#moving-to-production-runbook)
+    - [Site address (bowda.rocks)](#site-address)
 4. [Backups](#backups)
 5. [Admin Accounts](#admin-accounts)
 6. [Permission Levels](#permission-levels)
@@ -215,22 +216,39 @@ Puma plugin shuts Puma down *cleanly*. The unit now uses `Restart=always` with
 used `Restart=on-failure`, which ignores a clean exit and left the site down
 silently for 8 days from 2026-08-21.
 
-**Testing from the machine itself:** requests to `https://bowda.edsouthwood.com`
+**Testing from the machine itself:** requests to `https://bowda.rocks`
 from this box hairpin out through the router and back, which stalls part-way
 through larger responses. That is a router NAT artefact, not a site fault. Bypass
 it by pointing curl straight at Caddy:
 
 ```bash
-curl --resolve bowda.edsouthwood.com:443:127.0.0.1 https://bowda.edsouthwood.com/
+curl --resolve bowda.rocks:443:127.0.0.1 https://bowda.rocks/
 ```
 
-### Uptime monitoring {#uptime-monitoring}
+### Site address (bowda.rocks) {#site-address}
+
+The site lives at **https://bowda.rocks** (registered at Cloudflare, which also runs its DNS
+and forwards hello@bowda.rocks to Gmail). Until 6 November 2026 it was bowda.edsouthwood.com.
+
+- `APP_HOST` in `.env` sets the address used for asset and photo URLs and email links
+  (`config/environments/production.rb`; defaults to `bowda.rocks`). Both addresses are in
+  `config.hosts`, so changing `APP_HOST` only needs a restart.
+- DNS: `A` records for `bowda.rocks` and `www.bowda.rocks` point at the server, **DNS only**
+  (grey cloud). Proxying through Cloudflare would hide visitors' real IPs from the app
+  (rate limits, spam checks) unless Rails is told to trust Cloudflare's proxy addresses.
+- Caddy serves `bowda.rocks`, and permanently redirects `www.bowda.rocks` and
+  `bowda.edsouthwood.com` to it, keeping the path.
+- Offline saves and home-screen installs belong to the address they were made on, so people
+  who saved areas on the old address must save them again; `/downloads` says so.
+- Moving to another server later only needs the two `A` records changing.
+
+
 
 A GitHub Actions workflow, `.github/workflows/uptime.yml`, checks the live site every
 15 minutes (at :07, :22, :37 and :52) from GitHub's servers. It still works when this machine
 or its internet connection is down. It runs `script/uptime_check.sh`, which checks that:
 
-- `https://bowda.edsouthwood.com/up` returns 200
+- `https://bowda.rocks/up` returns 200
 - `/` returns 200 and contains "Bouldering on Dartmoor", so a Caddy error page or a parked
   domain doesn't count as up
 - the HTTPS certificate has at least 14 days left (Caddy normally renews at 30)
@@ -280,7 +298,7 @@ journalctl --user -u boolder-rails --since "7 days ago" | grep "\[CSP\]"
 ```
 
 Each line names the rule, what was blocked and the page, e.g.
-`[CSP] img-src blocked https://tiles.example.com/... on https://bowda.edsouthwood.com/map`.
+`[CSP] img-src blocked https://tiles.example.com/... on https://bowda.rocks/map`.
 A legitimate new service (a new tile provider, say) means adding its host to the policy;
 anything unfamiliar is worth a closer look. Once a stretch of real traffic reports nothing
 unexpected, enforce it by setting `content_security_policy_report_only = false`.
@@ -1262,7 +1280,7 @@ The full problems dataset is downloadable as CSV, intended for release under
 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain):
 
 ```
-https://bowda.edsouthwood.com/data/problems.csv
+https://bowda.rocks/data/problems.csv
 ```
 
 - **Columns:** `id, name, grade, steepness, latitude, longitude, area, url`
@@ -1527,7 +1545,7 @@ Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) o
 ## Search engines {#search-engines}
 
 - **`/sitemap.xml`** lists every public page for search engines: home, map, the areas page, each published area and its problem list, every shown problem with a location, and circuits. It's built from the database when requested (cached for an hour), so new problems appear straight away and hidden problems and unpublished areas never do. Each entry carries the date the page last changed. Code: `SitemapsController`.
-- **`public/robots.txt`** points crawlers at `https://bowda.edsouthwood.com/sitemap.xml`. Change it if the site's address changes.
+- **`public/robots.txt`** points crawlers at `https://bowda.rocks/sitemap.xml`. Change it if the site's address changes.
 - **Preferred addresses**: problem, area, area problem-list, areas and map pages tell search engines their canonical address, so the same page reached another way (old `/en/` links, extra query strings) is counted once.
 - To see what's indexed, add the site to **Google Search Console** and **Bing Webmaster Tools** (verify by DNS record or an uploaded file) and submit the sitemap address there.
 
