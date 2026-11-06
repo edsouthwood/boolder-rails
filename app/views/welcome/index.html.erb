@@ -25,7 +25,12 @@
         </p>
       </div>
     </div>
-    <%= image_tag "hero-homepage.jpg", alt: "A climber bouldering on Dartmoor granite", class: "w-full h-[340px] rounded-2xl object-cover object-right" %>
+    <%# The page's largest image (LCP): fetched first, and sized to the screen %>
+    <%= image_tag "hero-homepage-1325.webp",
+          srcset: { "hero-homepage-700.webp" => "700w", "hero-homepage-1325.webp" => "1325w" },
+          sizes: "(min-width: 640px) 50vw, 100vw",
+          fetchpriority: "high",
+          alt: "A climber bouldering on Dartmoor granite", class: "w-full h-[340px] rounded-2xl object-cover object-right" %>
   </div>
 </section>
 
@@ -81,12 +86,16 @@
 
   <section class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
     <% [
-         [ethics_path, "banner-app-outdoors.jpg", "ethics"],
-         [beginners_guide_path, "banner-shoes.jpg", "beginners_guide"],
-         [about_path, "hero-about.jpg", "about"]
-       ].each do |path, banner, key| %>
+         [ethics_path, "banner-app-outdoors", 640, "ethics"],
+         [beginners_guide_path, "banner-shoes", 800, "beginners_guide"],
+         [about_path, "hero-about", 800, "about"]
+       ].each do |path, banner, wide, key| %>
       <a href="<%= path %>" class="group flex flex-col bg-white border border-line rounded-2xl overflow-hidden hover:border-stone">
-        <%= image_tag banner, alt: "", class: "h-48 w-full object-cover bg-photo" %>
+        <%# Small WebP copies of the full-size JPEGs, which other pages still use %>
+        <%= image_tag "#{banner}-#{wide}.webp",
+              srcset: { "#{banner}-400.webp" => "400w", "#{banner}-#{wide}.webp" => "#{wide}w" },
+              sizes: "(min-width: 1200px) 380px, (min-width: 640px) 50vw, 100vw",
+              loading: "lazy", alt: "", class: "h-48 w-full object-cover bg-photo" %>
         <div class="flex flex-1 flex-col gap-2 p-6">
           <h3 class="text-xl font-extrabold"><%= t("views.homepage.promoted.#{key}.title") %></h3>
           <p class="text-muted"><%= t("views.homepage.promoted.#{key}.subtitle") %></p>
