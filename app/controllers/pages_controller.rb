@@ -5,6 +5,9 @@ class PagesController < ApplicationController
   def about
   end
 
+  def support
+  end
+
   def ethics
   end
 
