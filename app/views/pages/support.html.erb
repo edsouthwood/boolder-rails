@@ -5,9 +5,9 @@
 <% costs = [
   { name: "A small server to run the site", amount: 55,
     detail: "A rented computer in a data centre that stays switched on, has a fast connection and is backed up automatically every day." },
-  { name: "The bowda.rocks address", amount: 11,
+  { name: "The bowda.rocks address", amount: 13,
     detail: "Bowda's own web address, so it no longer has to borrow a corner of someone's personal website." },
-  { name: "Spare copies and a little headroom", amount: 9,
+  { name: "Spare copies and a little headroom", amount: 7,
     detail: "A second copy of the photos and problem data kept somewhere else, plus a bit spare in case the maps or photos outgrow their free allowances." }
 ] %>
 <% donation_url = support_donation_url %>
@@ -28,7 +28,7 @@
         <%= link_to donation_url, class: "inline-flex items-center gap-2 min-h-[44px] rounded-lg bg-granite px-5 py-3 text-base font-semibold text-white hover:opacity-90", target: "_blank", rel: "noopener" do %>
           ☕ Buy Bowda a coffee
         <% end %>
-        <span class="text-sm text-warm-gray-500">Any amount helps. Opens in a new tab.</span>
+        <span class="text-sm text-warm-gray-500">Any amount helps. Opens Ko-fi in a new tab.</span>
       <% else %>
         <p class="text-base text-warm-gray-600">
           Donations open soon. In the meantime you can get in touch at
@@ -82,7 +82,7 @@
     </dl>
 
     <p class="mt-6 text-base text-warm-gray-600">
-      That works out at about £6 a month, or a couple of coffees.
+      That works out at about £6 a month, or nineteen £4 coffees for the whole year.
       Every penny goes on running costs, and anything left over goes towards the following year.
     </p>
   </section>
