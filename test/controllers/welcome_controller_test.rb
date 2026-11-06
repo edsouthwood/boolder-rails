@@ -7,6 +7,13 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='/map']"
   end
 
+  test "home page images are small responsive WebPs, with the hero fetched first" do
+    get "/"
+    assert_select "img[fetchpriority=high][srcset*='hero-homepage-700'][srcset*='hero-homepage-1325']", 1
+    assert_select "img[loading=lazy][srcset*='banner-shoes-400'][sizes]"
+    assert_select "img[src$='.jpg']", false, "homepage should not load the full-size JPEGs"
+  end
+
   test "old /en addresses redirect permanently to the same page without the prefix" do
     area = Area.create!(name: "Bell Tor", slug: "belltor", published: true)
     {
