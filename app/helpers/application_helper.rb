@@ -1,4 +1,12 @@
 module ApplicationHelper
+  # Where the "Buy Bowda a coffee" button on /support points (e.g. a Ko-fi page): the
+  # SUPPORT_URL env var, else the `support_url` credential. Nil hides the button and the
+  # page shows a "donations open soon" note instead. Only http(s) addresses are used.
+  def support_donation_url
+    url = ENV["SUPPORT_URL"].presence || Rails.application.credentials.support_url.presence
+    url if url.to_s.match?(%r{\Ahttps?://}i)
+  end
+
   # A visitor's uploaded image as shown publicly: a resized copy with its EXIF (camera
   # details, exact GPS) stripped, never the original file.
   def public_photo(attachment)

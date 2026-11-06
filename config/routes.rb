@@ -135,6 +135,7 @@ Rails.application.routes.draw do
   # "My downloads": save, update and remove areas for offline use.
   get "downloads", to: "pages#downloads", as: :downloads
   get "about", to: "pages#about", as: :about
+  get "support", to: "pages#support", as: :support
   get "ethics", to: "pages#ethics", as: :ethics
   get "contribute", to: "pages#contribute", as: :contribute
   get "map-data", to: "map_data#index", as: :map_data

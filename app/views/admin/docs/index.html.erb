@@ -32,6 +32,7 @@
       <li><a href="#offline-use" class="hover:underline">Offline Use (Map &amp; Photos)</a></li>
       <li><a href="#stats" class="hover:underline">Stats</a></li>
       <li><a href="#search-engines" class="hover:underline">Search engines</a></li>
+      <li><a href="#support-page" class="hover:underline">Support Page (Donations)</a></li>
       <li><a href="#problems-by-grade" class="hover:underline">Problems by Grade and Map Grade Filters</a></li>
       <li><a href="#topo-neighbours" class="hover:underline">Photo to the Left / Right</a></li>
       <li><a href="#topo-sheets" class="hover:underline">Printable Topo Sheets</a></li>
@@ -775,6 +776,15 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       <div class="prose-content text-sm text-gray-700 space-y-4">
         <p><code>/sitemap.xml</code> lists every public page (published areas, their shown and located problems, circuits) with the date each last changed. It's built from the database when requested and cached for an hour, so new problems appear straight away and hidden ones never do. <code>robots.txt</code> points crawlers at it. Problem, area and map pages also name their preferred (canonical) address.</p>
         <p>To see what search engines have indexed, add the site to Google Search Console and Bing Webmaster Tools and submit <code>https://bowda.edsouthwood.com/sitemap.xml</code> there.</p>
+      </div>
+    </section>
+
+    <%# Support page %>
+    <section id="support-page">
+      <%= render "admin/docs/section_header", title: "Support Page (Donations)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p><code>/support</code> ("Support Bowda" in the footer) asks visitors to chip in towards the running costs, with a target of £75 a year, and explains in plain terms where that goes: server, the bowda.rocks address, spare copies and headroom.</p>
+        <p>The "Buy Bowda a coffee" button goes to the <code>SUPPORT_URL</code> env var, or the <code>support_url</code> credential, e.g. a Ko-fi page. With neither set, the button is hidden and the page says donations open soon. It's a plain link, so no third-party scripts load. To change the figures, edit the <code>costs</code> list at the top of <code>app/views/pages/support.html.erb</code>, along with the "£75" wording in its intro and heading.</p>
       </div>
     </section>
 

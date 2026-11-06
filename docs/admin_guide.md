@@ -32,6 +32,7 @@
 26. [Printable Topo Sheets](#topo-sheets)
 27. [Stats](#stats)
 28. [Search engines](#search-engines)
+29. [Support Page (Donations)](#support-page)
 
 ---
 
@@ -1529,4 +1530,13 @@ Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) o
 - **`public/robots.txt`** points crawlers at `https://bowda.edsouthwood.com/sitemap.xml`. Change it if the site's address changes.
 - **Preferred addresses**: problem, area, area problem-list, areas and map pages tell search engines their canonical address, so the same page reached another way (old `/en/` links, extra query strings) is counted once.
 - To see what's indexed, add the site to **Google Search Console** and **Bing Webmaster Tools** (verify by DNS record or an uploaded file) and submit the sitemap address there.
+
+---
+
+## Support Page (Donations) {#support-page}
+
+- **`/support`** ("Support Bowda" in the footer, also linked from the About page FAQ) asks visitors to chip in towards running costs, with a target of **£75 a year**. It explains in plain terms where that goes: server (about £55), the bowda.rocks address (about £11), spare copies and headroom (about £9). It also says the site currently runs on an old computer at home, with the potato photo.
+- **The donate button** ("Buy Bowda a coffee") goes to the address in the `SUPPORT_URL` env var, or the `support_url` Rails credential if that isn't set, e.g. `https://ko-fi.com/yourpage`. Only `http(s)` addresses are used. With neither set, the button is hidden and the page says "Donations open soon" with the contact email.
+- It's a plain link, not an embedded widget, so no third-party scripts load and the Content-Security-Policy needs no changes.
+- **Changing the figures:** edit the `costs` list at the top of `app/views/pages/support.html.erb`. The total is added up automatically, but the "£75 a year" wording in the intro, heading and meta description is written out, so update those too.
 

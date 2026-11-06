@@ -1,0 +1,98 @@
+<% set_meta_tags title: "Support Bowda",
+                  description: "Bowda is free, with no ads. About £75 a year keeps it online — here's where that goes." %>
+<% set_meta_tags og: { type: "website", image: image_url("support-potato.jpg") } %>
+
+<% costs = [
+  { name: "A small server to run the site", amount: 55,
+    detail: "A rented computer in a data centre that stays switched on, has a fast connection and is backed up automatically every day." },
+  { name: "The bowda.rocks address", amount: 11,
+    detail: "Bowda's own web address, so it no longer has to borrow a corner of someone's personal website." },
+  { name: "Spare copies and a little headroom", amount: 9,
+    detail: "A second copy of the photos and problem data kept somewhere else, plus a bit spare in case the maps or photos outgrow their free allowances." }
+] %>
+<% donation_url = support_donation_url %>
+
+<main class="bg-white">
+  <div class="mx-auto max-w-3xl px-6 pt-16 pb-10 sm:pt-24">
+    <p class="text-sm font-semibold uppercase tracking-wider text-warm-gray-500">Support Bowda</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+      Help give Bowda a home of its own
+    </h1>
+    <p class="mt-6 text-lg text-warm-gray-600">
+      Bowda is free to use, has no adverts and doesn't track you. It's run by volunteers, and nobody is paid for their time.
+      It does cost a little to keep online, though: about <strong class="text-gray-900">£75 a year</strong>.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center gap-4">
+      <% if donation_url %>
+        <%= link_to donation_url, class: "inline-flex items-center gap-2 min-h-[44px] rounded-lg bg-granite px-5 py-3 text-base font-semibold text-white hover:opacity-90", target: "_blank", rel: "noopener" do %>
+          ☕ Buy Bowda a coffee
+        <% end %>
+        <span class="text-sm text-warm-gray-500">Any amount helps. Opens in a new tab.</span>
+      <% else %>
+        <p class="text-base text-warm-gray-600">
+          Donations open soon. In the meantime you can get in touch at
+          <%= link_to "bowda@edsouthwood.com", "mailto:bowda@edsouthwood.com", class: "font-medium underline text-granite" %>.
+        </p>
+      <% end %>
+    </div>
+  </div>
+</main>
+
+<div class="bg-warm-gray-50">
+  <section class="mx-auto max-w-3xl px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight text-warm-gray-900">Where Bowda lives right now</h2>
+    <p class="mt-6 text-lg text-warm-gray-600">
+      At the moment the whole site runs on an old computer in Ed's house, on a spare corner of his personal website.
+      It works, but when the power or the internet drops at home, the guide goes down with it.
+    </p>
+    <p class="mt-4 text-lg text-warm-gray-600">
+      It would be nice to give Bowda its own space: a small, proper server that stays on, and its own address,
+      <strong class="text-gray-900">bowda.rocks</strong>.
+    </p>
+
+    <figure class="mt-8">
+      <%= image_tag "support-potato.jpg",
+            alt: "The Bowda home page on a monitor, with a potato in the foreground with two USB cables plugged into it",
+            width: 1400, height: 1050, loading: "lazy",
+            class: "w-full h-auto rounded-xl shadow-sm" %>
+      <figcaption class="mt-3 text-sm text-warm-gray-500">
+        Bowda's current hosting setup. Well, nearly: it's really an old computer, but it isn't much more glamorous than this.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="mx-auto max-w-3xl px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight text-warm-gray-900">What £75 a year pays for</h2>
+
+    <dl class="mt-8 divide-y divide-warm-gray-200 rounded-xl bg-white shadow-sm">
+      <% costs.each do |cost| %>
+        <div class="flex gap-4 p-5 sm:p-6">
+          <div class="flex-1">
+            <dt class="text-base font-semibold text-gray-900"><%= cost[:name] %></dt>
+            <dd class="mt-1 text-base text-warm-gray-600"><%= cost[:detail] %></dd>
+          </div>
+          <dd class="shrink-0 text-base font-semibold text-gray-900 tabular-nums">about £<%= cost[:amount] %></dd>
+        </div>
+      <% end %>
+      <div class="flex gap-4 p-5 sm:p-6">
+        <dt class="flex-1 text-lg font-bold text-gray-900">Total per year</dt>
+        <dd class="shrink-0 text-lg font-bold text-gray-900 tabular-nums">£<%= costs.sum { |c| c[:amount] } %></dd>
+      </div>
+    </dl>
+
+    <p class="mt-6 text-base text-warm-gray-600">
+      That works out at about £6 a month, or a couple of coffees.
+      Every penny goes on running costs, and anything left over goes towards the following year.
+    </p>
+  </section>
+
+  <section class="mx-auto max-w-3xl px-6 py-12">
+    <h2 class="text-3xl font-bold tracking-tight text-warm-gray-900">Other ways to help</h2>
+    <p class="mt-6 text-lg text-warm-gray-600">
+      Money isn't the only way to help. Photos, new problems and corrections make the guide better for everyone, and you can
+      <%= link_to "contribute", contribute_path, class: "font-medium underline text-granite" %> any time.
+      Telling your climbing friends about Bowda helps too.
+    </p>
+  </section>
+</div>
