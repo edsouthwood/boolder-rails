@@ -1536,7 +1536,7 @@ Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) o
 ## Support Page (Donations) {#support-page}
 
 - **`/support`** ("Support Bowda" in the footer, also linked from the About page FAQ) asks visitors to chip in towards running costs, with a target of **£75 a year**. It explains in plain terms where that goes: server (about £55), the bowda.rocks address (about £13), spare copies and headroom (about £7). It also says the site currently runs on an old computer at home, with the potato photo.
-- **The donate button** ("Buy Bowda a coffee") goes to the address in the `SUPPORT_URL` env var, or the `support_url` Rails credential if that isn't set, currently `https://ko-fi.com/bowda`, set in production's `.env`. Only `http(s)` addresses are used. With neither set, the button is hidden and the page says "Donations open soon" with the contact email.
+- **The donate button** ("Buy Bowda a coffee") goes to the address in the `SUPPORT_URL` env var, or the `support_url` Rails credential if that isn't set, currently `https://ko-fi.com/bowda`, set in production's `.env`. Only `http(s)` addresses are used. With neither set, the button is hidden and the page says "Donations open soon" with the contact email (hello@bowda.rocks).
 - It's a plain link, not an embedded widget, so no third-party scripts load and the Content-Security-Policy needs no changes.
 - **Changing the figures:** edit the `costs` list at the top of `app/views/pages/support.html.erb`. The total is added up automatically, but the "£75 a year" wording in the intro, heading and meta description is written out, so update those too.
 

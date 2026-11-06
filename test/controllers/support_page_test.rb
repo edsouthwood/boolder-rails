@@ -32,6 +32,14 @@ class SupportPageTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "public pages give hello@bowda.rocks as the contact address" do
+    get "/about"
+    assert_select "a[href='mailto:hello@bowda.rocks']"
+    get "/privacy"
+    assert_match "hello@bowda.rocks", response.body
+    assert_no_match "bowda@edsouthwood.com", response.body
+  end
+
   test "the footer and about page link to the support page" do
     get "/about"
     assert_select "footer a[href='/support']"
