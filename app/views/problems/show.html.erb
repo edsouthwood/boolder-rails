@@ -9,6 +9,8 @@
                                   address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" } } } %>
   <% data[:geo] = { "@type": "GeoCoordinates", latitude: @problem.lat, longitude: @problem.lon } if @problem.location %>
   <%= json_ld_tag(data) %>
+  <%= breadcrumb_json_ld([ "Dartmoor", areas_url ], [ @problem.area.name, area_url(@problem.area) ],
+                         [ @problem.name_with_fallback, area_problem_url(@problem.area, @problem) ]) %>
 <% end %>
 
 <% set_meta_tags canonical: area_problem_url(@problem.area, @problem) %>

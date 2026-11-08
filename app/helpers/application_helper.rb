@@ -7,6 +7,16 @@ module ApplicationHelper
     tag.script(data.to_json.html_safe, type: "application/ld+json")
   end
 
+  # Search engines can show this trail ("bowda.rocks › Dartmoor › Saddle Tor") in place
+  # of the raw URL. Pass [name, url] pairs, top level first, ending with the page itself.
+  # Every step needs a URL, so steps with no page of their own (a boulder) are left out.
+  def breadcrumb_json_ld(*crumbs)
+    json_ld_tag("@context": "https://schema.org", "@type": "BreadcrumbList",
+                itemListElement: crumbs.each_with_index.map { |(name, url), i|
+                  { "@type": "ListItem", position: i + 1, name: name, item: url }
+                })
+  end
+
   # Where the "Buy Bowda a coffee" button on /support points (e.g. a Ko-fi page): the
   # SUPPORT_URL env var, else the `support_url` credential. Nil hides the button and the
   # page shows a "donations open soon" note instead. Only http(s) addresses are used.

@@ -1,4 +1,8 @@
 <% set_meta_tags canonical: area_problems_url(@area) %>
+<% content_for :json_ld do %>
+  <%= breadcrumb_json_ld([ "Dartmoor", areas_url ], [ @area.name, area_url(@area) ],
+                         [ "Problems", area_problems_url(@area) ]) %>
+<% end %>
 <div class="max-w-7xl mx-auto pt-6 sm:px-6 lg:px-8">
   <div class="px-4 sm:px-0">
     <div class="flex items-center space-x-1 text-sm font-medium text-gray-500">
