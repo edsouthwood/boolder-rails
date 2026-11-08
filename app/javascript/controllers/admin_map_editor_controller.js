@@ -73,17 +73,23 @@ export default class extends Controller {
       })
   }
 
-  // Estimated markers (guessed from a photo) are amber until the problem is dragged into place
-  markerClass(estimated) {
-    return [
-      'w-4 h-4 rounded-full border-2 cursor-move shadow-md transition-colors',
-      estimated ? 'bg-amber-400 hover:bg-amber-500 border-amber-900 border-dashed' : 'bg-granite hover:bg-granite-dark border-white',
-    ].join(' ')
+  // Estimated markers (guessed from a photo) are amber until the problem is dragged into place.
+  // Toggle classes with classList, never assign el.className: MapLibre puts its own
+  // maplibregl-marker class (position: absolute) on the element, and wiping it leaves the
+  // pin in the page flow, drawn offset from its real position by every such pin before it.
+  // That offset is fixed in pixels, so the pin seemed to move on zoom, and a drag saved
+  // the hidden position rather than the one on screen.
+  setMarkerStyle(el, estimated) {
+    el.classList.add('w-4', 'h-4', 'rounded-full', 'border-2', 'cursor-move', 'shadow-md', 'transition-colors')
+    const amber = ['bg-amber-400', 'hover:bg-amber-500', 'border-amber-900', 'border-dashed']
+    const placed = ['bg-granite', 'hover:bg-granite-dark', 'border-white']
+    el.classList.remove(...(estimated ? placed : amber))
+    el.classList.add(...(estimated ? amber : placed))
   }
 
   addMarker(problemId, name, lng, lat, estimated = false) {
     const el = document.createElement('div')
-    el.className = this.markerClass(estimated)
+    this.setMarkerStyle(el, estimated)
     const label = estimated ? `${name} (estimated from a photo: drag it into place)` : name
     el.title = label
 
@@ -97,14 +103,17 @@ export default class extends Controller {
     el.addEventListener('mouseenter', () => popup.addTo(this.map))
     el.addEventListener('mouseleave', () => popup.remove())
 
+    let savedLngLat = marker.getLngLat()
     marker.on('dragend', () => {
       const lngLat = marker.getLngLat()
       this.patchLocation(problemId, lngLat.lat, lngLat.lng)
         .then(ok => {
-          if (!ok) return
+          // A failed save puts the pin back, so the map never shows a position that isn't stored
+          if (!ok) { marker.setLngLat(savedLngLat); return }
+          savedLngLat = lngLat
           if (estimated) {
             estimated = false
-            el.className = this.markerClass(false)
+            this.setMarkerStyle(el, false)
             el.title = name
             popup.setText(name)
             this.updateEstimatedCount(-1)
