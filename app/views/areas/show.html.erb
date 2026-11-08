@@ -1,20 +1,9 @@
 <% set_meta_tags title: t("views.areas.show.metas.title", area: @area.name) %>
 <% content_for :json_ld do %>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "TouristAttraction",
-  "name": "<%= j @area.name %>",
-  "description": "<%= j @area.description_en.to_s.truncate(200) %>",
-  "url": "<%= area_url(@area) %>",
-  "sport": "Bouldering",
-  "address": {
-    "@type": "PostalAddress",
-    "addressRegion": "Devon",
-    "addressCountry": "GB"
-  }
-}
-</script>
+  <%= json_ld_tag("@context": "https://schema.org", "@type": "TouristAttraction",
+                  name: @area.name, description: @area.description_en.to_s.truncate(200),
+                  url: area_url(@area), sport: "Bouldering",
+                  address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" }) %>
 <% end %>
 <% set_meta_tags description: t("views.areas.show.metas.description", area: @area.name) %>
 <% set_meta_tags canonical: area_url(@area) %>

@@ -1,23 +1,12 @@
 <% set_meta_tags title: t("views.problems.show.metas.title", problem: @problem.name_with_fallback, grade: @problem.grade, area: @problem.area.name) %>
 <% content_for :json_ld do %>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SportsEvent",
-  "name": "<%= j @problem.name_with_fallback %> (<%= j @problem.grade %>)",
-  "url": "<%= area_problem_url(@problem.area, @problem) %>",
-  "sport": "Bouldering",
-  "location": {
-    "@type": "Place",
-    "name": "<%= j @problem.area.name %>",
-    "address": {
-      "@type": "PostalAddress",
-      "addressRegion": "Devon",
-      "addressCountry": "GB"
-    }<%= @problem.location ? ",\n    \"geo\": { \"@type\": \"GeoCoordinates\", \"latitude\": #{@problem.lat}, \"longitude\": #{@problem.lon} }" : "" %>
-  }
-}
-</script>
+  <% place = { "@type": "Place", name: @problem.area.name,
+               address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" } } %>
+  <% place[:geo] = { "@type": "GeoCoordinates", latitude: @problem.lat, longitude: @problem.lon } if @problem.location %>
+  <%= json_ld_tag("@context": "https://schema.org", "@type": "SportsEvent",
+                  name: "#{@problem.name_with_fallback} (#{@problem.grade})",
+                  url: area_problem_url(@problem.area, @problem),
+                  sport: "Bouldering", location: place) %>
 <% end %>
 
 <% set_meta_tags canonical: area_problem_url(@problem.area, @problem) %>
