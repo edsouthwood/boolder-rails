@@ -1,6 +1,11 @@
 <% set_meta_tags title: t("views.circuits.show.metas.title", circuit: @circuit.name, area: @area.name) %>
 <% set_meta_tags description: t("views.circuits.show.metas.description", circuit: @circuit.name, area: @area.name) %>
 
+<% content_for :json_ld do %>
+  <%= breadcrumb_json_ld([ "Dartmoor", areas_url ], [ @area.name, area_url(@area) ],
+                         [ t("circuit.long_name", name: @circuit.name), circuit_url(@circuit) ]) %>
+<% end %>
+
 <% if @area.cover.persisted? %>
   <% set_meta_tags og: { type: "website", image: cdn_image_url(@area.cover.variant(:medium)) } %>
 <% end %>

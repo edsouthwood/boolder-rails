@@ -16,7 +16,7 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
 
     get area_problem_path(@area, @problem)
 
-    script = css_select('script[type="application/ld+json"]').first
+    script = css_select('script[type="application/ld+json"]').find { |s| JSON.parse(s.text)["@type"] == "Place" }
     data = JSON.parse(script.text)
     assert_equal "Place", data["@type"]
     assert_equal %q(Foal's "Chopper" </script> (5)), data["name"]
@@ -24,6 +24,17 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta 50.5739, data.dig("geo", "latitude")
     assert_in_delta(-3.7657, data.dig("geo", "longitude"))
     assert_not_includes script.to_html, "</script> ("
+  end
+
+  test "breadcrumb structured data runs Dartmoor, area, problem" do
+    get area_problem_path(@area, @problem)
+
+    crumbs = css_select('script[type="application/ld+json"]').map { |s| JSON.parse(s.text) }
+                                                            .find { |d| d["@type"] == "BreadcrumbList" }
+    items = crumbs["itemListElement"]
+    assert_equal [ 1, 2, 3 ], items.map { |i| i["position"] }
+    assert_equal [ "Dartmoor", "Bonehill", "Flagpole" ], items.map { |i| i["name"] }
+    assert_equal [ areas_url, area_url(@area), area_problem_url(@area, @problem) ], items.map { |i| i["item"] }
   end
 
   test "the breadcrumb names the problem's boulder when it has one" do
