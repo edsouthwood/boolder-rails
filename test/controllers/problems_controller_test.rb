@@ -11,6 +11,21 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
                          coordinates: [ { "x" => 0.2, "y" => 0.9 }, { "x" => 0.3, "y" => 0.5 }, { "x" => 0.4, "y" => 0.1 } ])
   end
 
+  test "structured data is valid JSON, even with apostrophes and tags in names" do
+    @problem.update!(name: %q(Foal's "Chopper" </script>), location: FACTORY.point(-3.7657, 50.5739))
+
+    get area_problem_path(@area, @problem)
+
+    script = css_select('script[type="application/ld+json"]').first
+    data = JSON.parse(script.text)
+    assert_equal "Place", data["@type"]
+    assert_equal %q(Foal's "Chopper" </script> (5)), data["name"]
+    assert_equal "Bonehill", data.dig("containedInPlace", "name")
+    assert_in_delta 50.5739, data.dig("geo", "latitude")
+    assert_in_delta(-3.7657, data.dig("geo", "longitude"))
+    assert_not_includes script.to_html, "</script> ("
+  end
+
   test "the breadcrumb names the problem's boulder when it has one" do
     get area_problem_url(@area.slug, @problem)
     assert_select "div", text: "Photo Arête", count: 0

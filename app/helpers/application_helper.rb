@@ -1,4 +1,12 @@
 module ApplicationHelper
+  # Structured data for search engines, built from a hash so the JSON is always valid.
+  # to_json escapes <, > and & (as \u003c etc.), so a name can't close the script tag.
+  # Never build JSON-LD by hand in ERB: `j` makes \' (invalid JSON) and ERB then
+  # HTML-escapes quotes to &quot;, which Search Console reports as bad escapes.
+  def json_ld_tag(data)
+    tag.script(data.to_json.html_safe, type: "application/ld+json")
+  end
+
   # Where the "Buy Bowda a coffee" button on /support points (e.g. a Ko-fi page): the
   # SUPPORT_URL env var, else the `support_url` credential. Nil hides the button and the
   # page shows a "donations open soon" note instead. Only http(s) addresses are used.
