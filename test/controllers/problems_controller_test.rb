@@ -18,9 +18,11 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
 
     script = css_select('script[type="application/ld+json"]').first
     data = JSON.parse(script.text)
+    assert_equal "Place", data["@type"]
     assert_equal %q(Foal's "Chopper" </script> (5)), data["name"]
-    assert_in_delta 50.5739, data.dig("location", "geo", "latitude")
-    assert_in_delta(-3.7657, data.dig("location", "geo", "longitude"))
+    assert_equal "Bonehill", data.dig("containedInPlace", "name")
+    assert_in_delta 50.5739, data.dig("geo", "latitude")
+    assert_in_delta(-3.7657, data.dig("geo", "longitude"))
     assert_not_includes script.to_html, "</script> ("
   end
 

@@ -1,12 +1,14 @@
 <% set_meta_tags title: t("views.problems.show.metas.title", problem: @problem.name_with_fallback, grade: @problem.grade, area: @problem.area.name) %>
 <% content_for :json_ld do %>
-  <% place = { "@type": "Place", name: @problem.area.name,
-               address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" } } %>
-  <% place[:geo] = { "@type": "GeoCoordinates", latitude: @problem.lat, longitude: @problem.lon } if @problem.location %>
-  <%= json_ld_tag("@context": "https://schema.org", "@type": "SportsEvent",
-                  name: "#{@problem.name_with_fallback} (#{@problem.grade})",
-                  url: area_problem_url(@problem.area, @problem),
-                  sport: "Bouldering", location: place) %>
+  <%# A problem is a Place (a spot on a boulder) inside the area's Place, not an event. %>
+  <% data = { "@context": "https://schema.org", "@type": "Place",
+              name: "#{@problem.name_with_fallback} (#{@problem.grade})",
+              description: "Bouldering problem, grade #{@problem.grade}, at #{@problem.area.name} on Dartmoor",
+              url: area_problem_url(@problem.area, @problem),
+              containedInPlace: { "@type": "Place", name: @problem.area.name, url: area_url(@problem.area),
+                                  address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" } } } %>
+  <% data[:geo] = { "@type": "GeoCoordinates", latitude: @problem.lat, longitude: @problem.lon } if @problem.location %>
+  <%= json_ld_tag(data) %>
 <% end %>
 
 <% set_meta_tags canonical: area_problem_url(@problem.area, @problem) %>
