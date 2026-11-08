@@ -1,29 +1,79 @@
 <!DOCTYPE html>
-<html class="h-full">
+<html lang="en">
 <head>
-  <title>The page you were looking for doesn't exist (404)</title>
+  <meta charset="utf-8">
+  <title>Page not found (404) · bowda</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="turbo-visit-control" content="reload">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Static page served by Rails/Caddy without the asset pipeline, so all styles are inline
+      and nothing loads from a CDN (the 500 page must work when everything else is broken).
+      Colours are the bowda granite tokens from config/tailwind.config.js. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    html { font-size: 16px; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column;
+      background: #F3F3F1; color: #33393D;
+      font-family: Outfit, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    nav { background: #FFF; border-bottom: 1px solid #DEDFDC; }
+    .bar { max-width: 1200px; margin: 0 auto; padding: 14px 24px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; }
+    .brand svg { width: 35px; height: 40px; }
+    .brand-text { display: flex; flex-direction: column; }
+    .wordmark { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; line-height: 0.95; color: #33393D; }
+    .tagline { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #5E6468; }
+    main { flex: 1; display: grid; place-items: center; padding: 64px 24px; }
+    .card { display: flex; gap: 24px; max-width: 680px; }
+    .code { font-size: 48px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: #6F767A; }
+    .body { flex: 1; border-left: 1px solid #DEDFDC; padding-left: 24px; }
+    h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: #33393D; }
+    p { margin-top: 8px; font-size: 16px; line-height: 1.5; color: #5E6468; }
+    .actions { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .button {
+      display: inline-flex; align-items: center; min-height: 44px; padding: 8px 18px;
+      border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none;
+    }
+    .primary { background: #33393D; color: #FFF; }
+    .primary:hover { background: #1F2326; }
+    .secondary { background: #FFF; color: #33393D; border: 1px solid #DEDFDC; }
+    .secondary:hover { background: #F3F3F1; }
+    .button:focus-visible { outline: 2px solid #33393D; outline-offset: 2px; }
+    @media (max-width: 640px) {
+      .card { flex-direction: column; gap: 12px; }
+      .body { border-left: 0; padding-left: 0; }
+      h1 { font-size: 32px; }
+    }
+  </style>
 </head>
-
-<body  class="h-full">
-  <div class="min-h-full bg-white py-16 px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
-    <div class="mx-auto max-w-max">
-      <main class="sm:flex">
-        <p class="text-4xl font-bold tracking-tight text-emerald-600 sm:text-5xl">404</p>
-        <div class="sm:ml-6">
-          <div class="sm:border-l sm:border-gray-200 sm:pl-6">
-            <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Page not found</h1>
-            <p class="mt-1 text-base text-gray-500">Please check the URL in the address bar and try again.</p>
-          </div>
-          <div class="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
-            <a href="/" class="inline-flex items-center rounded-md border border-transparent bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">Go back home</a>
-          </div>
-        </div>
-      </main>
+<body>
+  <nav>
+    <div class="bar">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 117 133" aria-hidden="true"><polygon points="40.35,112.36 21.90,30.93 36.34,18.36 71.58,34.59 72.17,64.70 94.60,82.02 98.95,112.36" fill="none" stroke="#6F767A" stroke-width="11" stroke-linejoin="round"/></svg>
+        <span class="brand-text">
+          <span class="wordmark">bowda</span>
+          <span class="tagline">Dartmoor bouldering</span>
+        </span>
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">— home</span>
+      </a>
     </div>
-  </div>
-
+  </nav>
+  <main>
+    <div class="card">
+      <div class="code">404</div>
+      <div class="body">
+        <h1>Page not found</h1>
+        <p>Check the address and try again, or find your way from the list of areas.</p>
+        <div class="actions">
+          <a class="button primary" href="/">Go back home</a>
+          <a class="button secondary" href="/dartmoor">Browse areas</a>
+        </div>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
