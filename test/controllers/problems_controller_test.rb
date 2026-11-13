@@ -131,4 +131,41 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a[data-topo-nav-target]", count: 0
   end
+
+  # A problem can be saved without a grade (e.g. added on the topo workbench with the grade left blank)
+  test "an area's problem list puts problems without a grade last instead of failing" do
+    @problem.update!(location: FACTORY.point(-3.7657, 50.5739))
+    @area.problems.create!(name: "Hard One", grade: "6a", steepness: "wall", location: FACTORY.point(-3.7657, 50.5739))
+    @area.problems.create!(name: "New Thing", grade: nil, steepness: "other", location: FACTORY.point(-3.7657, 50.5739))
+    @area.problems.create!(name: "Blank Thing", grade: "", steepness: "other", location: FACTORY.point(-3.7657, 50.5739))
+
+    get area_problems_path(@area)
+
+    assert_response :success
+    assert_equal [ "6a", "5", "No grade yet" ], css_select("h3").map { |heading| heading.text.strip }
+    assert_match "New Thing", response.body
+    assert_match "Blank Thing", response.body
+  end
+
+  test "a problem without a grade has a title and structured data that leave the grade out" do
+    @problem.update!(grade: nil)
+
+    get area_problem_path(@area, @problem)
+
+    assert_response :success
+    assert_select "title", /\AFlagpole - Bonehill/
+    data = css_select('script[type="application/ld+json"]').map { |s| JSON.parse(s.text) }.find { |d| d["@type"] == "Place" }
+    assert_equal "Flagpole", data["name"]
+    assert_equal "Bouldering problem, at Bonehill on Dartmoor", data["description"]
+  end
+
+  test "a problem page lists variants even when one has no grade" do
+    @area.problems.create!(name: "Flagpole Sit", grade: "6a", steepness: "wall", parent: @problem)
+    @area.problems.create!(name: "Flagpole Project", grade: nil, steepness: "wall", parent: @problem)
+
+    get area_problem_path(@area, @problem)
+
+    assert_response :success
+    assert_match "Flagpole Project", response.body
+  end
 end

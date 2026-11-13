@@ -180,7 +180,7 @@
             <div class="<%= 'font-bold' if parent.id == @problem.id %>"><%= link_to [parent.name_with_fallback, parent.grade].compact.join(" - "), admin_problem_path(parent) %></div>
           </p>
           <p>
-            <% parent.children.sort_by(&:grade).reverse.each do |child| %>
+            <% parent.children.sort_by { |child| child.grade.to_s }.reverse.each do |child| %>
               <div class="flex ml-2">
                 <span>↳</span>
                 <div class="ml-2 <%= 'font-bold' if child.id == @problem.id %>"><%= link_to [child.name_with_fallback, child.grade].compact.join(" - "), admin_problem_path(child) %></div>

@@ -32,8 +32,8 @@ class AreasController < ApplicationController
     @area = Area.find_by!(slug: params[:slug])
     return if hide_unpublished_area(@area)
 
-    lines = Line.reorder(nil).joins(:topo, :problem).merge(Topo.published).
-      where(problems: { area_id: @area.id, hidden: false }).where.not(coordinates: nil).
+    lines = Line.reorder(nil).joins(:topo, :problem).merge(Topo.published).merge(Problem.shown).
+      where(problems: { area_id: @area.id }).where.not(coordinates: nil).
       includes(:topo, problem: :circuit).to_a
 
     # Photos in boulder order (as linked automatically), lines left to right on each
@@ -55,6 +55,8 @@ class AreasController < ApplicationController
     @area = Area.find_by!(slug: params[:slug])
     return if hide_unpublished_area(@area)
 
-    @problems = @area.problems.shown.with_location.order(popularity: :desc).group_by { |p| p.grade }.sort_by { |grade, _| grade }.reverse
+    # Hardest grade first; problems without a grade yet (nil) go last
+    @problems = @area.problems.shown.with_location.order(popularity: :desc).
+      group_by { |p| p.grade.presence }.sort_by { |grade, _| grade.to_s }.reverse
   end
 end

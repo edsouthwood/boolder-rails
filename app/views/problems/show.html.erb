@@ -1,9 +1,12 @@
-<% set_meta_tags title: t("views.problems.show.metas.title", problem: @problem.name_with_fallback, grade: @problem.grade, area: @problem.area.name) %>
+<% grade = @problem.grade.presence %>
+<% set_meta_tags title: grade ?
+     t("views.problems.show.metas.title", problem: @problem.name_with_fallback, grade: grade, area: @problem.area.name) :
+     t("views.problems.show.metas.title_no_grade", problem: @problem.name_with_fallback, area: @problem.area.name) %>
 <% content_for :json_ld do %>
   <%# A problem is a Place (a spot on a boulder) inside the area's Place, not an event. %>
   <% data = { "@context": "https://schema.org", "@type": "Place",
-              name: "#{@problem.name_with_fallback} (#{@problem.grade})",
-              description: "Bouldering problem, grade #{@problem.grade}, at #{@problem.area.name} on Dartmoor",
+              name: [ @problem.name_with_fallback, ("(#{grade})" if grade) ].compact.join(" "),
+              description: [ "Bouldering problem", ("grade #{grade}" if grade), "at #{@problem.area.name} on Dartmoor" ].compact.join(", "),
               url: area_problem_url(@problem.area, @problem),
               containedInPlace: { "@type": "Place", name: @problem.area.name, url: area_url(@problem.area),
                                   address: { "@type": "PostalAddress", addressRegion: "Devon", addressCountry: "GB" } } } %>
@@ -176,7 +179,7 @@
         <div class="px-4 sm:px-0 py-4">
           <h2 class="text-xl font-semibold mb-3"><%= t("views.problems.show.variants") %></h2>
           <ul class="">
-            <% @problem.variants.sort_by(&:grade).reverse.each do |variant| %>
+            <% @problem.variants.sort_by { |variant| variant.grade.to_s }.reverse.each do |variant| %>
               <li class="mt-2">
                 <%= link_to problem_friendly_path(variant) do %>
                   <%= problem_circle_view(variant) %>
