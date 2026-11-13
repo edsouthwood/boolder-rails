@@ -160,4 +160,25 @@ class CragListImportTest < ActiveSupport::TestCase
     CragListImport.new(@area, list).apply!
     assert keep.reload.hidden, "without a hide list nothing changes"
   end
+
+  test "a hidden problem picked as \"Same as\" stays hidden with its box unticked, and a shown one can still be hidden" do
+    hidden = problem("Photo Wal", "4", hidden: true)
+    shown = problem("Litle Roof", "5")
+    list = "Block\n\t\tPhoto Wall\tf4\n\t\tLittle Roof\tf5\n"
+    import = CragListImport.new(@area, list)
+    rows = import.preview.first.rows
+    assert_equal [ :possible_match, :possible_match ], rows.map(&:action)
+    keys = rows.to_h { [ _1.row.name, _1.row.key ] }
+    choices = { keys["Photo Wall"] => "problem:#{hidden.id}", keys["Little Roof"] => "problem:#{shown.id}" }
+
+    summary = import.apply!(choices: choices, hide: [])
+    assert hidden.reload.hidden, "its box was never ticked for it: stays hidden"
+    assert_not shown.reload.hidden
+    assert_equal [ 0, 0, 2 ], summary.values_at(:hidden, :unhidden, :assigned)
+
+    summary = CragListImport.new(@area, list).apply!(choices: choices, hide: [ keys["Little Roof"] ])
+    assert shown.reload.hidden, "ticking still hides a visible one"
+    assert hidden.reload.hidden
+    assert_equal [ 1, 0 ], summary.values_at(:hidden, :unhidden)
+  end
 end

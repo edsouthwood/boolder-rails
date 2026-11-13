@@ -89,7 +89,7 @@
                     <%= select_tag "choices[#{row.key}]",
                           options_for_select(
                             [ [ "Skip this row", "skip" ] ] +
-                            row_plan.similar.map { |problem| [ "Same as #{problem.name} (#{problem.grade.presence || "no grade"}, ##{problem.id})", "problem:#{problem.id}" ] } +
+                            row_plan.similar.map { |problem| [ "Same as #{problem.name} (#{[ problem.grade.presence || "no grade", "##{problem.id}", ("hidden, stays hidden" if problem.hidden) ].compact.join(", ")})", "problem:#{problem.id}" ] } +
                             [ [ "Create as a new problem", "new" ] ], "skip"),
                           class: "ml-1 text-sm rounded-md border-gray-300" %>
                   <% end %>

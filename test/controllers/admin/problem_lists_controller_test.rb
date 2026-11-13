@@ -115,4 +115,22 @@ class Admin::ProblemListsControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal admin_area_boulders_path(area_slug: "theirs"), URI(response.location).path
     assert_equal 0, @theirs.boulders.count
   end
+
+  test "a hidden problem offered as \"Same as\" is labelled, and picking it with hide unticked keeps it hidden" do
+    hidden = @mine.problems.create!(name: "New Arêtes", grade: "6b+", steepness: "wall", hidden: true)
+    near = @mine.problems.create!(name: "Slabb", grade: "3", steepness: "slab")
+
+    post admin_area_problem_list_preview_path(area_slug: "mine"), params: { text: LIST }
+    assert_response :success
+    assert_select "option[value='problem:#{near.id}']", text: "Same as Slabb (3, ##{near.id})"
+    assert_select "option[value='problem:#{hidden.id}']", text: "Same as New Arêtes (6b+, ##{hidden.id}, hidden, stays hidden)"
+    assert_select "input[type=checkbox][name='hide[]'][checked]", 0
+    key = css_select("select").find { |select| select.to_s.include?("problem:#{hidden.id}") }["name"][/choices\[(.+)\]/, 1]
+
+    post admin_area_problem_list_path(area_slug: "mine"), params: { text: LIST, choices: { key => "problem:#{hidden.id}" } }
+    assert_no_match "shown again", flash[:notice]
+    assert hidden.reload.hidden
+    assert_equal "North Block", hidden.boulder.name
+    assert_not @old.reload.hidden
+  end
 end
