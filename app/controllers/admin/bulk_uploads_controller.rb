@@ -59,9 +59,10 @@ class Admin::BulkUploadsController < Admin::BaseController
           description: row["description"].presence,
         )
 
-        if row["lat"].present? && row["lon"].present?
-          problem.lat = row["lat"].strip
-          problem.lon = row["lon"].strip
+        # One without the other, or something that isn't a coordinate, is a row error
+        if row["lat"].present? || row["lon"].present?
+          problem.lat = row["lat"]
+          problem.lon = row["lon"]
         end
 
         unless problem.valid?

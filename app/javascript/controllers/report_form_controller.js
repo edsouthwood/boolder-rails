@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { sendReport, queueReport, queuedReports, RetryLater } from "offline_reports"
+import { sendReport, queueReport, queuedReports, RetryLater, SpamCheckFailed } from "offline_reports"
 import { matchCached } from "offline_areas"
 
 // "Report a mistake" form. Sends via offline_reports.js; with no connection the
@@ -33,8 +33,8 @@ export default class extends Controller {
   showQueued() {
     const count = queuedReports().length
     this.queuedTarget.textContent = count === 1
-      ? "1 report is saved on this phone, waiting for a connection to send."
-      : `${count} reports are saved on this phone, waiting for a connection to send.`
+      ? "1 report is saved on this phone, waiting to be sent."
+      : `${count} reports are saved on this phone, waiting to be sent.`
     this.queuedTarget.classList.toggle("hidden", count === 0)
   }
 
@@ -66,7 +66,9 @@ export default class extends Controller {
       queueReport(report)
       this.commentTarget.value = ""
       this.showQueued()
-      this.setStatus("No connection — your report is saved on this phone and will be sent automatically when you're back online.", "text-amber-700")
+      this.setStatus(error instanceof SpamCheckFailed
+        ? "Couldn't send just now — your report is saved on this phone and will be sent automatically."
+        : "No connection — your report is saved on this phone and will be sent automatically when you're back online.", "text-amber-700")
     } finally {
       this.sending = false
       this.setBusy(false)

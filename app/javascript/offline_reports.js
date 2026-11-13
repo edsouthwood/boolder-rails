@@ -17,6 +17,15 @@ const FETCH_TIMEOUT_MS = 10000
 // Network trouble (or a throttled 429): keep the report and retry later.
 export class RetryLater extends Error {}
 
+// The server's spam checks turned the post down ("too_fast": the session's form
+// timestamp was too recent or missing; "rejected": the spinner didn't match). That says
+// nothing about the report: any other spam-checked form this session renders in the
+// meantime (another tab, the visitor opening the report form during the wait) resets
+// both. So the report is kept and tried again, up to MAX_SPAM_CHECK_ATTEMPTS times.
+export class SpamCheckFailed extends RetryLater {}
+const SPAM_CHECK_ERRORS = ["too_fast", "rejected"]
+const MAX_SPAM_CHECK_ATTEMPTS = 5
+
 export function queuedReports() {
   try {
     return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []
@@ -39,8 +48,18 @@ export function queueReport(report) {
 }
 
 // Sends one report. Resolves { ok: true } or { ok: false, errors: [...] } (rejected —
-// retrying won't help); throws RetryLater when the server can't be reached.
-export async function sendReport(report) {
+// retrying won't help); throws RetryLater when the server can't be reached or its spam
+// checks turned the post down (SpamCheckFailed).
+// One at a time: each send loads a fresh form, which restarts the session's spam-check
+// clock, so two overlapping sends on a page would get each other turned down.
+let lastSend = Promise.resolve()
+export function sendReport(report) {
+  const send = lastSend.then(() => sendNow(report))
+  lastSend = send.catch(() => {})
+  return send
+}
+
+async function sendNow(report) {
   const started = Date.now()
   let html
   try {
@@ -83,7 +102,9 @@ export async function sendReport(report) {
   if (res.status === 201) return { ok: true }
   if (res.status === 422) {
     const data = await res.json().catch(() => ({}))
-    return { ok: false, errors: data.errors || ["rejected"] }
+    const errors = data.errors || ["rejected"]
+    if (errors.some(error => SPAM_CHECK_ERRORS.includes(error))) throw new SpamCheckFailed(errors.join(", "))
+    return { ok: false, errors }
   }
   throw new RetryLater(`report post: ${res.status}`)
 }
@@ -103,8 +124,16 @@ export async function flushQueuedReports() {
       try {
         result = await sendReport(report)
       } catch (error) {
-        if (error instanceof RetryLater) break
-        throw error
+        if (!(error instanceof RetryLater)) throw error
+        if (!(error instanceof SpamCheckFailed)) break
+        // Kept for the next page load, unless it has been turned down too many times
+        // (e.g. cookies are blocked, so the spam checks can never pass).
+        const attempts = (report.spamCheckAttempts || 0) + 1
+        if (attempts < MAX_SPAM_CHECK_ATTEMPTS) {
+          saveQueue(queuedReports().map(r => r.queuedAt === report.queuedAt ? { ...r, spamCheckAttempts: attempts } : r))
+          break
+        }
+        result = { ok: false, errors: [error.message] }
       }
       // Sent, or rejected for good (e.g. an invalid email): either way it's done.
       if (result.ok) {

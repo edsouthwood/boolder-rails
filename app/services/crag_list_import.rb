@@ -146,7 +146,8 @@ class CragListImport
   # choices: { row key => "new" | "skip" | "problem:<id>" } for :new and :possible_match rows
   #   (:new rows default to "new", :possible_match rows to "skip")
   # update_grades: ids of matched problems whose grade should become the list's
-  # hide: row keys whose problems should be hidden; the rest are shown. nil leaves every
+  # hide: row keys whose problems should be hidden; the rest are shown (except a hidden
+  #   problem chosen for a :possible_match row, which stays hidden). nil leaves every
   #   problem's hidden flag as it is.
   def apply!(choices: {}, update_grades: [], hide: nil)
     choices = choices.to_h.transform_keys(&:to_s)
@@ -174,9 +175,15 @@ class CragListImport
             problem.grade = row_plan.row.grade
             summary[:grades_updated] += 1
           end
-          if hide && problem.hidden != hide.include?(row_plan.row.key)
-            problem.hidden = !problem.hidden
-            summary[problem.hidden ? :hidden : :unhidden] += 1
+          if hide
+            want_hidden = hide.include?(row_plan.row.key)
+            # A hidden problem picked through "Same as …" had no pre-ticked box on the
+            # preview (only exact matches do), so an unticked box doesn't show it again.
+            want_hidden ||= problem.hidden if row_plan.action == :possible_match
+            if problem.hidden != want_hidden
+              problem.hidden = want_hidden
+              summary[problem.hidden ? :hidden : :unhidden] += 1
+            end
           end
           problem.save! if problem.changed?
         end

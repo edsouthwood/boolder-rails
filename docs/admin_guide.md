@@ -504,8 +504,8 @@ Unnamed Slab,,slab,false,,,,
 | `grade` | No | Font grade: `4`, `5`, `5+`, `6a`, `6b+`, `7a`, etc. |
 | `steepness` | **Yes** | See valid values below |
 | `sit_start` | No | `true` or leave blank |
-| `lat` | No | Decimal latitude (e.g. `50.5712`) |
-| `lon` | No | Decimal longitude (e.g. `-3.9341`) |
+| `lat` | No | Decimal latitude (e.g. `50.5712`). Give both `lat` and `lon` or neither |
+| `lon` | No | Decimal longitude (e.g. `-3.9341`). A row with only one, or with something that isn't a coordinate (`50,5712`), is reported as an error and nothing is uploaded |
 | `image_filename` | No | Must match an uploaded image filename exactly |
 | `ukc_url` | No | Full UKC URL for the problem |
 | `description` | No | Free-text description shown on the problem page |
@@ -570,7 +570,9 @@ off the public site (map, area pages, grade lists, search, offline downloads, ot
 photos; its own page is a 404 to the public) and out of the Boulders list counts and the workbench.
 
 - **On the import preview**, tick **hide** on a row. Rows for problems that are already hidden
-  start ticked; unticking one shows it again.
+  start ticked; unticking one shows it again. A hidden problem you pick from a **check** row's
+  "Same as …" list (marked "hidden, stays hidden" there) stays hidden whether or not its box is
+  ticked; show it again from the Boulders list or its admin page.
 - **On the Boulders list**, expand a boulder and click **Hide** next to a problem. Hidden ones are
   listed struck through under their boulder (the summary says "(2 hidden)"), each with **Show
   again**. A boulder whose problems are all hidden shows as "No problems", under the **All** tab.
@@ -949,7 +951,7 @@ The area's problem list is ordered by popularity (or circuit order on a circuit 
 
 From a problem's show page you can:
 - Edit name, grade, steepness, sit start, UKC URL
-- Set or update location (lat/lon)
+- Set or update location (lat/lon). Both must be decimal numbers (`50.5712`, `-3.9341`); anything else (`50,5712`, a missing one) is refused with a message and the old location is kept. Clearing **both** boxes removes the location
 - Add a topo photo
 - Draw lines on existing topos. Click a line's photo to open the line editor (line, start holds and not-in areas)
 - View contribution requests
@@ -1400,7 +1402,9 @@ It works with no signal: the form is saved with each area, and a report that can
 **kept on the phone** ("your report is saved on this phone and will be sent automatically when
 you're back online"). The next time any page of the site opens with a connection, it's sent
 and a message confirms it. Sending takes about 5 seconds, because the spam check rejects forms
-submitted within 4 seconds of loading.
+submitted within 4 seconds of loading. If the spam check turns a send down (it can when the
+report form is opened in another tab during those seconds), the report is kept and tried again
+on the next page; it's only given up on after five such tries.
 
 For developers: `app/javascript/offline_reports.js` (queue in localStorage `queued_reports`,
 flushed from `application.js` on every page load and on `online`) and
@@ -1409,7 +1413,10 @@ flushed from `application.js` on every page load and on `online`) and
 valid), waits 4.5 s, then posts asking for JSON: `ReportsController#create` answers 201, or
 422 with `errors` (validation, `rejected` for the honeypot, `too_fast` for the timestamp check)
 — the HTML responses redirect in all three cases, so they can't be told apart. Network
-failures and 429s keep the report queued. `script/offline_check.mjs` with `REPORT_SEND=1`
+failures and 429s keep the report queued. So do `too_fast` and `rejected`: any other
+spam-checked form the session renders during the wait resets the timestamp and spinner, which
+says nothing about the report. Each such failure is counted on the queued report
+(`spamCheckAttempts`) and it is dropped at five. Sends within a page run one at a time. `script/offline_check.mjs` with `REPORT_SEND=1`
 also checks the send-on-reconnect (creates a real report: dev only).
 
 ### Installing the app

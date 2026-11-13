@@ -69,4 +69,27 @@ class Admin::ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?][title='Edit this line']", edit_admin_line_path(line)
     assert_match "Click the photo to edit the line", response.body
   end
+
+  test "a mistyped coordinate is refused with a message and the location is kept" do
+    @easy.update!(lat: 50.5712, lon: -3.9341)
+
+    patch admin_problem_url(@easy), params: { problem: { name: "Bravo", lat: "50,5712", lon: "-3.9341" } }
+    assert_response :unprocessable_entity
+    assert_match "Latitude must be a number", flash[:error]
+    assert_equal [ 50.5712, -3.9341 ], [ @easy.reload.lat, @easy.lon ]
+  end
+
+  test "saving the form as loaded keeps the location, and blanking both coordinates removes it" do
+    @easy.update!(lat: 50.5712, lon: -3.9341)
+    get edit_admin_problem_url(@easy)
+    typed = %w[lat lon].to_h { |field| [ field, css_select("input[name='problem[#{field}]']").first["value"] ] }
+
+    patch admin_problem_url(@easy), params: { problem: { name: "Bravo", **typed } }
+    assert_redirected_to admin_problem_path(@easy)
+    assert_equal [ 50.5712, -3.9341 ], [ @easy.reload.lat, @easy.lon ]
+
+    patch admin_problem_url(@easy), params: { problem: { name: "Bravo", lat: "", lon: "" } }
+    assert_redirected_to admin_problem_path(@easy)
+    assert_nil @easy.reload.location
+  end
 end
