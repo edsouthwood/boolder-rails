@@ -33,4 +33,23 @@ class Admin::BulkUploadsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, problem.lines.count
     assert problem.lines.first.topo.photo.attached?
   end
+
+  test "a row with a mistyped or half-given location is reported and nothing is saved" do
+    { "abc,-3.93" => /Row 2 \(Arete\): Latitude must be a number/,
+      "50.57," => /Row 2 \(Arete\): Latitude and longitude go together/ }.each do |location, message|
+      csv = Rack::Test::UploadedFile.new(StringIO.new("name,grade,lat,lon\nArete,6a,#{location}\n"), "text/csv", original_filename: "problems.csv")
+      assert_no_difference "Problem.count" do
+        post admin_bulk_uploads_url, params: { area_id: @area.id, csv_file: csv }
+      end
+      assert_match message, flash[:error]
+    end
+  end
+
+  test "a row with a location places the problem" do
+    csv = Rack::Test::UploadedFile.new(StringIO.new("name,grade,lat,lon\nArete,6a, 50.57 ,-3.93\n"), "text/csv", original_filename: "problems.csv")
+    post admin_bulk_uploads_url, params: { area_id: @area.id, csv_file: csv }
+
+    problem = @area.problems.find_by!(name: "Arete")
+    assert_equal [ 50.57, -3.93 ], [ problem.lat, problem.lon ]
+  end
 end

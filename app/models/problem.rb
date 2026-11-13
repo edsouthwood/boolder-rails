@@ -20,6 +20,7 @@ class Problem < ApplicationRecord
   # A newly located problem with no boulder belongs to the outline it sits on
   before_save :fill_boulder_from_location, if: -> { boulder_id.nil? && location.present? && will_save_change_to_location? }
   validate :boulder_in_same_area
+  validate :location_input_valid
 
   # Moving a problem any other way (dragged on the map, typed in, from a contribution)
   # places it by hand, so it's no longer an estimate (see Topo#estimate_location!)
@@ -38,13 +39,18 @@ class Problem < ApplicationRecord
     location&.lon
   end
 
+  # Latitude and longitude as typed (admin problem form, bulk upload). The location only
+  # changes once both have been given: two numbers move it, two blanks remove it, and
+  # anything else leaves it alone and fails validation (see location_input_valid).
   def lat=(value)
     @lat_input = value.presence
+    @lat_given = true
     rebuild_location
   end
 
   def lon=(value)
     @lon_input = value.presence
+    @lon_given = true
     rebuild_location
   end
 
@@ -267,9 +273,34 @@ class Problem < ApplicationRecord
   end
 
   def rebuild_location
-    if @lat_input && @lon_input
-      self.location = FACTORY.point(@lon_input.to_f, @lat_input.to_f)
+    @location_input_error = nil
+    return unless @lat_given && @lon_given
+    return self.location = nil if @lat_input.nil? && @lon_input.nil?
+
+    lat = coordinate(@lat_input, 90)
+    lon = coordinate(@lon_input, 180)
+    if lat && lon
+      self.location = FACTORY.point(lon, lat)
+    elsif @lat_input.nil? || @lon_input.nil?
+      @location_input_error = "Latitude and longitude go together: fill in both, or clear both to remove the location"
+    elsif lat.nil?
+      @location_input_error = "Latitude must be a number between -90 and 90, like 50.5712 (not \"#{@lat_input}\")"
+    else
+      @location_input_error = "Longitude must be a number between -180 and 180, like -3.9341 (not \"#{@lon_input}\")"
     end
+  end
+
+  # "50,6", "abc", "NaN" and out-of-range values are nil, not a silent 50.0 or 0.0
+  def coordinate(input, limit)
+    input = input.strip if input.is_a?(String)
+    return if input.is_a?(String) && !input.match?(/\A[-+]?\d+(\.\d+)?(e[-+]?\d+)?\z/i)
+
+    number = Float(input, exception: false)
+    number if number&.finite? && number.abs <= limit
+  end
+
+  def location_input_valid
+    errors.add(:base, @location_input_error) if @location_input_error
   end
 
   def validate_circuit_fields

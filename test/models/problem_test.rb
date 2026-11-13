@@ -36,4 +36,44 @@ class ProblemTest < ActiveSupport::TestCase
     same.update!(name: "Marie Rose (assis)")
     assert_empty Problem.bleau_sit_start_mismatches, "an (assis) name is a sit start whatever bleau.info says"
   end
+
+  test "typed coordinates place the problem, as numbers or text" do
+    area = Area.create!(name: "Coordinate Tor", slug: "coordinate-tor")
+    problem = area.problems.create!(name: "Typed", grade: "5", steepness: "wall", lat: " 50.5712 ", lon: "-3.9341")
+    assert_equal [ 50.5712, -3.9341 ], [ problem.lat, problem.lon ]
+
+    problem.update!(lat: 50.6, lon: -3.9)
+    assert_equal [ 50.6, -3.9 ], [ problem.reload.lat, problem.lon ]
+  end
+
+  test "coordinates that aren't coordinates are refused and the location is left alone" do
+    area = Area.create!(name: "Coordinate Tor", slug: "coordinate-tor")
+    problem = area.problems.create!(name: "Typed", grade: "5", steepness: "wall", lat: 50.5712, lon: -3.9341)
+
+    { [ "50,5712", "-3.9341" ] => /Latitude must be a number.*50,5712/,
+      [ "50.5712", "abc" ] => /Longitude must be a number.*abc/,
+      [ "NaN", "-3.9341" ] => /Latitude must be a number/,
+      [ "95", "-3.9341" ] => /Latitude must be a number between -90 and 90/,
+      [ "50.5712", "-393.41" ] => /Longitude must be a number between -180 and 180/,
+      [ "50.5712", "" ] => /go together/,
+      [ nil, "-3.9341" ] => /go together/ }.each do |(lat, lon), message|
+      assert_not problem.update(lat: lat, lon: lon), "#{lat.inspect}, #{lon.inspect} should be refused"
+      assert_match message, problem.errors.full_messages.to_sentence
+      assert_equal [ 50.5712, -3.9341 ], [ problem.reload.lat, problem.lon ]
+    end
+
+    assert problem.update(lat: "50.58", lon: "-3.93"), "a corrected pair goes through"
+    assert_equal [ 50.58, -3.93 ], [ problem.reload.lat, problem.lon ]
+  end
+
+  test "clearing both coordinates removes the location, clearing neither keeps it" do
+    area = Area.create!(name: "Coordinate Tor", slug: "coordinate-tor")
+    problem = area.problems.create!(name: "Typed", grade: "5", steepness: "wall", lat: 50.5712, lon: -3.9341)
+
+    problem.update!(name: "Renamed")
+    assert problem.reload.location
+
+    problem.update!(lat: "", lon: "")
+    assert_nil problem.reload.location
+  end
 end
