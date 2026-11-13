@@ -1086,8 +1086,11 @@ Users can submit photos and route information to improve topos. The contribution
 queue by default, shows a photo thumbnail, submission date and comment preview for quick
 triage, and is paginated. A badge at the top shows how many contributions are still pending.
 Tick the checkboxes to **bulk-close** several at once (with an optional shared note that goes
-into the decline emails) — handy for clearing spam or duplicates. Acceptance stays one-at-a-
-time because each import needs its own photo/line/GPS decisions.
+into the decline emails) — handy for clearing spam or duplicates. Only pending contributions
+have a checkbox: accepted and closed ones are left as they are. Acceptance stays one-at-a-
+time because each import needs its own photo/line/GPS decisions. A contribution put back to
+pending and accepted again is not imported twice: a photo or line that's already on the site
+is left alone.
 
 The three states are:
 

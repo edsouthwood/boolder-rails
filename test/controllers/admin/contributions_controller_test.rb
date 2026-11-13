@@ -256,4 +256,51 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-line-preview-excluded-areas-value]"
     assert_match "1 start hold and 1 not-in area on Topo ##{topo.id}", response.body
   end
+
+  test "bulk_close leaves accepted contributions alone and doesn't email their contributors" do
+    pending = Contribution.create!(state: "pending", problem: @problem, comment: "a", contributor_email: "a@example.com")
+    accepted = Contribution.create!(state: "accepted", problem: @problem, comment: "b", contributor_email: "b@example.com",
+      accepted_at: 1.day.ago)
+
+    assert_enqueued_emails 1 do
+      post bulk_close_admin_contributions_url, params: { contribution_ids: [ pending.id, accepted.id ] }
+    end
+
+    assert_equal "closed", pending.reload.state
+    assert_equal "accepted", accepted.reload.state
+    assert_nil accepted.closed_at
+    follow_redirect!
+    assert_match "Closed 1 contribution. 1 already reviewed, left as it was.", response.body
+  end
+
+  test "index only offers the bulk-close checkbox on pending contributions" do
+    pending = Contribution.create!(state: "pending", problem: @problem, comment: "a")
+    accepted = Contribution.create!(state: "accepted", problem: @problem, comment: "b")
+
+    get admin_contributions_url(state: "")
+
+    assert_response :success
+    assert_select "input[name='contribution_ids[]'][value=?]", pending.id.to_s, count: 1
+    assert_select "input[name='contribution_ids[]'][value=?]", accepted.id.to_s, count: 0
+  end
+
+  test "putting a contribution back to pending and accepting it again doesn't import it twice" do
+    contribution = Contribution.create!(state: "pending", problem: @problem, comment: "x",
+      line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
+    contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "boulder.jpg", content_type: "image/jpeg")
+    accept = { contribution: { state: "accepted", apply_photo: "1", apply_gps: "1" } }
+
+    assert_difference [ "Topo.count", "Line.count" ], 1 do
+      patch admin_contribution_url(contribution), params: accept
+    end
+    patch admin_contribution_url(contribution), params: { contribution: { state: "pending" } }
+
+    assert_no_difference [ "Topo.count", "Line.count" ] do
+      patch admin_contribution_url(contribution), params: accept
+    end
+
+    assert_equal "accepted", contribution.reload.state
+    follow_redirect!
+    assert_match "already imported earlier, nothing added", response.body
+  end
 end

@@ -130,4 +130,63 @@ class ContributionImporterTest < ActiveSupport::TestCase
     Line.create!(problem: @area.problems.create!(steepness: "wall"), topo: topo)
     topo
   end
+
+  test "importing twice doesn't add the photo and line again" do
+    contribution = Contribution.create!(state: "accepted", problem: @problem, comment: "x",
+      line_coordinates: '[{"x":0.2,"y":0.8},{"x":0.4,"y":0.2}]', start_holds: '[{"x":0.2,"y":0.8}]')
+    contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "boulder.jpg", content_type: "image/jpeg")
+    ContributionImporter.new(contribution).import!
+
+    again = ContributionImporter.new(contribution)
+    assert_no_difference [ "Topo.count", "Line.count" ] do
+      again.import!
+    end
+
+    assert again.already_imported
+    assert_nil again.created_topo
+  end
+
+  test "importing twice doesn't draw the line on an existing topo again" do
+    topo = existing_topo
+    contribution = Contribution.create!(state: "accepted", problem: @problem, existing_topo: topo,
+      line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]', start_holds: '[{"x":0.2,"y":0.8}]')
+    ContributionImporter.new(contribution).import!
+
+    again = ContributionImporter.new(contribution)
+    assert_no_difference "Line.count" do
+      again.import!
+    end
+
+    assert again.already_imported
+  end
+
+  test "a new line for a problem that already has a different one on the topo still imports" do
+    topo = existing_topo
+    Line.create!(problem: @problem, topo: topo)
+    contribution = Contribution.create!(state: "accepted", problem: @problem, existing_topo: topo,
+      line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
+
+    importer = ContributionImporter.new(contribution)
+    assert_difference "Line.count", 1 do
+      importer.import!
+    end
+
+    assert_not importer.already_imported
+  end
+
+  test "a photo an admin has deleted since is imported afresh" do
+    contribution = Contribution.create!(state: "accepted", problem: @problem, comment: "x",
+      line_coordinates: '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]')
+    contribution.photos.attach(io: StringIO.new("fake-bytes"), filename: "boulder.jpg", content_type: "image/jpeg")
+    first = ContributionImporter.new(contribution)
+    first.import!
+    first.created_topo.destroy!
+
+    again = ContributionImporter.new(contribution)
+    assert_difference [ "Topo.count", "Line.count" ], 1 do
+      again.import!
+    end
+
+    assert_not again.already_imported
+  end
 end

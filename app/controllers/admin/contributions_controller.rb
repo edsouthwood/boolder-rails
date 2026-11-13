@@ -99,12 +99,16 @@ class Admin::ContributionsController < Admin::BaseController
 
   # Closes (declines) several contributions at once, with an optional shared note. Accept is
   # deliberately not bulk: each acceptance needs per-contribution photo/line/GPS decisions.
+  # Only pending ones are closed: an accepted contribution is already on the site, and its
+  # contributor must not be emailed that it was declined.
   def bulk_close
     ids = Array(params[:contribution_ids]).reject(&:blank?)
     note = params[:moderator_note].presence
     closed = 0
+    selected = Contribution.where(id: ids)
+    left_alone = selected.where.not(state: "pending").count
 
-    Contribution.where(id: ids).where.not(state: "closed").find_each do |contribution|
+    selected.pending.find_each do |contribution|
       attrs = { state: "closed", closed_at: Time.current, reviewed_by: current_admin_user&.username }
       attrs[:moderator_note] = note if note
       begin
@@ -116,7 +120,10 @@ class Admin::ContributionsController < Admin::BaseController
       end
     end
 
-    flash[:notice] = "Closed #{closed} #{'contribution'.pluralize(closed)}."
+    flash[:notice] = [
+      "Closed #{closed} #{'contribution'.pluralize(closed)}.",
+      ("#{left_alone} already reviewed, left as #{left_alone == 1 ? 'it was' : 'they were'}." if left_alone > 0)
+    ].compact.join(" ")
     redirect_to admin_contributions_path(state: session[:contributions_filter].presence)
   end
 
@@ -196,6 +203,7 @@ class Admin::ContributionsController < Admin::BaseController
       parts << helpers.link_to("line added to Topo ##{importer.created_line.topo_id}",
         edit_admin_topo_path(importer.created_line.topo), class: "underline")
     end
+    parts << "already imported earlier, nothing added" if importer&.already_imported
     parts << "GPS applied" if importer&.applied_gps
     parts << "#{Contribution.pending.count} pending remaining"
 
