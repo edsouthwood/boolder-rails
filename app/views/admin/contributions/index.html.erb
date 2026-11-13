@@ -49,8 +49,11 @@
               <% @contributions.each do |contribution| %>
                 <tr class="align-top h-16">
                   <td class="px-4 py-2">
-                    <input type="checkbox" name="contribution_ids[]" value="<%= contribution.id %>"
-                           data-bulk-select-target="checkbox" data-action="bulk-select#refresh">
+                    <%# Only pending contributions can be closed in bulk %>
+                    <% if contribution.state == "pending" %>
+                      <input type="checkbox" name="contribution_ids[]" value="<%= contribution.id %>"
+                             data-bulk-select-target="checkbox" data-action="bulk-select#refresh">
+                    <% end %>
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <%= link_to contribution.id, edit_admin_contribution_path(contribution), class: "text-sm text-granite" %>

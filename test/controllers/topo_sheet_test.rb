@@ -57,4 +57,20 @@ class TopoSheetTest < ActionDispatch::IntegrationTest
     get area_print_url(hidden.slug)
     assert_response :not_found
   end
+
+  test "the sheet leaves out problems on a hidden boulder" do
+    hidden_boulder = @area.boulders.create!(name: "Out Of Scope Block", hidden: true)
+    shown = @area.problems.create!(name: "Shown Wall", grade: "4", steepness: "wall", lat: 50.6, lon: -3.9)
+    on_hidden = @area.problems.create!(name: "Hidden Block Arete", grade: "5", steepness: "wall", lat: 50.6, lon: -3.9, boulder: hidden_boulder)
+    topo_with([ shown, 0.2 ], [ on_hidden, 0.6 ])
+    topo_with([ on_hidden, 0.4 ])
+
+    get area_print_url(@area.slug)
+
+    assert_response :success
+    assert_match "Shown Wall", response.body
+    assert_no_match "Hidden Block Arete", response.body
+    assert_select "section.topo-block img", count: 1
+    assert_select "section.topo-block svg text", 1
+  end
 end

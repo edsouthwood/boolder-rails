@@ -296,6 +296,8 @@ en:
         title: Know how to code?
         p1_html: We are actively looking for a %{link_web} and an %{link_ios} dev. Come and join us!
     areas:
+      problems:
+        no_grade: No grade yet
       index:
         popular: Popular
         areas: All areas
@@ -334,6 +336,7 @@ en:
         variants: Variants
         metas:
           title: "%{problem} - %{grade} - %{area}"
+          title_no_grade: "%{problem} - %{area}"
       index:
         metas:
           title: "%{grade} bouldering problems on Dartmoor"
