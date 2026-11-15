@@ -4,9 +4,9 @@ import exifr from 'exifr/full'
 export default class extends Controller {
   static targets = [
     'previewImage', 'previewContainer', 'canvas', 'linePrompt', 'lineEditor', 'coordsField',
-    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField',
+    'latField', 'lonField', 'gpsStatus', 'topoThumbnail', 'existingTopoField', 'sourceContributionField',
     'holdsField', 'excludedField', 'modeButton', 'modeHint', 'newAreaButton',
-    'viewport', 'zoomWrapper', 'zoomLabel'
+    'viewport', 'zoomWrapper', 'zoomLabel', 'input'
   ]
 
   static ZOOM_LEVELS = [1, 2]
@@ -93,6 +93,9 @@ export default class extends Controller {
     const file = event.target.files[0]
     if (!file) return
 
+    // A new upload replaces any photo picked from the thumbnails
+    this.clearPicked()
+
     // Show photo preview for line drawing
     const url = URL.createObjectURL(file)
     this.lineEditorTarget.classList.remove('hidden')
@@ -123,42 +126,56 @@ export default class extends Controller {
     }
   }
 
+  // A photo already on the site: the line is drawn on it
   selectExistingTopo(event) {
-    const btn = event.currentTarget
-    const topoId = btn.dataset.topoId
-    const mediumUrl = btn.dataset.mediumUrl
+    this.pickThumbnail(event.currentTarget, this.existingTopoFieldTarget, event.currentTarget.dataset.topoId)
+  }
 
-    // Toggle deselect
-    if (this.hasExistingTopoFieldTarget && this.existingTopoFieldTarget.value === topoId) {
-      this.existingTopoFieldTarget.value = ''
-      btn.classList.remove('border-granite')
-      btn.classList.add('border-transparent')
+  // One of the visitor's own recent photos: sent again with this problem's line
+  selectRecentPhoto(event) {
+    this.pickThumbnail(event.currentTarget, this.sourceContributionFieldTarget, event.currentTarget.dataset.contributionId)
+  }
+
+  // Picking a thumbnail shows it in the line editor; picking it again lets go of it.
+  // Only one thumbnail, existing or recent, is picked at a time.
+  pickThumbnail(btn, field, value) {
+    const deselect = field.value === value
+    this.clearPicked()
+    this.resetDrawing()
+
+    if (deselect) {
       this.lineEditorTarget.classList.add('hidden')
       this.linePromptTarget.classList.remove('hidden')
-      this.points = []
-      this.holds = []
-      this.excludedAreas = []
-      this.startNewArea = true
-      this.syncFields()
       return
     }
 
-    // Deselect any previously selected thumbnail
-    this.topoThumbnailTargets.forEach(t => {
-      t.classList.remove('border-granite')
-      t.classList.add('border-transparent')
-    })
-
+    field.value = value
     btn.classList.remove('border-transparent')
     btn.classList.add('border-granite')
-
-    if (this.hasExistingTopoFieldTarget) this.existingTopoFieldTarget.value = topoId
+    if (this.hasInputTarget) this.inputTarget.value = ''
 
     this.lineEditorTarget.classList.remove('hidden')
     this.linePromptTarget.classList.add('hidden')
 
     this.previewImageTarget.onload = () => { this.setupCanvas() }
-    this.previewImageTarget.src = mediumUrl
+    this.previewImageTarget.src = btn.dataset.mediumUrl
+  }
+
+  clearPicked() {
+    if (this.hasExistingTopoFieldTarget) this.existingTopoFieldTarget.value = ''
+    if (this.hasSourceContributionFieldTarget) this.sourceContributionFieldTarget.value = ''
+    this.topoThumbnailTargets.forEach(t => {
+      t.classList.remove('border-granite')
+      t.classList.add('border-transparent')
+    })
+  }
+
+  resetDrawing() {
+    this.points = []
+    this.holds = []
+    this.excludedAreas = []
+    this.startNewArea = true
+    this.syncFields()
   }
 
   // Match the canvas to the photo's displayed size (which changes with zoom) and redraw

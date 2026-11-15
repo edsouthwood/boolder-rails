@@ -124,6 +124,29 @@
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <div class="px-4 py-6 sm:p-8">
 
+        <%# The visitor's own recent photos: the next problem on the same face goes on the same photo %>
+        <% if @recent_photos.present? %>
+          <div class="mb-4">
+            <p class="text-sm font-semibold text-gray-800"><%= t("views.mapping.contributions.new.recent_photos") %></p>
+            <p class="text-xs text-gray-500 mb-3"><%= t("views.mapping.contributions.new.recent_photos_description") %></p>
+            <div class="flex flex-wrap gap-3">
+              <% @recent_photos.each do |recent| %>
+                <% photo = recent.photos.first %>
+                <button type="button"
+                        data-contribution-photo-target="topoThumbnail"
+                        data-action="click->contribution-photo#selectRecentPhoto"
+                        data-contribution-id="<%= recent.id %>"
+                        data-medium-url="<%= url_for(public_photo(photo)) %>"
+                        title="<%= recent.problem&.name_with_fallback || recent.problem_name %>"
+                        class="border-2 border-transparent rounded-lg overflow-hidden hover:border-granite focus:outline-none focus:border-granite transition-colors">
+                  <%= image_tag photo.variant(resize_to_fill: [ 256, 160 ], saver: { quality: 60, strip: true }), class: "block w-32 h-20 object-cover",
+                        alt: t("views.mapping.contributions.new.recent_photo_alt", name: recent.problem&.name_with_fallback || recent.problem_name) %>
+                </button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
         <%# Existing topo picker — shown first when area topos are available %>
         <% if @area_topos.present? %>
           <div class="mb-4">
@@ -188,6 +211,7 @@
       <div class="px-4 py-6 sm:p-8">
 
         <%= form.hidden_field :existing_topo_id, data: { "contribution-photo-target": "existingTopoField" } %>
+        <%= hidden_field_tag "contribution[source_contribution_id]", params.dig(:contribution, :source_contribution_id), data: { "contribution-photo-target": "sourceContributionField" } %>
 
         <p class="text-sm text-gray-500 italic" data-contribution-photo-target="linePrompt">
           <%= t("views.mapping.contributions.new.line_upload_photo_first") %>
