@@ -120,4 +120,14 @@ class Mapping::CragSuggestionsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_nil Contribution.last.crag_suggestion
   end
+
+  test "once reviewed, its page says so instead of offering more" do
+    suggest
+    crag = CragSuggestion.last
+    crag.accept!(reviewed_by: "admin")
+
+    get mapping_crag_suggestion_url(crag)
+    assert_select "[data-reviewed]"
+    assert_select "a[href=?]", new_mapping_photo_contribution_path(crag_suggestion_id: crag.id), count: 0
+  end
 end

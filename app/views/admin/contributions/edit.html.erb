@@ -69,7 +69,9 @@
               <% if suggestion.pending? %><span class="text-amber-700">: review the crag first, which makes its area.</span><% end %>
             </p>
           <% end %>
-          <% if @contribution.area %>
+          <% if @contribution.crag_suggestion %>
+            <%# said above %>
+          <% elsif @contribution.area %>
             <p class="text-sm">Sent from the <%= @contribution.area.name %> mapping list</p>
           <% elsif @contribution.area_name.present? %>
             <p class="text-sm">Crag given by the contributor: <span class="font-medium"><%= @contribution.area_name %></span></p>

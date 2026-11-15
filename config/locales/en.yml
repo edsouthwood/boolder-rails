@@ -156,6 +156,7 @@ en:
             one: 1 photo
             other: "%{count} photos"
           done: "That's all: we'll email you once it's been reviewed, if you gave your email."
+          reviewed: "This crag has been reviewed, so nothing more can be added to it here. Thanks! To send more, use the normal contribution forms."
         photos:
           title: "Photos of boulders at %{name}"
           intro: "This crag isn't on the site yet, so there are no boulders to choose. Send a photo of each boulder face; we'll work out which is which from the photos and their GPS."

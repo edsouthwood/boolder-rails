@@ -27,7 +27,7 @@ class Admin::CragSuggestionsController < Admin::BaseController
 
     CragSuggestionMailer.with(crag_suggestion: @crag_suggestion).reviewed_email.deliver_later
     link = helpers.link_to("Photos to draw at #{area.name}", admin_area_topos_path(area_slug: area.slug, undrawn: 1), class: "underline")
-    flash[:notice] = "New area \"#{area.name}\" created, unpublished. #{link}; its problems are listed below to review.".html_safe
+    flash[:notice] = "New area \"#{ERB::Util.html_escape(area.name)}\" created, unpublished. #{link}; its problems are listed below to review.".html_safe
     redirect_to admin_crag_suggestion_path(@crag_suggestion)
   rescue ActiveRecord::RecordInvalid => e
     redirect_to admin_crag_suggestion_path(@crag_suggestion), flash: { error: "Couldn't accept: #{e.record.errors.full_messages.to_sentence}" }
