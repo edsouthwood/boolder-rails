@@ -4,6 +4,8 @@ class Line < ApplicationRecord
   # The contribution whose drawing (on the contributor's own photo) this line is to be redrawn
   # from: set when an admin put the problem on this photo instead of making a new topo
   belongs_to :reference_contribution, class_name: "Contribution", optional: true
+  # The same problem's line on the photo this one's topo replaces, shown while it's redrawn
+  belongs_to :reference_line, class_name: "Line", optional: true
   accepts_nested_attributes_for :topo
 
   audited

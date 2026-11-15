@@ -1034,6 +1034,37 @@ Like start holds, not-in areas belong to the line's photo, and contributors can 
 
 **Zoom:** to place holds or area corners precisely, use the **Zoom − / +** controls (1× or 2×) in the line editor's toolbar, then scroll to pan. The contribution form has the same − / + buttons next to Undo and Clear. Zoom only changes the view. Points are saved the same way at any zoom level.
 
+### Replacing a photo with a better one {#replacing-photos}
+
+When a better photo of a face arrives, it replaces the old topo without the face losing its
+lines on the site. The lines are redrawn on the new photo: their points are fractions of the
+old image, so they don't fit another one.
+
+1. Get the better photo onto the site as a topo: accept it from **Photos (N)**, upload it from
+   **+ Add → Upload photos**, or accept the contribution it came with as a new topo.
+2. Open its workbench, open **Better than an existing photo?** in the sidebar, pick the photo it
+   replaces and click **Replace it with this photo**. Offered: published photos in the area of
+   the same boulder (tied, drawn or matched) or sharing a problem with it. The new photo is now
+   **unpublished**: climbers keep seeing the old one.
+3. Click **Bring all N across**. Each problem on the old photo is added here undrawn.
+4. Draw each one. **Drawing guides** under the photo shows the selected problem's line, start
+   holds and not-in areas on the old photo.
+5. When every problem is drawn, **Swap: put this photo on the site** publishes the new photo and
+   unpublishes the old one, in one step. Problem pages switch to the new photo straight away.
+   If a problem was left off the new photo (not visible in it), the confirm says so: it loses
+   its photo.
+6. The old photo is kept, unpublished, with **Undo swap** on its workbench (and a note on its
+   topo page). Undo puts it back and unpublishes the new one again. Delete it later if you like.
+
+**Stop replacing** cancels before the swap (the new photo stays unpublished: publish it from its
+topo page if it should show as a separate photo).
+
+Why a new topo rather than a new file on the old one: `/proxy/topos/:id` is cached for ever by
+browsers, Cloudflare and offline saves, so the old picture would stay under the new lines. A
+new topo has a new address; saved offline areas show "Update available" after the swap.
+Code: `Topo#replace!`, `#bring_problems_across!`, `#swap_in!`, `#undo_swap!`;
+`lines.reference_line_id` links each redrawn line to its old one.
+
 ### Photo to the left / right (public problem pages) {#topo-neighbours}
 
 A problem page's photo has **‹ ›** buttons that step to the nearest photo to the left or right, as if you turned and walked along the rocks. The **← / →** keys do the same on a computer. Each button goes to the most climbed problem on that photo. `TopoNeighbours` (`app/services/topo_neighbours.rb`) works it out on the fly:

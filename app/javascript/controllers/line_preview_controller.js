@@ -5,6 +5,12 @@ export default class extends Controller {
   static values = { coordinates: Array, holds: Array, excludedAreas: Array }
 
   connect() {
+    // Redraw when the photo changes size: a window resize, or shown after being hidden
+    // (a hidden photo has no size to draw at)
+    if (this.hasImageTarget && window.ResizeObserver) {
+      this.observer = new ResizeObserver(() => this.draw())
+      this.observer.observe(this.imageTarget)
+    }
     if (this.hasImageTarget) {
       if (this.imageTarget.complete) {
         requestAnimationFrame(() => this.draw())
@@ -12,6 +18,10 @@ export default class extends Controller {
         this.imageTarget.addEventListener('load', () => this.draw())
       }
     }
+  }
+
+  disconnect() {
+    this.observer?.disconnect()
   }
 
   draw() {

@@ -44,6 +44,10 @@ Rails.application.routes.draw do
         get   :workbench
         post  :quick_problem
         patch :boulder, action: :choose_boulder
+        patch :replaces, action: :choose_replaced
+        post  :bring_problems
+        post  :swap
+        post  :undo_swap
       end
     end
     resources :problem_imports

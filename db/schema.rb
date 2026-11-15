@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -217,8 +217,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.json "start_holds"
     t.json "excluded_areas"
     t.bigint "reference_contribution_id"
+    t.bigint "reference_line_id"
     t.index ["problem_id"], name: "index_lines_on_problem_id"
     t.index ["reference_contribution_id"], name: "index_lines_on_reference_contribution_id"
+    t.index ["reference_line_id"], name: "index_lines_on_reference_line_id"
     t.index ["topo_id"], name: "index_lines_on_topo_id"
   end
 
@@ -335,6 +337,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "contributions", "areas", on_delete: :nullify
   add_foreign_key "contributions", "topos", column: "merge_topo_id", on_delete: :nullify
   add_foreign_key "lines", "contributions", column: "reference_contribution_id", on_delete: :nullify
+  add_foreign_key "lines", "lines", column: "reference_line_id", on_delete: :nullify
   add_foreign_key "photo_contributions", "areas"
   add_foreign_key "photo_contributions", "boulders", column: "gps_boulder_id", on_delete: :nullify
   add_foreign_key "photo_contributions", "boulders", on_delete: :nullify

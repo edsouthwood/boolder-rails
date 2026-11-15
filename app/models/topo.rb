@@ -97,6 +97,110 @@ class Topo < ApplicationRecord
     wkt && FACTORY.parse_wkt(wkt)
   end
 
+  # ─── Replacing a photo with a better one ─────────────────────────────────────
+  # A better photo of a face becomes its own topo, kept unpublished while every problem is
+  # redrawn on it (lines can't be copied: their points are fractions of the other image).
+  # Swapping then publishes it and unpublishes the old one, kept for undo. A new topo rather
+  # than a new file on the old one, because /proxy/topos/:id is cached forever by id.
+
+  class ReplacementError < StandardError; end
+
+  def replaces_topo
+    Topo.find_by(id: metadata&.dig("replaces_topo_id"))
+  end
+
+  def replaced_by_topo
+    Topo.find_by(id: metadata&.dig("replaced_by_topo_id"))
+  end
+
+  # Published topos this photo could replace: the same boulder's, then ones sharing a
+  # problem with it, in its area
+  def replacement_candidates
+    return Topo.none unless self[:area_id]
+
+    boulder_id = matched_boulder_id
+    scope = Topo.published.in_area(Area.find(self[:area_id])).where.not(id: id)
+    # topos.boulder_id is filled in by a background job, so also look at the problems drawn
+    # on each photo and the boulder it was tied to by hand
+    related = Line.unscoped.where(problem_id: lines.select(:problem_id))
+    related = related.or(Line.unscoped.where(problem_id: Problem.where(boulder_id: boulder_id).select(:id))) if boulder_id
+    candidates = scope.where(id: related.select(:topo_id))
+    if boulder_id
+      candidates = candidates.or(scope.where(boulder_id: boulder_id)).
+        or(scope.where("topos.metadata->>'chosen_boulder_id' = ?", boulder_id.to_s))
+    end
+    candidates.order(:id)
+  end
+
+  # Marks this photo as the replacement for old (nil cancels) and keeps it off the site
+  # until the swap
+  def replace!(old)
+    if old
+      raise ReplacementError, "Choose a different photo" if old.id == id
+      raise ReplacementError, "That photo isn't published" unless old.published
+      raise ReplacementError, "That photo isn't in this one's area" unless same_area?(old)
+    end
+
+    data = (metadata || {}).dup
+    old ? data["replaces_topo_id"] = old.id : data.delete("replaces_topo_id")
+    update!(metadata: data, published: old ? false : published)
+  end
+
+  # Each problem on the old photo not yet on this one, as an undrawn line pointing at its old
+  # line. Returns how many were added.
+  def bring_problems_across!
+    old = replaces_topo or raise ReplacementError, "This photo isn't replacing another"
+    here = lines.pluck(:problem_id)
+    added = 0
+    transaction do
+      old.lines.includes(:problem).each do |line|
+        next if here.include?(line.problem_id)
+
+        Line.create!(problem: line.problem, topo: self, reference_line: line)
+        here << line.problem_id
+        added += 1
+      end
+    end
+    added
+  end
+
+  # Problems on the old photo that aren't on this one: they'd lose their photo on the swap
+  def problems_left_behind
+    old = replaces_topo
+    return Problem.none unless old
+
+    Problem.where(id: old.lines.select(:problem_id)).where.not(id: lines.select(:problem_id))
+  end
+
+  def all_drawn?
+    lines.any? && lines.where(coordinates: nil).none?
+  end
+
+  # Publishes this photo in place of the one it replaces, which is kept unpublished
+  def swap_in!
+    old = replaces_topo or raise ReplacementError, "This photo isn't replacing another"
+    raise ReplacementError, "Draw every problem on this photo first" unless all_drawn?
+
+    transaction do
+      old.update!(published: false, metadata: (old.metadata || {}).merge("replaced_by_topo_id" => id))
+      update!(published: true)
+      refresh_has_line(old)
+    end
+    old
+  end
+
+  # On the old photo after a swap: puts it back and takes the replacement off the site again
+  def undo_swap!
+    newer = replaced_by_topo or raise ReplacementError, "This photo hasn't been replaced"
+
+    transaction do
+      newer.update!(published: false)
+      update!(published: true, metadata: (metadata || {}).except("replaced_by_topo_id"))
+      refresh_has_line(newer)
+    end
+    newer
+  end
+
   # Gap between problems estimated from the same photo, so they don't sit on one spot
   SPREAD_METRES = 2
   # A problem on the photo further than this from where it was taken isn't used as a guide
@@ -196,6 +300,15 @@ class Topo < ApplicationRecord
     dlon = (b.lon - a.lon) * rad
     h = Math.sin(dlat / 2)**2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dlon / 2)**2
     2 * 6_371_000 * Math.asin(Math.sqrt(h))
+  end
+
+  def same_area?(other)
+    area_id.present? && other.area_id == area_id
+  end
+
+  # Problem#has_line counts published lines only, so it moves with the swap
+  def refresh_has_line(other)
+    Problem.where(id: Line.unscoped.where(topo_id: [ id, other.id ]).select(:problem_id)).find_each(&:update_has_line)
   end
 
   def gps_location

@@ -1,6 +1,7 @@
 class Admin::ToposController < Admin::BaseController
   before_action :require_super_admin,      only: [ :new, :create ]
-  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy, :workbench, :quick_problem, :choose_boulder ]
+  before_action :require_topo_area_access, only: [ :show, :edit, :update, :destroy, :workbench, :quick_problem, :choose_boulder,
+                                                      :choose_replaced, :bring_problems, :swap, :undo_swap ]
   before_action :set_area_and_check_access, only: [ :index ]
 
   def index
@@ -61,6 +62,12 @@ class Admin::ToposController < Admin::BaseController
     @references = @topo.lines.where(coordinates: nil).where.not(reference_contribution_id: nil).
       includes(:problem, reference_contribution: { photos_attachments: :blob }).
       select { |line| line.reference_contribution&.photos&.attached? }
+    # Replacing another photo: its problems' old lines, shown while each is redrawn here
+    @replaces = @topo.replaces_topo
+    @replaced_by = @topo.replaced_by_topo
+    @old_lines = @topo.lines.where.not(reference_line_id: nil).includes(:problem, reference_line: { topo: { photo_attachment: :blob } }).
+      select { |line| line.reference_line&.coordinates.present? }
+    @replacement_candidates = @replaces || @replaced_by ? [] : @topo.replacement_candidates.includes(photo_attachment: :blob).to_a
     @boulder_id = @topo.matched_boulder_id
     @boulder = Boulder.find_by(id: @boulder_id)
     @candidates = workbench_candidates
@@ -99,6 +106,38 @@ class Admin::ToposController < Admin::BaseController
       flash[:notice] = boulder ? "Photo tied to #{boulder.display_name}" : "Photo untied from its boulder"
     end
     redirect_to workbench_admin_topo_path(@topo)
+  end
+
+  # Workbench: mark this photo as the replacement for another of its boulder's (blank cancels)
+  def choose_replaced
+    replacement_step do
+      old = params[:replaces_topo_id].presence && Topo.find_by(id: params[:replaces_topo_id])
+      @topo.replace!(old)
+      old ? "Replacing Topo ##{old.id}. Bring its problems across, redraw them, then swap." : "No longer replacing another photo."
+    end
+  end
+
+  # Workbench: put every problem on the replaced photo onto this one, undrawn
+  def bring_problems
+    replacement_step do
+      added = @topo.bring_problems_across!
+      added.zero? ? "Every problem is already on this photo." : "Added #{helpers.pluralize(added, 'problem')} to redraw."
+    end
+  end
+
+  def swap
+    replacement_step do
+      old = @topo.swap_in!
+      "Topo ##{@topo.id} is on the site in place of Topo ##{old.id}, which is kept unpublished (Undo swap is on its workbench)."
+    end
+  end
+
+  # On the old photo: put it back on the site and take its replacement off again
+  def undo_swap
+    replacement_step do
+      newer = @topo.undo_swap!
+      "Topo ##{@topo.id} is back on the site; Topo ##{newer.id} is unpublished again."
+    end
   end
 
   def show
@@ -178,5 +217,16 @@ class Admin::ToposController < Admin::BaseController
 
   def set_topo
     @topo = Topo.find(params[:id])
+  end
+
+  # Runs one replacement step; the block returns the notice. Back to the workbench either way.
+  def replacement_step
+    set_topo
+    begin
+      flash[:notice] = yield
+    rescue Topo::ReplacementError, ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
+    end
+    redirect_to workbench_admin_topo_path(@topo)
   end
 end
