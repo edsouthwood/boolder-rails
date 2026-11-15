@@ -1043,9 +1043,11 @@ old image, so they don't fit another one.
 1. Get the better photo onto the site as a topo: accept it from **Photos (N)**, upload it from
    **+ Add → Upload photos**, or accept the contribution it came with as a new topo.
 2. Open its workbench, open **Better than an existing photo?** in the sidebar, pick the photo it
-   replaces and click **Replace it with this photo**. Offered: published photos in the area of
-   the same boulder (tied, drawn or matched) or sharing a problem with it. The new photo is now
-   **unpublished**: climbers keep seeing the old one.
+   replaces and click **Replace it with this photo**. Offered: photos in the area of the same
+   boulder (tied, drawn or matched) or sharing a problem with it, published or not (an
+   unpublished one shows "not published"), but not one already swapped out. Both photos offer
+   each other. If the old photo is on the site, the new one comes **off** it until the swap, so
+   climbers keep seeing the old one; if the old one isn't published, the new one stays as it is.
 3. Click **Bring all N across**. Each problem on the old photo is added here undrawn.
 4. Draw each one. **Drawing guides** under the photo shows the selected problem's line, start
    holds and not-in areas on the old photo.

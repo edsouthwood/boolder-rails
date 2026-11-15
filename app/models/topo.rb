@@ -113,13 +113,15 @@ class Topo < ApplicationRecord
     Topo.find_by(id: metadata&.dig("replaced_by_topo_id"))
   end
 
-  # Published topos this photo could replace: the same boulder's, then ones sharing a
-  # problem with it, in its area
+  # Topos this photo could replace, in its area: the same boulder's, or ones sharing a
+  # problem with it. Unpublished ones too (an unfinished photo whose lines make a good guide),
+  # but not ones already swapped out.
   def replacement_candidates
     return Topo.none unless self[:area_id]
 
     boulder_id = matched_boulder_id
-    scope = Topo.published.in_area(Area.find(self[:area_id])).where.not(id: id)
+    scope = Topo.in_area(Area.find(self[:area_id])).where.not(id: id).
+      where("topos.metadata->>'replaced_by_topo_id' IS NULL")
     # topos.boulder_id is filled in by a background job, so also look at the problems drawn
     # on each photo and the boulder it was tied to by hand
     related = Line.unscoped.where(problem_id: lines.select(:problem_id))
@@ -132,18 +134,19 @@ class Topo < ApplicationRecord
     candidates.order(:id)
   end
 
-  # Marks this photo as the replacement for old (nil cancels) and keeps it off the site
-  # until the swap
+  # Marks this photo as the replacement for old (nil cancels). When old is on the site, this
+  # one comes off it until the swap, so climbers never see both.
   def replace!(old)
     if old
       raise ReplacementError, "Choose a different photo" if old.id == id
-      raise ReplacementError, "That photo isn't published" unless old.published
       raise ReplacementError, "That photo isn't in this one's area" unless same_area?(old)
+      raise ReplacementError, "That photo is replacing this one" if old.replaces_topo&.id == id
+      raise ReplacementError, "That photo has already been replaced" if old.replaced_by_topo
     end
 
     data = (metadata || {}).dup
     old ? data["replaces_topo_id"] = old.id : data.delete("replaces_topo_id")
-    update!(metadata: data, published: old ? false : published)
+    update!(metadata: data, published: old&.published ? false : published)
   end
 
   # Each problem on the old photo not yet on this one, as an undrawn line pointing at its old

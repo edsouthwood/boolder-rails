@@ -14,7 +14,11 @@
     <p class="font-semibold text-gray-800">Replacing <%= link_to "Topo ##{replaces.id}", workbench_admin_topo_path(replaces), class: "text-granite hover:underline" %></p>
     <%= cdn_image_tag replaces.photo.variant(:thumb), class: "w-full h-28 object-cover rounded border border-gray-200" %>
     <p class="text-xs text-gray-600">
-      This photo stays off the site until you swap. Climbers see Topo #<%= replaces.id %> until then.
+      <% if replaces.published %>
+        This photo stays off the site until you swap. Climbers see Topo #<%= replaces.id %> until then.
+      <% else %>
+        Topo #<%= replaces.id %> isn't on the site, so its lines are just a guide here. Swapping publishes this photo and keeps that one unpublished.
+      <% end %>
     </p>
     <% if left_behind.any? %>
       <p class="text-xs text-gray-600"><%= pluralize(left_behind.size, "problem") %> on the old photo <%= left_behind.size == 1 ? "isn't" : "aren't" %> on this one yet: <%= left_behind.first(4).map(&:name_with_fallback).to_sentence %><%= "…" if left_behind.size > 4 %>.</p>
@@ -41,7 +45,7 @@
         <label class="flex items-center gap-2 text-xs cursor-pointer">
           <%= radio_button_tag :replaces_topo_id, candidate.id %>
           <%= cdn_image_tag candidate.photo.variant(:thumb), class: "w-20 h-14 object-cover rounded border border-gray-200" %>
-          <span>Topo #<%= candidate.id %><span class="block text-gray-500 truncate max-w-[9rem]"><%= candidate.problems.reorder(nil).limit(3).map(&:name_with_fallback).to_sentence %></span></span>
+          <span>Topo #<%= candidate.id %><span class="block text-gray-500 truncate max-w-[9rem]"><%= candidate.problems.reorder(nil).limit(3).map(&:name_with_fallback).to_sentence %></span><% unless candidate.published %><span class="block text-amber-700">not published</span><% end %></span>
         </label>
       <% end %>
       <button type="submit" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 text-xs">Replace it with this photo</button>
