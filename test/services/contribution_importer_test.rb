@@ -189,4 +189,85 @@ class ContributionImporterTest < ActiveSupport::TestCase
 
     assert_not again.already_imported
   end
+
+  # --- putting the problem on a photo already on the site ---
+
+  LINE = '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]'
+
+  def contribution_with_photo(bytes: "fake-bytes", **attrs)
+    contribution = Contribution.new(state: "accepted", problem: @problem, line_coordinates: LINE, **attrs)
+    contribution.photos.attach(io: StringIO.new(bytes), filename: "boulder.jpg", content_type: "image/jpeg")
+    contribution.save!
+    contribution
+  end
+
+  test "merging onto an admin's chosen photo adds an undrawn line there and no topo" do
+    topo = existing_topo
+    contribution = contribution_with_photo(merge_topo: topo, start_holds: '[{"x":0.2,"y":0.8}]')
+
+    importer = ContributionImporter.new(contribution)
+    assert_no_difference "Topo.count" do
+      assert_difference "Line.count", 1 do
+        importer.import!
+      end
+    end
+
+    line = importer.merged_line
+    assert_equal topo, line.topo
+    assert_nil line.coordinates, "the line was drawn on another photo, so it must not be copied"
+    assert_nil line.start_holds
+    assert_equal contribution, line.reference_contribution
+    assert_nil importer.created_line
+    assert_includes Topo.undrawn, topo
+  end
+
+  test "merging twice doesn't add a second undrawn line" do
+    topo = existing_topo
+    contribution = contribution_with_photo(merge_topo: topo)
+    ContributionImporter.new(contribution).import!
+
+    again = ContributionImporter.new(contribution)
+    assert_no_difference "Line.count" do
+      again.import!
+    end
+    assert again.already_imported
+  end
+
+  test "merging onto the photo the contributor drew on keeps their line" do
+    topo = existing_topo
+    contribution = Contribution.create!(state: "accepted", problem: @problem, existing_topo: topo, merge_topo: topo, line_coordinates: LINE)
+
+    importer = ContributionImporter.new(contribution)
+    importer.import!
+
+    assert_nil importer.merged_line
+    assert_equal JSON.parse(LINE), importer.created_line.coordinates
+  end
+
+  test "a photo that's already a topo gets the line as drawn instead of a second topo" do
+    first = contribution_with_photo
+    ContributionImporter.new(first).import!
+    other_problem = @area.problems.create!(steepness: "wall")
+    second = contribution_with_photo(problem: other_problem)
+
+    importer = ContributionImporter.new(second)
+    assert_no_difference "Topo.count" do
+      importer.import!
+    end
+
+    assert_equal first.problem.topos.first, importer.created_line.topo
+    assert_equal JSON.parse(LINE), importer.created_line.coordinates
+  end
+
+  test "merging onto the topo made from this very photo keeps the line as drawn" do
+    ContributionImporter.new(contribution_with_photo).import!
+    topo = Topo.last
+    second = contribution_with_photo(problem: @area.problems.create!(steepness: "wall"), merge_topo: topo)
+
+    importer = ContributionImporter.new(second)
+    importer.import!
+
+    assert_nil importer.merged_line
+    assert_equal JSON.parse(LINE), importer.created_line.coordinates
+  end
 end

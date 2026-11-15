@@ -214,4 +214,60 @@ class ContributionTest < ActiveSupport::TestCase
 
     assert_equal [ near ], here.nearby_unlisted.to_a
   end
+
+  # --- grouping one person's contributions ---
+
+  def grouping_setup
+    @area = Area.create!(name: "Group Area", slug: "group-area")
+    @other_area = Area.create!(name: "Other Area", slug: "other-area")
+  end
+
+  def sent(name: "Sam", email: nil, area: @area, at: Time.current, state: "pending")
+    Contribution.create!(state: state, problem: area.problems.create!(steepness: "wall"), comment: "x",
+                         contributor_name: name, contributor_email: email, created_at: at)
+  end
+
+  test "siblings are the same person's pending contributions at the same crag within a day" do
+    grouping_setup
+    first = sent
+    same = sent(name: " sam ")
+    sent(name: "Alex")
+    sent(area: @other_area)
+    sent(at: 2.days.ago)
+    sent(state: "accepted")
+
+    assert_equal [ same ], first.siblings.to_a
+    assert_equal({ first.id => 1, same.id => 1 }, Contribution.sibling_counts([ first, same ]))
+  end
+
+  test "an email, when given, decides who sent it" do
+    grouping_setup
+    first = sent(name: "Sam", email: "sam@example.com")
+    renamed = sent(name: "Samuel", email: "SAM@example.com")
+    sent(name: "Sam", email: "other@example.com")
+
+    assert_equal [ renamed ], first.siblings.to_a
+    assert_equal 1, Contribution.sibling_counts([ first ])[first.id]
+  end
+
+  test "anonymous contributions aren't grouped" do
+    grouping_setup
+    first = sent(name: nil)
+    sent(name: nil)
+
+    assert_empty first.siblings
+    assert_empty Contribution.sibling_counts([ first ])
+  end
+
+  test "can't be put on another area's photo" do
+    grouping_setup
+    theirs = Topo.new(area: @other_area)
+    theirs.photo.attach(io: StringIO.new("fake image"), filename: "topo.jpg", content_type: "image/jpeg")
+    theirs.save!
+    contribution = sent
+    contribution.merge_topo = theirs
+
+    assert_not contribution.valid?
+    assert_includes contribution.errors.attribute_names, :merge_topo_id
+  end
 end

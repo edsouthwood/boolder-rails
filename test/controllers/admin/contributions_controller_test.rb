@@ -303,4 +303,100 @@ class Admin::ContributionsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_match "already imported earlier, nothing added", response.body
   end
+
+  # --- putting a problem on a photo already on the site ---
+
+  LINE = '[{"x":0.1,"y":0.2},{"x":0.3,"y":0.4},{"x":0.5,"y":0.6}]'
+
+  def topo_with_problem(problem, bytes: "topo image")
+    topo = Topo.new(area: @area, published: true)
+    topo.photo.attach(io: StringIO.new(bytes), filename: "topo.jpg", content_type: "image/jpeg")
+    topo.save!
+    Line.create!(problem: problem, topo: topo, coordinates: JSON.parse(LINE))
+    topo
+  end
+
+  def with_photo(problem, bytes: "contributed image", **attrs)
+    contribution = Contribution.new(state: "pending", problem: problem, line_coordinates: LINE, contributor_name: "Sam", **attrs)
+    contribution.photos.attach(io: StringIO.new(bytes), filename: "boulder.jpg", content_type: "image/jpeg")
+    contribution.save!
+    contribution
+  end
+
+  test "edit offers the photo the same person's earlier contribution went on" do
+    earlier_problem = @area.problems.create!(steepness: "wall")
+    with_photo(earlier_problem, state: "accepted")
+    topo = topo_with_problem(earlier_problem)
+    contribution = with_photo(@problem)
+
+    get edit_admin_contribution_url(contribution)
+
+    assert_response :success
+    assert_select "input[type=radio][name='contribution[merge_topo_id]'][value=?]", topo.id.to_s
+    assert_select "input[type=radio][name='contribution[merge_topo_id]'][value='']"
+  end
+
+  test "edit offers nearby photos, but not another area's" do
+    point = FACTORY.point(-3.9, 50.58)
+    other_area = Area.create!(name: "Elsewhere", slug: "elsewhere")
+    elsewhere = Topo.new(area: other_area, published: true)
+    elsewhere.photo.attach(io: StringIO.new("x"), filename: "topo.jpg", content_type: "image/jpeg")
+    elsewhere.save!
+    Line.create!(problem: other_area.problems.create!(steepness: "wall", location: point), topo: elsewhere)
+    nearby = topo_with_problem(@area.problems.create!(steepness: "wall", location: point))
+    contribution = with_photo(@problem, location: point)
+
+    get edit_admin_contribution_url(contribution)
+
+    assert_select "input[type=radio][name='contribution[merge_topo_id]'][value=?]", nearby.id.to_s
+    assert_select "input[type=radio][name='contribution[merge_topo_id]'][value=?]", elsewhere.id.to_s, count: 0
+  end
+
+  test "edit says when the photo is already a topo" do
+    topo = topo_with_problem(@area.problems.create!(steepness: "wall"), bytes: "same file")
+    contribution = with_photo(@problem, bytes: "same file")
+
+    get edit_admin_contribution_url(contribution)
+
+    assert_match "that's this very photo", response.body
+    assert_select "a[href=?]", edit_admin_topo_path(topo)
+  end
+
+  test "accepting onto a chosen photo adds an undrawn line there and links to the workbench" do
+    topo = topo_with_problem(@area.problems.create!(steepness: "wall"))
+    contribution = with_photo(@problem)
+
+    assert_no_difference "Topo.count" do
+      patch admin_contribution_url(contribution),
+        params: { contribution: { state: "accepted", merge_topo_id: topo.id, apply_photo: "1" } }
+    end
+
+    line = @problem.lines.find_by(topo: topo)
+    assert_nil line.coordinates
+    assert_equal contribution, line.reference_contribution
+    assert_match workbench_admin_topo_path(topo), flash[:notice]
+  end
+
+  test "the admin form can't change the photo the contributor drew on" do
+    topo = topo_with_problem(@area.problems.create!(steepness: "wall"))
+    contribution = with_photo(@problem)
+
+    patch admin_contribution_url(contribution), params: { contribution: { existing_topo_id: topo.id } }
+
+    assert_nil contribution.reload.existing_topo_id
+  end
+
+  test "the queue marks and filters contributions from the same person here" do
+    first = with_photo(@problem)
+    second = with_photo(@area.problems.create!(steepness: "wall"))
+    other = Contribution.create!(state: "pending", problem: @problem, comment: "x", contributor_name: "Alex")
+
+    get admin_contributions_url
+    assert_select "a[href=?]", admin_contributions_path(siblings_of: first.id), text: "+1 more here"
+
+    get admin_contributions_url(siblings_of: first.id)
+    assert_select "a[href=?]", edit_admin_contribution_path(first)
+    assert_select "a[href=?]", edit_admin_contribution_path(second)
+    assert_select "a[href=?]", edit_admin_contribution_path(other), count: 0
+  end
 end

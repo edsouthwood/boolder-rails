@@ -681,13 +681,22 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p>When setting state to <strong>accepted</strong>, checkboxes control what gets applied. Their labels adapt to what the contribution contains:</p>
         <ul class="list-disc list-inside space-y-1 text-gray-600">
           <li><strong>Line on Topo #N</strong> — the contributor drew on an existing topo; accepting only adds the line, no new photo is created</li>
-          <li><strong>Photo &amp; line (new topo)</strong> — the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay</li>
-          <li><strong>Photo (new topo, no line drawn)</strong> — photo uploaded without a line</li>
+          <li><strong>Photo &amp; line</strong> — the contributor uploaded a photo and drew a line; it goes on the photo chosen under <strong>Which photo?</strong> (a new topo by default)</li>
+          <li><strong>Photo (no line drawn)</strong> — photo uploaded without a line</li>
+          <li><strong>… on Topo #N (that's this very photo)</strong> — the same file is already on the site, so the line goes on that topo as drawn</li>
           <li>Start holds and not-in areas go with the photo/line option (the label shows e.g. "+ 2 start holds and 1 not-in area") and are copied onto the new line. Ones marked on an existing topo without a line are imported as a line with just those</li>
           <li><strong>GPS coordinates</strong> — copies the contributor's location to the problem (only if the problem has no existing location; a hint shows if it's already located)</li>
         </ul>
         <p class="text-gray-500 text-xs">Checkboxes are checked by default; if the contribution has no photo/line or no GPS, a "nothing to import" note shows instead. Uncheck either to skip that part — useful when the photo is good but the GPS is inaccurate, or vice versa. Accepting always closes any open contribution request for that problem.</p>
         <p>Accepting or closing returns you to the contributions list, with a banner summarising what was applied (e.g. "line added to Topo #74", with the topo linked) and how many contributions are still pending. Updates that don't change the state stay on the edit page.</p>
+        <p class="font-medium text-gray-800" id="merging-photos">One photo per line: putting problems on one photo</p>
+        <p>Contributors often send each problem on a face with its own photo. Rather than a new topo for each, put them on one photo:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>+N more here</strong> on the list marks pending contributions from the same person (email, else name) at the same crag within a day. Click it to see just those; the edit page shows them too.</li>
+          <li><strong>Which photo?</strong> on the edit page offers photos already on the site: ones this person's other contributions went on, ones showing this problem or its boulder, and ones within 10 m. Only the problem's area.</li>
+          <li>The contributor's line was drawn on their own photo and won't fit another, so the problem goes on the chosen photo <strong>undrawn</strong>. The banner links to the workbench, which shows their photo and line under <strong>Drawn by contributors on their own photos</strong> while you redraw it.</li>
+          <li>Accept the best photo first, then put the others on it.</li>
+        </ul>
         <p class="font-medium text-gray-800">Unlisted problems</p>
         <p>Submissions for a problem that isn't on the map yet arrive with a name/URL but no linked problem. The edit page shows a <strong>Create &amp; link problem</strong> form — pick the area and set name/grade/steepness to create a real problem (it inherits the submitted GPS), then accept to import the photo and line.</p>
         <ul class="list-disc pl-5 space-y-1">

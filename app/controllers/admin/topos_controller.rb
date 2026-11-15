@@ -56,6 +56,11 @@ class Admin::ToposController < Admin::BaseController
     end
 
     @lines = @topo.lines.includes(problem: :circuit).to_a
+    # Problems put on this photo from a contribution drawn on another one: show that drawing
+    # until the line is redrawn here
+    @references = @topo.lines.where(coordinates: nil).where.not(reference_contribution_id: nil).
+      includes(:problem, reference_contribution: { photos_attachments: :blob }).
+      select { |line| line.reference_contribution&.photos&.attached? }
     @boulder_id = @topo.matched_boulder_id
     @boulder = Boulder.find_by(id: @boulder_id)
     @candidates = workbench_candidates

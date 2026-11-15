@@ -368,4 +368,31 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_select "p[title=?]", "Taken near Boulder ##{@boulder.id}", text: /near\s+Boulder ##{@boulder.id}/
     assert gps_only
   end
+
+  test "the workbench shows a contributor's drawing for a problem put on this photo to redraw" do
+    problem = @mine.problems.create!(steepness: "wall", name: "Merged One")
+    contribution = Contribution.new(state: "accepted", problem: problem, line_coordinates: POINTS.to_json)
+    contribution.photos.attach(io: StringIO.new("their photo"), filename: "theirs.jpg", content_type: "image/jpeg")
+    contribution.save!
+    Line.create!(problem: problem, topo: @topo, reference_contribution: contribution)
+
+    get workbench_admin_topo_url(@topo)
+
+    assert_response :success
+    assert_match "Drawn by contributors on their own photos", response.body
+    assert_select "[data-controller=line-preview]"
+    assert_select "a[href=?]", edit_admin_contribution_path(contribution)
+  end
+
+  test "no contributor drawing once the line is redrawn" do
+    problem = @mine.problems.create!(steepness: "wall")
+    contribution = Contribution.new(state: "accepted", problem: problem, line_coordinates: POINTS.to_json)
+    contribution.photos.attach(io: StringIO.new("their photo"), filename: "theirs.jpg", content_type: "image/jpeg")
+    contribution.save!
+    Line.create!(problem: problem, topo: @topo, reference_contribution: contribution, coordinates: POINTS)
+
+    get workbench_admin_topo_url(@topo)
+
+    assert_no_match "Drawn by contributors", response.body
+  end
 end
