@@ -27,6 +27,26 @@
     </div>
 
     <div class="mt-5 md:mt-0 md:col-span-2">
+      <% if @siblings.any? %>
+        <div class="mb-4 rounded bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-900">
+          <p>
+            <%= pluralize(@siblings.size, "more pending contribution") %> from the same person here within a day
+            (<%= link_to "review them together", admin_contributions_path(siblings_of: @contribution.id), class: "underline" %>).
+            If they're the same face, accept the best photo first, then put the others on it.
+          </p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <% @siblings.each do |sibling| %>
+              <%= link_to edit_admin_contribution_path(sibling), class: "block w-20", title: sibling.problem&.name_with_fallback || sibling.problem_name do %>
+                <% if sibling.photos.attached? %>
+                  <%= image_tag sibling.photos.first.variant(resize_to_limit: [ 160, 160 ]), class: "w-20 h-14 object-cover rounded border border-blue-200" %>
+                <% end %>
+                <span class="block text-xs truncate">#<%= sibling.id %> <%= sibling.problem&.name_with_fallback || sibling.problem_name %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
       <% if @nearby_topos.any? %>
         <div class="mb-4 rounded bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
           &#9888; <%= pluralize(@nearby_topos.size, "existing photo") %> found within 10 m &mdash; check below before importing.

@@ -16,18 +16,21 @@
         <%= form.check_box :apply_photo, checked: true %>
         <%= @contribution.drawing_parts.to_sentence.upcase_first.presence || "Nothing drawn" %> on Topo #<%= @contribution.existing_topo_id %> (no new photo is created)
       </label>
+    <% elsif @same_photo_topo %>
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :apply_photo, checked: true %>
+        <%= @contribution.drawing_parts.to_sentence.upcase_first.presence || "Nothing drawn" %> on
+        <%= link_to "Topo ##{@same_photo_topo.id}", edit_admin_topo_path(@same_photo_topo), class: "text-granite hover:underline", target: "_blank" %>
+        <span class="text-xs text-gray-500">(that's this very photo, so no new topo)</span>
+      </label>
     <% elsif @contribution.photos.any? %>
       <label class="flex items-center gap-2 text-sm text-gray-700">
         <%= form.check_box :apply_photo, checked: true %>
-        <%= @contribution.line_coordinates.present? ? "Photo & line (new topo)" : "Photo (new topo, no line drawn)" %>
+        <%= @contribution.line_coordinates.present? ? "Photo & line" : "Photo (no line drawn)" %>
         <% extras = @contribution.drawing_parts - [ "line" ] %>
         <% if extras.any? %><span class="text-xs text-gray-500">+ <%= extras.to_sentence %></span><% end %>
+        <span class="text-xs text-gray-500">(on the photo chosen below)</span>
       </label>
-      <% if @contribution.problem&.topos&.any? %>
-        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1">
-          &#9888; This problem already has <%= pluralize(@contribution.problem.topos.count, "topo") %> &mdash; importing will create a duplicate.
-        </p>
-      <% end %>
     <% else %>
       <p class="text-sm text-gray-400 italic">No photo or line to import</p>
     <% end %>
@@ -47,19 +50,29 @@
   <p class="text-xs text-gray-400 mt-1">Only applied when state is set to "accepted".</p>
 </div>
 
-<% if @contribution.problem&.topos&.any? && @contribution.line_coordinates.present? %>
+<% if @merge_candidates.any? %>
   <div class="col-span-6 mt-4 border-t pt-4">
-    <p class="text-sm font-medium text-gray-700 mb-2">Draw line on</p>
+    <p class="text-sm font-medium text-gray-700">Which photo?</p>
+    <p class="text-xs text-gray-500 mb-2">
+      If one of these shows the same face, put the problem on it rather than adding another topo.
+      The line was drawn on the contributor's photo, so it won't fit another: it comes across
+      undrawn, and the workbench shows their drawing while you redraw it.
+    </p>
     <div class="space-y-2">
       <label class="flex items-center gap-2 text-sm text-gray-700">
-        <%= radio_button_tag "contribution[existing_topo_id]", "", @contribution.existing_topo_id.blank? %>
-        New topo from contributed photo
+        <%= radio_button_tag "contribution[merge_topo_id]", "", @contribution.merge_topo_id.blank? %>
+        New topo from the contributed photo
       </label>
-      <% @contribution.problem.topos.each do |topo| %>
+      <% @merge_candidates.each do |topo| %>
         <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
-          <%= radio_button_tag "contribution[existing_topo_id]", topo.id, @contribution.existing_topo_id == topo.id %>
-          <%= cdn_image_tag topo.photo.variant(:thumb), class: "w-20 h-14 object-cover rounded border border-gray-200" %>
-          <span>Topo #<%= topo.id %></span>
+          <%= radio_button_tag "contribution[merge_topo_id]", topo.id, @contribution.merge_topo_id == topo.id %>
+          <%= cdn_image_tag topo.photo.variant(:thumb), class: "w-24 h-16 object-cover rounded border border-gray-200" %>
+          <span>
+            Topo #<%= topo.id %>
+            <% names = topo.problems.reorder(nil).limit(3).map(&:name_with_fallback) %>
+            <% if names.any? %><span class="block text-xs text-gray-500 truncate max-w-[14rem]"><%= names.to_sentence %><%= "…" if topo.lines.size > 3 %></span><% end %>
+            <% unless topo.published %><span class="block text-xs text-amber-700">not published yet</span><% end %>
+          </span>
         </label>
       <% end %>
     </div>

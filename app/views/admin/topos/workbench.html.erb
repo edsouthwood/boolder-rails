@@ -60,6 +60,31 @@
       Pick a problem on the right, click along its line from bottom to top, then press Enter. On a line that's already drawn, the first click starts it again.
       <kbd>N</kbd> jumps to the next problem with no line.
     </p>
+
+    <% if @references.any? %>
+      <div class="mt-4 bg-white shadow sm:rounded-md p-3">
+        <p class="font-semibold text-gray-800 text-sm">Drawn by contributors on their own photos</p>
+        <p class="text-xs text-gray-500 mb-2">These problems were put on this photo when their contributions were accepted. Redraw each line here using their drawing as a guide.</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <% @references.each do |line| %>
+            <% contribution = line.reference_contribution %>
+            <figure>
+              <div class="relative" data-controller="line-preview"
+                   data-line-preview-coordinates-value="<%= contribution.line_coordinates.presence || "[]" %>"
+                   data-line-preview-holds-value="<%= (contribution.start_holds || []).to_json %>"
+                   data-line-preview-excluded-areas-value="<%= (contribution.excluded_areas || []).to_json %>">
+                <%= image_tag(contribution.photos.first, class: "w-full object-cover block rounded", data: { "line-preview-target": "image" }) %>
+                <canvas data-line-preview-target="canvas" class="absolute top-0 left-0 pointer-events-none rounded" style="width:100%;height:100%"></canvas>
+              </div>
+              <figcaption class="mt-1 text-xs text-gray-600">
+                <%= line.problem.name_with_fallback %><%= " (#{line.problem.grade})" if line.problem.grade.present? %>
+                · <%= link_to "contribution ##{contribution.id}", edit_admin_contribution_path(contribution), class: "text-granite hover:underline" %>
+              </figcaption>
+            </figure>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <aside class="space-y-4 text-sm">

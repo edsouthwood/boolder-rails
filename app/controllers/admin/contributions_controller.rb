@@ -15,8 +15,14 @@ class Admin::ContributionsController < Admin::BaseController
       session[:contributions_filter] = nil
     end
 
+    # "From the same person": one contribution's pending siblings, to review them together
+    if (@siblings_of = Contribution.find_by(id: params[:siblings_of]))
+      arel = Contribution.includes(:area, problem: :area).where(id: [ @siblings_of.id ] + @siblings_of.siblings.ids).order(id: :desc)
+    end
+
     @pending_count = Contribution.pending.count
     @contributions = arel.page(params[:page]).per(50)
+    @sibling_counts = Contribution.sibling_counts(@contributions.select(&:pending?))
   end
 
   def edit
@@ -139,6 +145,33 @@ class Admin::ContributionsController < Admin::BaseController
                           .where.not(id: @contribution.existing_topo_id.to_i)
                           .includes(lines: :problem)
     end
+
+    @same_photo_topo = @contribution.same_photo_topo
+    @siblings = @contribution.siblings.includes(:problem)
+    @merge_candidates = merge_candidates
+  end
+
+  MAX_MERGE_CANDIDATES = 12
+
+  # Photos already on the site this problem could go on instead of a new topo: ones this
+  # person's other contributions from the same visit went on, the problem's own, ones of its
+  # boulder, then ones within 10 m. Only the problem's area: merge_topo must be in it.
+  def merge_candidates
+    problem = @contribution.problem
+    return [] unless problem && @contribution.existing_topo_id.blank? && @contribution.photos.attached?
+
+    in_area = Topo.in_area(problem.area)
+    sibling_problem_ids = @contribution.siblings(state: %w[pending accepted]).where.not(problem_id: nil).pluck(:problem_id)
+    groups = [
+      in_area.where(id: Line.unscoped.where(problem_id: sibling_problem_ids).select(:topo_id)),
+      in_area.where(id: Line.unscoped.where(problem_id: problem.id).select(:topo_id)),
+      (in_area.where(id: Line.unscoped.joins(:problem).where(problems: { boulder_id: problem.boulder_id }).select(:topo_id)) if problem.boulder_id),
+      in_area.where(id: @nearby_topos.map(&:id))
+    ].compact
+
+    exclude = [ @same_photo_topo&.id ].compact
+    groups.flat_map { |scope| scope.where.not(id: exclude).includes(photo_attachment: :blob).order(id: :desc).limit(MAX_MERGE_CANDIDATES).to_a }.
+      uniq.first(MAX_MERGE_CANDIDATES)
   end
 
   # For an unlisted problem: which area it probably belongs to (the one the contributor
@@ -199,6 +232,9 @@ class Admin::ContributionsController < Admin::BaseController
     if importer&.created_topo
       parts << helpers.link_to("new Topo ##{importer.created_topo.id} created",
         edit_admin_topo_path(importer.created_topo), class: "underline")
+    elsif importer&.merged_line
+      parts << helpers.link_to("added to Topo ##{importer.merged_line.topo_id}: redraw the line there",
+        workbench_admin_topo_path(importer.merged_line.topo), class: "underline")
     elsif importer&.created_line
       parts << helpers.link_to("line added to Topo ##{importer.created_line.topo_id}",
         edit_admin_topo_path(importer.created_line.topo), class: "underline")
@@ -241,7 +277,7 @@ class Admin::ContributionsController < Admin::BaseController
 
   def contribution_params
     params.require(:contribution).
-      permit(:state, :existing_topo_id, :moderator_note)
+      permit(:state, :merge_topo_id, :moderator_note)
   end
 
   def set_contribution

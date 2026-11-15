@@ -7,6 +7,13 @@
   <% end %>
 </div>
 
+<% if @siblings_of %>
+  <p class="my-2 rounded bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-900">
+    Contribution #<%= @siblings_of.id %> and the others waiting from the same person at the same crag.
+    <%= link_to "Show all", admin_contributions_path(state: @state), class: "underline" %>
+  </p>
+<% end %>
+
 <%= form_with url: admin_contributions_path, method: :get, class: "my-4", data: { controller: "auto-submit" } do |form| %>
   <div class="w-1/2">
     <label for="state" class="block text-sm font-medium text-gray-700">State</label>
@@ -95,6 +102,11 @@
                   </td>
                   <td class="px-4 py-2 whitespace-nowrap">
                     <div class="text-sm"><%= contribution.contributor_name %></div>
+                    <% if (count = @sibling_counts[contribution.id].to_i) > 0 && !@siblings_of %>
+                      <%= link_to "+#{count} more here", admin_contributions_path(siblings_of: contribution.id),
+                            class: "inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-800 ring-1 ring-inset ring-blue-600/20 hover:underline",
+                            title: "#{pluralize(count, 'other contribution')} waiting from the same person at this crag" %>
+                    <% end %>
                   </td>
                   <td class="px-4 py-2">
                     <span class="text-sm text-gray-500"><%= truncate(contribution.comment, length: 60) %></span>

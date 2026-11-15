@@ -1112,8 +1112,9 @@ When reviewing a contribution, the admin edit page shows:
 When setting state to **accepted** you can choose which parts to apply using the checkboxes on the edit form. The labels adapt to what the contribution actually contains:
 
 - **Line on Topo #N (no new photo is created)** — shown when the contributor drew on an existing topo; accepting only adds a Line record to that topo
-- **Photo & line (new topo)** — shown when the contributor uploaded a photo and drew a line; accepting creates a new topo with the line overlay
-- **Photo (new topo, no line drawn)** — shown when the contributor uploaded a photo without drawing a line
+- **Photo & line** — shown when the contributor uploaded a photo and drew a line; it goes on the photo chosen under **Which photo?** (see below): a new topo from their photo by default
+- **Photo (no line drawn)** — shown when the contributor uploaded a photo without drawing a line
+- **… on Topo #N (that's this very photo, so no new topo)** — the contributed file is already on the site (the same photo sent again, or accepted before). The line goes on that topo as drawn
 - Start holds and not-in areas always go with the photo/line option. The label lists them ("+ 2 start holds and 1 not-in area", or "Line, 2 start holds and 1 not-in area on Topo #N"). Accepting copies them onto the new line. A contributor can also mark only holds or not-in areas on an existing topo; accepting adds a line with just those
 - **GPS coordinates** — copies the contributor's GPS location to the problem (only applied if the problem has no existing location; a hint appears if the problem is already located)
 
@@ -1126,6 +1127,28 @@ triaging. The green banner summarises what was applied — e.g. "Contribution #1
 line added to Topo #74 · 2 pending remaining" — with the topo linked so you can verify the
 import in one click. Updates that don't change the state (e.g. editing the moderator note)
 stay on the edit page.
+
+### One photo per line: putting problems on one photo {#merging-photos}
+
+Contributors often send several problems from the same face, each with its own photo and one
+line. Accepting each as a new topo would leave several photos of one face with a line each.
+Instead, put them on one photo.
+
+- **Same person, same crag:** the list marks pending contributions sent by the same person
+  (same email, else same name) at the same crag within a day with **+N more here**. Click it to
+  see just those. The edit page shows them too, with thumbnails.
+- **Which photo?** On the edit page, under the checkboxes, pick a photo already on the site
+  instead of **New topo from the contributed photo**. Offered: photos this person's other
+  contributions from the same visit went on, photos already showing this problem, photos of
+  its boulder, and photos within 10 m. Only photos in the problem's area are offered or allowed.
+- **The line is redrawn.** It was drawn on the contributor's own photo, so its points don't fit
+  another one. Accepting adds the problem to the chosen photo **undrawn** (start holds and
+  not-in areas stay behind too). The banner links to the workbench, where **Drawn by contributors
+  on their own photos** shows their photo with their line while you redraw it. The photo counts
+  in "Photos to draw" until it's drawn. The public problem page shows the photo with no line
+  until then.
+- **Order:** accept the best photo first (as a new topo), then put the others on it.
+- Accepting the same contribution twice doesn't add a second line.
 
 ### Existing topo line contributions
 
