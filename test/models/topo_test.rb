@@ -78,12 +78,46 @@ class TopoTest < ActiveSupport::TestCase
     assert_not @arete.reload.has_line
   end
 
-  test "only a published photo in the same area can be replaced" do
+  test "only another photo in the same area can be replaced, and not round in a circle" do
     elsewhere = photo(area: Area.create!(name: "Elsewhere", slug: "elsewhere"))
 
     assert_raises(Topo::ReplacementError) { @better.replace!(elsewhere) }
     assert_raises(Topo::ReplacementError) { @better.replace!(@better) }
-    assert_raises(Topo::ReplacementError) { @better.replace!(photo(published: false)) }
+    @better.replace!(@old)
+    assert_raises(Topo::ReplacementError) { @old.replace!(@better) }
+  end
+
+  test "an unpublished photo can be replaced too, and the published one stays on the site" do
+    unfinished = photo(bytes: "unfinished", published: false)
+    Line.create!(problem: @crack, topo: unfinished, coordinates: LINE)
+    published = photo(bytes: "published one")
+    Line.create!(problem: @arete, topo: published, coordinates: LINE)
+    # Both tied by hand to the same boulder, with no problem in common
+    [ unfinished, published ].each { |topo| topo.update!(metadata: { "chosen_boulder_id" => 4242 }) }
+
+    assert_includes published.replacement_candidates, unfinished
+    assert_includes unfinished.replacement_candidates, published
+
+    published.replace!(unfinished)
+    assert published.reload.published
+    assert_equal 1, published.bring_problems_across!
+    published.lines.each { |line| line.update!(coordinates: LINE) }
+
+    published.swap_in!
+    assert published.reload.published
+    assert_not unfinished.reload.published
+  end
+
+  test "a photo already swapped out isn't offered again" do
+    @better.replace!(@old)
+    @better.bring_problems_across!
+    draw_all(@better)
+    @better.swap_in!
+    another = photo(bytes: "another")
+    Line.create!(problem: @crack, topo: another, coordinates: LINE)
+
+    assert_not_includes another.replacement_candidates, @old
+    assert_includes another.replacement_candidates, @better
   end
 
   test "stopping a replacement forgets the old photo" do
