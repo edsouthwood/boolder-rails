@@ -1,7 +1,8 @@
 class Rack::Attack
   # Throttle public contribution submissions by IP to curb spam/abuse of the
-  # unauthenticated, file-accepting, email-triggering create endpoint.
-  throttle("contributions/ip", limit: 5, period: 10.minutes) do |req|
+  # unauthenticated, file-accepting, email-triggering create endpoint. Contributors send one
+  # problem per post, often several from one face in a few minutes, so this allows a full face.
+  throttle("contributions/ip", limit: 15, period: 10.minutes) do |req|
     req.ip if req.post? && req.path.match?(%r{/mapping/contributions\z})
   end
 
