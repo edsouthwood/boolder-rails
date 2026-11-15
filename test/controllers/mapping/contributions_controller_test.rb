@@ -169,4 +169,10 @@ class Mapping::ContributionsControllerTest < ActionDispatch::IntegrationTest
 
     assert second.reload.photos.first.blob.service.exist?(second.photos.first.blob.key)
   end
+
+  test "the throttle allows a whole face of problems, one post each" do
+    throttle = Rack::Attack.throttles["contributions/ip"]
+    assert_equal 15, throttle.limit
+    assert_equal 10.minutes, throttle.period
+  end
 end

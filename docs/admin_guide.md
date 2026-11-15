@@ -1218,7 +1218,8 @@ CONTRIBUTION_EMAILS=you@example.com,teammate@example.com
 
 ### Spam protection and data integrity
 
-The public form is rate-limited per IP (rack-attack) and carries a honeypot
+The public form is rate-limited per IP (rack-attack: 15 contributions per 10 minutes, enough
+for one problem per post across a whole face) and carries a honeypot
 (invisible_captcha), so automated spam is dropped before it reaches the queue. Contributions
 are also validated server-side: a submission must carry at least one piece of real content
 (photo, location, line, comment or problem name) and any email address must be well-formed —
