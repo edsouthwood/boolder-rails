@@ -214,6 +214,9 @@ en:
           boulder: Boulder photo
           boulder_description: Take a picture of the boulder with your phone.
           boulder_description_existing: "We may already have a picture of that boulder. If we do please draw the line on the existing photo, otherwise please upload an image."
+          recent_photos: "Your photos:"
+          recent_photos_description: "Another problem on a photo you've just sent? Pick it and draw this line on it too. One photo with every line on it beats one photo per line."
+          recent_photo_alt: "Your photo for %{name}"
           line: Route line
           line_description: Draw the route on your boulder photo.
           line_upload_photo_first: Select an existing photo above, or upload a new one, to draw the route line.
@@ -240,7 +243,7 @@ en:
           leaderboard_link: contributors leaderboard
           submit: Submit
           submitting: Submitting…
-          flash_success: Thank you for your contribution!
+          flash_success: "Thank you for your contribution! Got another problem on the same photo? Add it and pick your photo under \"Your photos\"."
           metas:
             title: New contribution
       map:

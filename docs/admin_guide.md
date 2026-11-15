@@ -1148,6 +1148,12 @@ Instead, put them on one photo.
   in "Photos to draw" until it's drawn. The public problem page shows the photo with no line
   until then.
 - **Order:** accept the best photo first (as a new topo), then put the others on it.
+- **Contributors can avoid it:** the contribution form offers each visitor's own photos from the
+  last day, at the same crag, under **Your photos**. Picking one sends the same stored file
+  again (no new upload) with this problem's line. Those contributions share one photo, so
+  accepting them puts every line on one topo **as drawn**, with nothing to redraw (the
+  "that's this very photo" case above). Only the visitor's own photos are offered: they're
+  remembered in their session. Deleting one contribution's photo leaves the others'.
 - Accepting the same contribution twice doesn't add a second line.
 
 ### Existing topo line contributions
