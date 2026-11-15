@@ -1,0 +1,36 @@
+<% set_meta_tags nofollow: true %>
+<% set_meta_tags title: t("views.mapping.crag_suggestions.show.metas.title") %>
+<% button_class = "inline-flex justify-center rounded-md bg-granite px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-granite-dark" %>
+
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pt-6 pb-12">
+  <div class="px-4 sm:px-0 max-w-3xl">
+    <h1 class="text-3xl font-bold mb-3 mt-2"><%= t("views.mapping.crag_suggestions.show.title", name: @crag_suggestion.name) %></h1>
+    <p class="text-base text-gray-600"><%= t("views.mapping.crag_suggestions.show.intro") %></p>
+    <p class="mt-2 text-sm text-gray-500" data-sent>
+      <%= t("views.mapping.crag_suggestions.show.sent",
+            photos: t("views.mapping.crag_suggestions.show.photo_count", count: @photo_count),
+            problems: t("views.mapping.crag_suggestions.show.problem_count", count: @problem_count)) %>
+    </p>
+  </div>
+
+  <% if !@crag_suggestion.pending? %>
+    <p class="mt-8 px-4 sm:px-0 max-w-3xl text-base text-gray-700" data-reviewed><%= t("views.mapping.crag_suggestions.show.reviewed") %></p>
+  <% else %>
+  <div class="mt-8 max-w-3xl grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <section class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-6 flex flex-col">
+      <h2 class="text-base font-semibold text-gray-900"><%= t("views.mapping.crag_suggestions.show.photos_title") %></h2>
+      <p class="mt-1 text-sm text-gray-600 flex-1"><%= t("views.mapping.crag_suggestions.show.photos_body") %></p>
+      <%= link_to t("views.mapping.crag_suggestions.show.photos_button"),
+            new_mapping_photo_contribution_path(crag_suggestion_id: @crag_suggestion.id), class: "mt-4 #{button_class}" %>
+    </section>
+    <section class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-6 flex flex-col">
+      <h2 class="text-base font-semibold text-gray-900"><%= t("views.mapping.crag_suggestions.show.problem_title") %></h2>
+      <p class="mt-1 text-sm text-gray-600 flex-1"><%= t("views.mapping.crag_suggestions.show.problem_body") %></p>
+      <%= link_to t("views.mapping.crag_suggestions.show.problem_button"),
+            new_mapping_contribution_path(crag_suggestion_id: @crag_suggestion.id), class: "mt-4 #{button_class}" %>
+    </section>
+  </div>
+
+  <p class="mt-8 px-4 sm:px-0 max-w-3xl text-sm text-gray-600"><%= t("views.mapping.crag_suggestions.show.done") %></p>
+  <% end %>
+</div>

@@ -4,7 +4,7 @@
 
 <div class="max-w-7xl mx-auto pt-6 sm:px-6 lg:px-8">
   <div class="px-4 sm:px-0">
-    <%= link_to mapping_path, class: "hover:text-gray-700" do %>
+    <%= link_to(@crag_suggestion ? mapping_crag_suggestion_path(@crag_suggestion) : mapping_path, class: "hover:text-gray-700") do %>
       <div class="flex items-center space-x-2 text-sm font-medium text-gray-500">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -17,14 +17,21 @@
 
 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pb-12">
   <div class="px-4 sm:px-0 max-w-3xl">
-    <h1 class="text-3xl font-bold mb-3 mt-2"><%= t("views.mapping.photo_contributions.new.title") %></h1>
-    <p class="text-base text-gray-600"><%= t("views.mapping.photo_contributions.new.intro") %></p>
+    <% if @crag_suggestion %>
+      <h1 class="text-3xl font-bold mb-3 mt-2"><%= t("views.mapping.crag_suggestions.photos.title", name: @crag_suggestion.name) %></h1>
+      <p class="text-base text-gray-600"><%= t("views.mapping.crag_suggestions.photos.intro") %></p>
+    <% else %>
+      <h1 class="text-3xl font-bold mb-3 mt-2"><%= t("views.mapping.photo_contributions.new.title") %></h1>
+      <p class="text-base text-gray-600"><%= t("views.mapping.photo_contributions.new.intro") %></p>
+    <% end %>
   </div>
 
   <div class="mt-8 max-w-3xl">
     <div class="space-y-8">
 
-      <%# Step 1: the area. A plain GET form, so the "still needing photos" list can load. %>
+      <%# Step 1: the area. A plain GET form, so the "still needing photos" list can load.
+          Not for a suggested crag: it has no area yet. %>
+      <% unless @crag_suggestion %>
       <section class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-8">
         <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.photo_contributions.new.area_step") %></h2>
         <%= form_with url: new_mapping_photo_contribution_path, method: :get, class: "mt-3", data: { controller: "auto-submit" } do |form| %>
@@ -35,9 +42,14 @@
           <noscript><%= form.submit t("views.mapping.photo_contributions.new.area_go"), class: "mt-2 text-sm underline" %></noscript>
         <% end %>
         <p class="mt-2 text-sm text-gray-500"><%= t("views.mapping.photo_contributions.new.area_hint") %></p>
+        <p class="mt-2 text-sm text-gray-500">
+          <%= t("views.mapping.areas.index.new_crag") %>
+          <%= link_to t("views.mapping.areas.index.new_crag_link"), new_mapping_crag_suggestion_path, class: "font-medium underline text-granite" %>
+        </p>
       </section>
+      <% end %>
 
-      <% if @area %>
+      <% if @area || @crag_suggestion %>
         <%= form_with model: @photo_contribution, url: mapping_photo_contributions_path, class: "space-y-8",
               data: {
                 controller: "photo-contribution",
@@ -47,6 +59,14 @@
                 photo_contribution_messages_value: t("views.mapping.photo_contributions.js").to_json
               } do |form| %>
           <%= invisible_captcha %>
+          <% if @crag_suggestion %>
+            <%= form.hidden_field :crag_suggestion_id, value: @crag_suggestion.id %>
+            <%# The uploader shows and hides this step; a new crag has no boulders to choose %>
+            <div data-photo-contribution-target="boulders">
+              <%= link_to t("views.mapping.crag_suggestions.photos.back", name: @crag_suggestion.name),
+                    mapping_crag_suggestion_path(@crag_suggestion), class: "text-sm font-medium text-granite underline" %>
+            </div>
+          <% else %>
           <%= form.hidden_field :area_id, value: @area.id %>
 
           <%# Step 2: which boulder. Required, so photos are never sent without an answer. %>
@@ -99,6 +119,7 @@
             <%= link_to t("views.mapping.photo_contributions.new.wanted_see_map"), mapping_map_path(slug: @area.slug),
                   class: "mt-4 inline-block text-sm font-medium text-granite underline" %>
           </fieldset>
+          <% end %>
 
           <section data-photo-contribution-target="picker" class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl px-4 py-6 sm:p-8">
             <h2 class="text-base font-semibold leading-7 text-gray-900"><%= t("views.mapping.photo_contributions.new.photos_step") %></h2>
@@ -163,6 +184,10 @@
             <button type="button" data-action="photo-contribution#reset" class="mt-4 text-sm font-medium text-granite underline">
               <%= t("views.mapping.photo_contributions.new.add_more") %>
             </button>
+            <% if @crag_suggestion %>
+              <%= link_to t("views.mapping.crag_suggestions.photos.back", name: @crag_suggestion.name),
+                    mapping_crag_suggestion_path(@crag_suggestion), class: "mt-4 ml-4 text-sm font-medium text-granite underline" %>
+            <% end %>
           </section>
         <% end %>
       <% end %>

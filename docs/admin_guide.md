@@ -12,6 +12,7 @@
 8. [Bulk Upload (Problems)](#bulk-upload-problems)
 9. [Photo Inbox (Upload Many Photos)](#photo-inbox)
     - [Boulder Photos from Visitors](#boulder-photos)
+    - [New Crags Suggested by Visitors](#new-crags)
     - [Boulder Names and Importing a Problem List](#boulder-names)
 10. [Importing Problems from Photos](#importing-from-photos)
 11. [Location Editor (Drag-and-Drop)](#location-editor)
@@ -707,6 +708,21 @@ The photo's boulder is the **chosen** one when the visitor picked one, which als
 Accepted photos count towards the **Top contributors** leaderboard on the Mapping page, alongside accepted contributions.
 
 ---
+
+## New Crags Suggested by Visitors {#new-crags}
+
+Visitors can suggest a crag that isn't on the site from **Suggest a new crag** (`/mapping/crags/new`). It's linked from the Mapping page and from the area step of **Add boulder photos**. The form asks for the crag's name, a pin on the map (it must be in the south-west of England), optional notes on parking, approach and access, and the visitor's name and email.
+
+Next the visitor gets a page with two buttons: **Add photos** opens Add boulder photos for that crag (no area or boulder to choose; GPS is kept but not matched to listed boulders), and **Add a problem** opens the usual problem form with the crag fixed. Only the visitor who suggested the crag can send things for it: the suggestion is remembered in their session. The photos and problems don't send their own staff or acknowledgement emails; the suggestion's do.
+
+**Reviewing (super admins only):** **Crags (N)** in the admin menu lists suggestions. Each one shows the pin, the nearest area on the site within 2 km (check it isn't the same crag), the notes, the photos and the problems.
+
+- **Accept** creates an **unpublished** area (you can change the name first; the slug is made unique), copies the notes into its description, turns every pending photo into an undrawn topo there (in **Photos to draw**, with GPS), and files every pending problem in the new area. The problems **stay pending**: review each one from the list as usual, now with the area already chosen. The contributor gets an email.
+- **Decline** keeps the suggestion and closes its photos, with an optional note for the contributor. Its problems stay in the Contributions queue as unlisted ones.
+- Until the crag is accepted, its photos aren't in the Photos queue. Its problems are in the Contributions queue, marked "Sent with the suggested crag …: review the crag first".
+- Once accepted, the new area is suggested for later contributions near the pin, even before anything in it is mapped.
+
+**Abuse:** invisible captcha, and 5 suggestions per visitor per hour. Nothing public changes until a super admin accepts, and an accepted area stays unpublished until you publish it.
 
 ## Importing Problems from Photos
 

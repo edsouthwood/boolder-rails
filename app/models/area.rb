@@ -58,8 +58,9 @@ class Area < ApplicationRecord
   }.freeze
 
   # The area closest to a point (an RGeo point, e.g. a contribution's GPS), measured to its
-  # nearest located problem or placed boulder outline. Returns [area, metres] or nil when
-  # nothing is within `within` metres.
+  # nearest located problem or placed boulder outline, or to the pin of the suggested crag
+  # it was made from (so a new area is found before anything in it is mapped). Returns
+  # [area, metres] or nil when nothing is within `within` metres.
   def self.nearest_to(point, within: 1000)
     return if point.blank?
 
@@ -71,6 +72,9 @@ class Area < ApplicationRecord
         UNION ALL
         SELECT area_id, ST_Distance(polygon, #{geog}) AS d FROM boulders
           WHERE polygon IS NOT NULL AND ST_DWithin(polygon, #{geog}, #{within.to_f})
+        UNION ALL
+        SELECT area_id, ST_Distance(location, #{geog}) AS d FROM crag_suggestions
+          WHERE state = 'accepted' AND area_id IS NOT NULL AND ST_DWithin(location, #{geog}, #{within.to_f})
       ) near GROUP BY area_id ORDER BY d LIMIT 1
     SQL
     row = connection.select_one(sql)

@@ -1,0 +1,100 @@
+<% s = @crag_suggestion %>
+<% lat, lon = s.location.lat, s.location.lon %>
+
+<div class="pt-4 px-4 sm:px-0">
+  <%= link_to "← Suggested crags", admin_crag_suggestions_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <h2 class="mt-2 text-2xl font-bold">#<%= s.id %> · <%= s.name %></h2>
+  <p class="text-sm text-gray-500">
+    <%= s.contributor_name.presence || "Anonymous" %><% if s.contributor_email.present? %> · <%= s.contributor_email %><% end %>
+    · <%= time_ago_in_words(s.created_at) %> ago · <span class="font-medium"><%= s.state %></span>
+    <% if s.reviewed_by %>by <%= s.reviewed_by %><% end %>
+  </p>
+</div>
+
+<div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <section class="bg-white shadow rounded-md p-4 space-y-3 text-sm">
+    <p>
+      Pin: <%= lat.round(6) %>, <%= lon.round(6) %> ·
+      <%= link_to "OpenStreetMap", "https://www.openstreetmap.org/?mlat=#{lat}&mlon=#{lon}#map=17/#{lat}/#{lon}", target: "_blank", rel: "noopener", class: "underline" %>
+    </p>
+    <% if @nearest_area %>
+      <p class="rounded bg-amber-50 p-2 text-amber-800 ring-1 ring-amber-200">
+        <%= link_to @nearest_area.name, admin_area_path(@nearest_area.slug), class: "font-medium underline" %>
+        is <%= @nearest_metres.round %>&nbsp;m away<%= " (unpublished)" unless @nearest_area.published %>: check this isn't the same crag.
+      </p>
+    <% elsif s.pending? %>
+      <p class="text-gray-500">No area on the site within 2&nbsp;km.</p>
+    <% end %>
+    <% if s.access_notes.present? %>
+      <div>
+        <p class="font-medium text-gray-900">Getting there</p>
+        <p class="whitespace-pre-line text-gray-700 bg-gray-50 rounded p-2"><%= s.access_notes %></p>
+        <% if s.pending? %><p class="text-xs text-gray-500">Accepting copies this into the new area's description, to edit there.</p><% end %>
+      </div>
+    <% end %>
+    <% if s.moderator_note.present? %>
+      <p class="text-gray-500">Note: <%= s.moderator_note %></p>
+    <% end %>
+    <% if s.area %>
+      <p>Area: <%= link_to s.area.name, admin_area_path(s.area.slug), class: "font-medium underline" %><%= " (unpublished)" unless s.area.published %></p>
+    <% end %>
+  </section>
+
+  <% if s.pending? %>
+    <section class="bg-white shadow rounded-md p-4 space-y-4">
+      <%= form_with url: accept_admin_crag_suggestion_path(s), method: :post, class: "space-y-2" do %>
+        <label for="area_name" class="block text-sm font-medium text-gray-700">Area name</label>
+        <%= text_field_tag :area_name, s.name, maxlength: 100, class: "block w-full rounded-md border-gray-300 text-sm" %>
+        <p class="text-xs text-gray-500">
+          Accepting makes this an unpublished area, turns its <%= pluralize(@photos.count(&:pending?), "pending photo") %> into photos to draw there,
+          and files its <%= pluralize(@problems.count(&:pending?), "pending problem") %> in it, still pending for you to check one by one.
+        </p>
+        <button type="submit" class="btn bg-granite hover:bg-granite-dark" data-turbo-confirm="Create the area and accept its photos?">Accept</button>
+      <% end %>
+      <%= form_with url: close_admin_crag_suggestion_path(s), method: :post, class: "space-y-2 border-t border-gray-200 pt-4" do %>
+        <%= text_field_tag :moderator_note, nil, placeholder: "Optional note (included in the decline email)", class: "block w-full rounded-md border-gray-300 text-sm" %>
+        <button type="submit" class="btn bg-red-600 hover:bg-red-700" data-turbo-confirm="Decline this crag and its photos?">Decline</button>
+        <p class="text-xs text-gray-500">Its photos are declined too; its problems stay in the contributions queue as unlisted ones.</p>
+      <% end %>
+    </section>
+  <% end %>
+</div>
+
+<h3 class="mt-8 text-lg font-semibold px-4 sm:px-0">Photos (<%= @photos.size %>)</h3>
+<% if @photos.empty? %>
+  <p class="text-sm text-gray-500 italic px-4 sm:px-0">None sent.</p>
+<% else %>
+  <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 my-3">
+    <% @photos.each do |pc| %>
+      <% photo = pc.display_photo %>
+      <li class="bg-white shadow rounded-md overflow-hidden text-xs">
+        <div class="bg-gray-100 aspect-[4/3]">
+          <% if photo %>
+            <%= link_to rails_representation_path(photo.variant(pc.topo ? :medium : :large)), target: "_blank", rel: "noopener" do %>
+              <%= image_tag photo.variant(:thumb), class: "w-full h-full object-cover", alt: "Photo ##{pc.id}", loading: "lazy" %>
+            <% end %>
+          <% end %>
+        </div>
+        <p class="p-2 text-gray-600">
+          #<%= pc.id %> · <%= pc.located? ? (pc.location_source == "device" ? "phone position" : "GPS") : "no GPS" %> · <%= pc.state %>
+          <% if pc.topo %> · <%= link_to "Draw lines →", workbench_admin_topo_path(pc.topo), class: "text-granite underline" %><% end %>
+        </p>
+        <% if pc.comment.present? %><p class="px-2 pb-2 text-gray-700"><%= pc.comment %></p><% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<h3 class="mt-8 text-lg font-semibold px-4 sm:px-0">Problems (<%= @problems.size %>)</h3>
+<% if @problems.empty? %>
+  <p class="text-sm text-gray-500 italic px-4 sm:px-0">None sent.</p>
+<% else %>
+  <ul class="my-3 divide-y divide-gray-200 bg-white shadow rounded-md text-sm">
+    <% @problems.each do |contribution| %>
+      <li class="px-4 py-2 flex justify-between gap-2">
+        <span>#<%= contribution.id %> · <%= contribution.problem_name.presence || "(no name)" %></span>
+        <span class="text-gray-500"><%= contribution.state %> · <%= link_to "Review →", edit_admin_contribution_path(contribution), class: "text-granite underline" %></span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

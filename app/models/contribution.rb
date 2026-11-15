@@ -15,6 +15,8 @@ class Contribution < ApplicationRecord
   # Which crag an unlisted problem is at: an existing area, or `area_name` free text for one
   # that isn't on the site yet. Neither counts as content on its own.
   belongs_to :area, optional: true
+  # Sent along with a suggested new crag; accepting the crag sets `area`
+  belongs_to :crag_suggestion, optional: true
 
   # Other unlisted submissions still waiting, near this one: likely the same new crag.
   def nearby_unlisted(within: 300)

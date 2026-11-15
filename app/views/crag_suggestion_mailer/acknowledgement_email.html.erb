@@ -1,0 +1,8 @@
+<%# Sent to whatever address was typed in, before any review, so it must not echo the
+    submitter's free text (name, crag name, notes): that would let anyone send their own
+    message to a stranger from our address. %>
+<p><%= t("contribute_mailer.greeting", name: t("contribute_mailer.fallback_name")) %></p>
+
+<p><%= t("crag_suggestion_mailer.acknowledgement_email.body") %></p>
+
+<p><%= t("contribute_mailer.signoff") %></p>

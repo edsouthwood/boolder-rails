@@ -71,6 +71,12 @@ Rails.application.routes.draw do
     resources :photo_contributions, path: "photo-contributions", only: :index do
       post :review, on: :collection
     end
+    resources :crag_suggestions, path: "crag-suggestions", only: [ :index, :show ] do
+      member do
+        post :accept
+        post :close
+      end
+    end
     resources :audits
     resources :redirects, only: :new
     resources :bulk_uploads, only: [ :new, :create ]
@@ -109,6 +115,7 @@ Rails.application.routes.draw do
     resources :problems, only: [ :show, :index ]
     resources :contributions, only: [ :show, :new, :create ]
     resources :photo_contributions, path: "photos", only: [ :new, :create ]
+    resources :crag_suggestions, path: "crags", only: [ :new, :create, :show ]
     resources :requests, controller: "contribution_requests", only: [ :index ]
     get "map(/:slug)", to: "/map#index", as: :map, defaults: { contribute: true }
     get "/", to: "areas#index"

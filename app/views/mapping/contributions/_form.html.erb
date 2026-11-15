@@ -22,7 +22,10 @@
 
 
 <% picker_area = @contribution.problem&.area || @contribution.area %>
-<% picker_bounds = picker_area&.serialized_bounds || {
+<% suggested_pin = @contribution.crag_suggestion&.location %>
+<% picker_bounds = picker_area&.serialized_bounds ||
+     (suggested_pin && { south_west: { lat: suggested_pin.lat - 0.003, lng: suggested_pin.lon - 0.005 },
+                         north_east: { lat: suggested_pin.lat + 0.003, lng: suggested_pin.lon + 0.005 } }) || {
      south_west: { lat: Area::DEFAULT_BOUNDS[:south_west][:lat], lng: Area::DEFAULT_BOUNDS[:south_west][:lon] },
      north_east: { lat: Area::DEFAULT_BOUNDS[:north_east][:lat], lng: Area::DEFAULT_BOUNDS[:north_east][:lon] }
    } %>
@@ -55,7 +58,11 @@
           <% else %>
 
           <div class="sm:col-span-4 sm:col-start-1">
-            <% if @contribution.area %>
+            <% if @contribution.crag_suggestion %>
+              <p class="block text-sm font-medium leading-6 text-gray-900"><%= t("views.mapping.contributions.new.area_fixed") %></p>
+              <p class="mt-2 text-gray-700"><%= @contribution.crag_suggestion.name %></p>
+              <%= form.hidden_field :crag_suggestion_id %>
+            <% elsif @contribution.area %>
               <p class="block text-sm font-medium leading-6 text-gray-900"><%= t("views.mapping.contributions.new.area_fixed") %></p>
               <p class="mt-2 text-gray-700"><%= @contribution.area.name %></p>
               <%= form.hidden_field :area_id %>

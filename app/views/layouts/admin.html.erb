@@ -49,7 +49,11 @@
 
                 <%= link_to "Contribs (#{Contribution.pending.count})", admin_contributions_path(state: "pending"), class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
-                <%= link_to "Photos (#{PhotoContribution.pending.count})", admin_photo_contributions_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "Photos (#{PhotoContribution.pending.where.not(area_id: nil).count})", admin_photo_contributions_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+
+                <% if current_admin_user.super_admin? %>
+                  <%= link_to "Crags (#{CragSuggestion.pending.count})", admin_crag_suggestions_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <% end %>
 
                 <%= link_to "Bulk Upload", new_admin_bulk_upload_path, class: "flex-shrink-0 text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
 
