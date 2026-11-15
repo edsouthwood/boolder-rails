@@ -7,7 +7,7 @@ import { LINE_RED as RED, pointFromClick, drawDot, drawHold, drawExcludedArea, d
 export default class extends Controller {
   static targets = [
     'viewport', 'container', 'image', 'canvas', 'zoomLabel', 'modeRadio',
-    'list', 'candidates', 'suggestions', 'filter', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
+    'list', 'candidates', 'suggestions', 'filter', 'guide', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
   ]
   static values = {
     lines: Array, candidates: Array, topoId: Number,
@@ -64,9 +64,17 @@ export default class extends Controller {
       dirty: false,
     }
     this.selectMode('line') // a new problem always starts with its line, not holds left over from the last one
+    this.showGuide(line.problem_id)
     this.renderList()
     this.redraw()
     this.setStatus(line.coordinates ? `Editing ${line.name}` : `Drawing ${line.name}: click along the line`)
+  }
+
+  // Drawing guides (how a problem was drawn on another photo): only the selected problem's,
+  // or all of them when it has none
+  showGuide(problemId) {
+    const mine = this.guideTargets.filter(guide => guide.dataset.problemId === String(problemId))
+    this.guideTargets.forEach(guide => { guide.hidden = mine.length > 0 && !mine.includes(guide) })
   }
 
   nextUndrawn() {

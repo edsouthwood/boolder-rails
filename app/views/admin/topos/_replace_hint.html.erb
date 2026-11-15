@@ -1,0 +1,3 @@
+<% area = Area.find_by(id: topo.area_id) %>
+Got a better photo of this face? <%= area ? link_to("Upload it", new_admin_area_photo_path(area_slug: area.slug), class: "text-granite hover:underline") : "Upload it" %>
+(or accept the one sent in), then on its workbench pick Topo #<%= topo.id %> under "Better than an existing photo?".

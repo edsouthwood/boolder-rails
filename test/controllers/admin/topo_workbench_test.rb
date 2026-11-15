@@ -379,7 +379,7 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     get workbench_admin_topo_url(@topo)
 
     assert_response :success
-    assert_match "Drawn by contributors on their own photos", response.body
+    assert_match "drawn by a contributor on their photo", response.body
     assert_select "[data-controller=line-preview]"
     assert_select "a[href=?]", edit_admin_contribution_path(contribution)
   end
@@ -393,6 +393,77 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
 
     get workbench_admin_topo_url(@topo)
 
-    assert_no_match "Drawn by contributors", response.body
+    assert_no_match "Drawing guides", response.body
+  end
+
+  # --- replacing a photo with a better one ---
+
+  def replacement_setup
+    @problem = @mine.problems.create!(name: "Old Crack", steepness: "wall", boulder: @boulder)
+    @old = topo(@mine)
+    @old.update!(metadata: { "chosen_boulder_id" => @boulder.id })
+    Line.create!(problem: @problem, topo: @old, coordinates: POINTS)
+    @topo.choose_boulder!(@boulder)
+  end
+
+  test "a photo of the same boulder offers to replace the existing one" do
+    replacement_setup
+
+    get workbench_admin_topo_url(@topo)
+
+    assert_select "summary", text: "Better than an existing photo?"
+    assert_select "input[type=radio][name=replaces_topo_id][value=?]", @old.id.to_s
+  end
+
+  test "replace, bring across, redraw with the old line as a guide, swap, undo" do
+    replacement_setup
+
+    patch replaces_admin_topo_url(@topo), params: { replaces_topo_id: @old.id }
+    assert_equal @old, @topo.reload.replaces_topo
+    assert_not @topo.published
+
+    post bring_problems_admin_topo_url(@topo)
+    line = @topo.lines.find_by!(problem: @problem)
+    assert_equal "Added 1 problem to redraw.", flash[:notice]
+
+    get workbench_admin_topo_url(@topo)
+    assert_select "figure[data-topo-workbench-target=guide][data-problem-id=?]", @problem.id.to_s
+    assert_select "button", text: "Swap: put this photo on the site", count: 0
+
+    line.update!(coordinates: POINTS)
+    get workbench_admin_topo_url(@topo)
+    assert_select "button", text: "Swap: put this photo on the site"
+
+    post swap_admin_topo_url(@topo)
+    assert @topo.reload.published
+    assert_not @old.reload.published
+
+    get workbench_admin_topo_url(@old)
+    assert_select "button", text: "Undo swap"
+
+    post undo_swap_admin_topo_url(@old)
+    assert @old.reload.published
+    assert_not @topo.reload.published
+  end
+
+  test "swapping before every problem is drawn is refused" do
+    replacement_setup
+    @topo.replace!(@old)
+    @topo.bring_problems_across!
+
+    post swap_admin_topo_url(@topo)
+
+    assert_equal "Draw every problem on this photo first", flash[:error]
+    assert @old.reload.published
+  end
+
+  test "another area's admin can't replace or swap its photos" do
+    theirs = topo(@theirs)
+
+    patch replaces_admin_topo_url(theirs), params: { replaces_topo_id: "" }
+    post swap_admin_topo_url(theirs)
+
+    assert_nil theirs.reload.replaces_topo
+    assert theirs.published
   end
 end

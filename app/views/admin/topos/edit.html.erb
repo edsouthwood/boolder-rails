@@ -8,6 +8,12 @@
   <p class="my-3"><%= link_to "Draw lines on this photo (workbench) →", workbench_admin_topo_path(@topo), class: "text-granite font-medium hover:underline" %></p>
 <% end %>
 
+<% if (newer = @topo.replaced_by_topo) %>
+  <p class="my-3 max-w-md rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">Replaced by <%= link_to "Topo ##{newer.id}", workbench_admin_topo_path(newer), class: "text-granite hover:underline" %>, so it's off the site. Undo the swap from <%= link_to "this photo's workbench", workbench_admin_topo_path(@topo), class: "text-granite hover:underline" %>.</p>
+<% elsif (older = @topo.replaces_topo) %>
+  <p class="my-3 max-w-md rounded bg-blue-50 border border-blue-200 px-3 py-2 text-sm">Replacing <%= link_to "Topo ##{older.id}", workbench_admin_topo_path(older), class: "text-granite hover:underline" %>: off the site until it's swapped in from <%= link_to "the workbench", workbench_admin_topo_path(@topo), class: "text-granite hover:underline" %>.</p>
+<% end %>
+
 <% if area %>
   <div class="my-3 max-w-md rounded border border-gray-200 bg-white p-3">
     <%= render "admin/topos/neighbours", topo: @topo %>

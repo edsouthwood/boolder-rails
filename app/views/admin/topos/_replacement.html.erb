@@ -1,0 +1,53 @@
+<%# Swapping a topo for a better photo: this photo is redrawn while unpublished, then swapped in %>
+<% if replaced_by %>
+  <div class="bg-amber-50 border border-amber-200 sm:rounded-md p-3 space-y-2">
+    <p class="font-semibold text-gray-800">Replaced by <%= link_to "Topo ##{replaced_by.id}", workbench_admin_topo_path(replaced_by), class: "text-granite hover:underline" %></p>
+    <p class="text-xs text-gray-600">This photo is off the site; the better one shows instead. It's kept so the swap can be undone.</p>
+    <%= button_to "Undo swap", undo_swap_admin_topo_path(topo), method: :post, form: { data: { turbo_confirm: "Put Topo ##{topo.id} back on the site and unpublish Topo ##{replaced_by.id}?" } },
+          class: "px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 text-xs" %>
+  </div>
+<% elsif replaces %>
+  <% lines = topo.lines.to_a %>
+  <% drawn = lines.count { |line| line.coordinates.present? } %>
+  <% left_behind = topo.problems_left_behind.to_a %>
+  <div class="bg-white shadow sm:rounded-md p-3 space-y-2">
+    <p class="font-semibold text-gray-800">Replacing <%= link_to "Topo ##{replaces.id}", workbench_admin_topo_path(replaces), class: "text-granite hover:underline" %></p>
+    <%= cdn_image_tag replaces.photo.variant(:thumb), class: "w-full h-28 object-cover rounded border border-gray-200" %>
+    <p class="text-xs text-gray-600">
+      This photo stays off the site until you swap. Climbers see Topo #<%= replaces.id %> until then.
+    </p>
+    <% if left_behind.any? %>
+      <p class="text-xs text-gray-600"><%= pluralize(left_behind.size, "problem") %> on the old photo <%= left_behind.size == 1 ? "isn't" : "aren't" %> on this one yet: <%= left_behind.first(4).map(&:name_with_fallback).to_sentence %><%= "…" if left_behind.size > 4 %>.</p>
+      <%= button_to "Bring #{left_behind.size == 1 ? 'it' : "all #{left_behind.size}"} across", bring_problems_admin_topo_path(topo), method: :post, class: "btn w-full" %>
+    <% end %>
+    <p class="text-xs <%= drawn == lines.size && lines.any? ? "text-green-700" : "text-gray-600" %>"><%= drawn %> of <%= pluralize(lines.size, "problem") %> drawn on this photo.</p>
+    <% if topo.all_drawn? %>
+      <% warning = left_behind.any? ? " #{pluralize(left_behind.size, 'problem')} on the old photo will no longer have a photo." : "" %>
+      <%= button_to "Swap: put this photo on the site", swap_admin_topo_path(topo), method: :post,
+            form: { data: { turbo_confirm: "Publish this photo and unpublish Topo ##{replaces.id}?#{warning}" } },
+            class: "block w-full text-center px-3 py-2 rounded bg-granite text-white hover:bg-granite-dark font-medium" %>
+    <% else %>
+      <p class="text-xs text-gray-500">Swap appears once every problem is drawn.</p>
+    <% end %>
+    <%= button_to "Stop replacing", replaces_admin_topo_path(topo), method: :patch, params: { replaces_topo_id: "" },
+          class: "text-xs text-gray-500 hover:underline" %>
+  </div>
+<% elsif candidates.any? %>
+  <details class="bg-white shadow sm:rounded-md p-3">
+    <summary class="font-semibold text-gray-800 cursor-pointer">Better than an existing photo?</summary>
+    <p class="mt-2 text-xs text-gray-600">Pick the photo this one should replace. Its problems come across to be redrawn here, with the old lines as a guide, and you swap when they're done.</p>
+    <%= form_with url: replaces_admin_topo_path(topo), method: :patch, class: "mt-2 space-y-2", data: { turbo: false } do %>
+      <% candidates.each do |candidate| %>
+        <label class="flex items-center gap-2 text-xs cursor-pointer">
+          <%= radio_button_tag :replaces_topo_id, candidate.id %>
+          <%= cdn_image_tag candidate.photo.variant(:thumb), class: "w-20 h-14 object-cover rounded border border-gray-200" %>
+          <span>Topo #<%= candidate.id %><span class="block text-gray-500 truncate max-w-[9rem]"><%= candidate.problems.reorder(nil).limit(3).map(&:name_with_fallback).to_sentence %></span></span>
+        </label>
+      <% end %>
+      <button type="submit" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100 text-xs">Replace it with this photo</button>
+    <% end %>
+    <p class="mt-3 text-xs text-gray-500"><%= render "admin/topos/replace_hint", topo: topo %></p>
+  </details>
+<% elsif topo.published && topo.lines.any? %>
+  <p class="text-xs text-gray-500 px-1"><%= render "admin/topos/replace_hint", topo: topo %></p>
+<% end %>
