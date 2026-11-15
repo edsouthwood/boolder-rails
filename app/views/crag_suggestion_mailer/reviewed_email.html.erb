@@ -1,0 +1,11 @@
+<%# Only after a review, but still no free text from the submitter (see acknowledgement_email) %>
+<p><%= t("contribute_mailer.greeting", name: t("contribute_mailer.fallback_name")) %></p>
+
+<p><%= t("crag_suggestion_mailer.reviewed_email.#{@crag_suggestion.accepted? ? 'accepted' : 'closed'}") %></p>
+
+<% if !@crag_suggestion.accepted? && @crag_suggestion.moderator_note.present? %>
+  <p><%= t("crag_suggestion_mailer.reviewed_email.note") %></p>
+  <p><%= @crag_suggestion.moderator_note %></p>
+<% end %>
+
+<p><%= t("contribute_mailer.signoff") %></p>

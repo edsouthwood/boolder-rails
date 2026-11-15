@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -196,10 +196,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
     t.bigint "area_id"
     t.string "area_name"
     t.bigint "merge_topo_id"
+    t.bigint "crag_suggestion_id"
     t.index ["area_id"], name: "index_contributions_on_area_id"
+    t.index ["crag_suggestion_id"], name: "index_contributions_on_crag_suggestion_id"
     t.index ["merge_topo_id"], name: "index_contributions_on_merge_topo_id"
     t.index ["problem_id"], name: "index_contributions_on_problem_id"
     t.index ["state"], name: "index_contributions_on_state"
+  end
+
+  create_table "crag_suggestions", force: :cascade do |t|
+    t.string "name", null: false
+    t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}, null: false
+    t.text "access_notes"
+    t.string "contributor_name"
+    t.string "contributor_email"
+    t.string "state", default: "pending", null: false
+    t.string "reviewed_by"
+    t.datetime "reviewed_at"
+    t.text "moderator_note"
+    t.bigint "area_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["area_id"], name: "index_crag_suggestions_on_area_id"
+    t.index ["state"], name: "index_crag_suggestions_on_state"
   end
 
   create_table "imports", force: :cascade do |t|
@@ -235,7 +254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
   end
 
   create_table "photo_contributions", force: :cascade do |t|
-    t.bigint "area_id", null: false
+    t.bigint "area_id"
     t.bigint "boulder_id"
     t.bigint "topo_id"
     t.geography "location", limit: {srid: 4326, type: "st_point", geographic: true}
@@ -253,9 +272,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
     t.datetime "updated_at", null: false
     t.boolean "boulder_chosen", default: false, null: false
     t.bigint "gps_boulder_id"
+    t.bigint "crag_suggestion_id"
     t.index ["area_id"], name: "index_photo_contributions_on_area_id"
     t.index ["batch"], name: "index_photo_contributions_on_batch"
     t.index ["boulder_id"], name: "index_photo_contributions_on_boulder_id"
+    t.index ["crag_suggestion_id"], name: "index_photo_contributions_on_crag_suggestion_id"
     t.index ["gps_boulder_id"], name: "index_photo_contributions_on_gps_boulder_id"
     t.index ["state"], name: "index_photo_contributions_on_state"
     t.index ["topo_id"], name: "index_photo_contributions_on_topo_id"
@@ -335,12 +356,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "boulders", "areas"
   add_foreign_key "contributions", "areas", on_delete: :nullify
+  add_foreign_key "contributions", "crag_suggestions"
   add_foreign_key "contributions", "topos", column: "merge_topo_id", on_delete: :nullify
+  add_foreign_key "crag_suggestions", "areas", on_delete: :nullify
   add_foreign_key "lines", "contributions", column: "reference_contribution_id", on_delete: :nullify
   add_foreign_key "lines", "lines", column: "reference_line_id", on_delete: :nullify
   add_foreign_key "photo_contributions", "areas"
   add_foreign_key "photo_contributions", "boulders", column: "gps_boulder_id", on_delete: :nullify
   add_foreign_key "photo_contributions", "boulders", on_delete: :nullify
+  add_foreign_key "photo_contributions", "crag_suggestions"
   add_foreign_key "photo_contributions", "topos", on_delete: :nullify
   add_foreign_key "problems", "areas"
   add_foreign_key "problems", "boulders", on_delete: :nullify

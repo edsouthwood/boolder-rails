@@ -1,5 +1,6 @@
 class Mapping::ContributionsController < ApplicationController
   include RemembersContributor
+  include SuggestsCrags
 
   invisible_captcha only: [ :create ], on_spam: :handle_spam
 
@@ -10,6 +11,7 @@ class Mapping::ContributionsController < ApplicationController
   def new
     @contribution = Contribution.new(**remembered_contributor, problem_id: params[:problem_id],
                                      area: published_area(params[:area_id]))
+    attach_crag_suggestion(params[:crag_suggestion_id])
     @area_topos = area_topos_for_problem(params[:problem_id])
     @recent_photos = recent_photos_for(@contribution)
   end
@@ -18,6 +20,7 @@ class Mapping::ContributionsController < ApplicationController
     @contribution = Contribution.new(contribution_params)
     # Only a published area can be named by id; an unknown crag goes in area_name.
     @contribution.area = published_area(@contribution.area_id)
+    attach_crag_suggestion(params.dig(:contribution, :crag_suggestion_id))
     reuse_recent_photo
 
     remember_contributor(@contribution)
@@ -26,11 +29,14 @@ class Mapping::ContributionsController < ApplicationController
       remember_photo(@contribution)
       flash[:notice] = t("views.mapping.contributions.new.flash_success")
 
-      ContributeMailer.with(contribution: @contribution).new_contribution_email.deliver_later
-      ContributeMailer.with(contribution: @contribution).acknowledgement_email.deliver_later
+      # A suggested crag's problems are reviewed with it, and its own emails cover them
+      unless @contribution.crag_suggestion
+        ContributeMailer.with(contribution: @contribution).new_contribution_email.deliver_later
+        ContributeMailer.with(contribution: @contribution).acknowledgement_email.deliver_later
+      end
 
       # Unlisted-problem submissions have no problem to return to; show the contribution instead.
-      redirect_to(@contribution.problem ? [ :mapping, @contribution.problem ] : [ :mapping, @contribution ])
+      redirect_to [ :mapping, @contribution.crag_suggestion || @contribution.problem || @contribution ]
     else
       @area_topos = area_topos_for_problem(@contribution.problem_id)
       @recent_photos = recent_photos_for(@contribution)
@@ -82,6 +88,16 @@ class Mapping::ContributionsController < ApplicationController
     @contribution.existing_topo_id = nil
     # Where that photo was taken, as read from it the first time
     @contribution.location = source.location if @contribution.location.blank?
+  end
+
+  # A problem at a crag this visitor just suggested (never a listed problem or area)
+  def attach_crag_suggestion(id)
+    suggestion = own_crag_suggestion(id)
+    return unless suggestion && @contribution.problem_id.blank?
+
+    @contribution.crag_suggestion = suggestion
+    @contribution.area = nil
+    @contribution.area_name = suggestion.name
   end
 
   # invisible_captcha honeypot tripped — silently drop and send the bot home.

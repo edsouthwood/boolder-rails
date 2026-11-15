@@ -17,6 +17,7 @@
       <li><a href="#bulk-upload" class="hover:underline">Bulk Upload (Problems)</a></li>
       <li><a href="#photo-inbox" class="hover:underline">Photo Inbox (Upload Many Photos)</a></li>
       <li><a href="#boulder-photos" class="hover:underline">Boulder Photos from Visitors</a></li>
+      <li><a href="#new-crags" class="hover:underline">New Crags Suggested by Visitors</a></li>
       <li><a href="#boulder-names" class="hover:underline">Boulder Names &amp; Problem Lists</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
@@ -354,6 +355,22 @@ Unnamed Slab,,slab,false,,,,</pre>
         </ul>
         <p><strong>Emails:</strong> staff get one email per upload session, not per photo. Contributors who gave an email get one acknowledgement per session and one email per review action.</p>
         <p><strong>Abuse and privacy:</strong> the invisible captcha checks the first photo of each session, and each visitor can send up to 120 photos an hour. Photos are only ever shown as resized copies with EXIF (GPS, camera) stripped, which now also applies to photos on public contribution pages. Accepted photos count towards the Top contributors leaderboard.</p>
+      </div>
+    </section>
+
+    <section id="new-crags">
+      <%= render "admin/docs/section_header", title: "New Crags Suggested by Visitors" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Visitors can suggest a crag that isn't on the site from <%= link_to "Suggest a new crag", new_mapping_crag_suggestion_path, class: "text-blue-600 hover:underline" %>, linked from the Mapping page and the area step of Add boulder photos. They give its name, a pin on the map (in the south-west of England), optional parking, approach and access notes, and their name and email.</p>
+        <p>Then <strong>Add photos</strong> opens Add boulder photos for that crag (no area or boulder to choose; GPS is kept but not matched to listed boulders), and <strong>Add a problem</strong> opens the usual problem form with the crag fixed. Only the visitor who suggested it can send things for it. Its photos and problems don't send their own emails; the suggestion's do.</p>
+        <p><strong>Reviewing (super admins only):</strong> <%= link_to "Crags (N)", admin_crag_suggestions_path, class: "text-blue-600 hover:underline" %> in the admin menu. Each one shows the pin, the nearest area within 2&nbsp;km (check it isn't the same crag), the notes, photos and problems.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Accept</strong> creates an <strong>unpublished</strong> area (rename it first if you like), copies the notes into its description, turns every pending photo into an undrawn topo there (in <strong>Photos to draw</strong>) and files every pending problem in it. The problems <strong>stay pending</strong> to review one by one, with the area already chosen</li>
+          <li><strong>Decline</strong> keeps it and closes its photos, with an optional note for the contributor. Its problems stay in Contributions as unlisted ones</li>
+          <li>Until accepted, its photos aren't in the Photos queue, and its problems in Contributions say "review the crag first"</li>
+          <li>Once accepted, the new area is suggested for later contributions near the pin, even before anything in it is mapped</li>
+        </ul>
+        <p><strong>Abuse:</strong> invisible captcha and 5 suggestions per visitor an hour. Nothing public changes until you accept, and the area stays unpublished until you publish it.</p>
       </div>
     </section>
 

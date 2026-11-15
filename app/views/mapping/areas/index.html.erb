@@ -64,7 +64,11 @@
       <div class="px-4 sm:px-0 mt-8">
         <p class="py-2 text-gray-600 text-base">
           <%= t("views.mapping.areas.index.new_crag") %>
-          <%= link_to t("views.mapping.areas.index.new_crag_link"), new_mapping_contribution_path, class: "font-medium underline text-granite" %>
+          <%= link_to t("views.mapping.areas.index.new_crag_link"), new_mapping_crag_suggestion_path, class: "font-medium underline text-granite" %>
+        </p>
+        <p class="py-2 text-gray-600 text-sm">
+          <%= t("views.mapping.areas.index.new_problem") %>
+          <%= link_to t("views.mapping.areas.index.new_problem_link"), new_mapping_contribution_path, class: "underline text-granite" %>
         </p>
         <p class="py-2 text-gray-600 text-base"><%= t("views.mapping.areas.index.core_mapping_team") %></p>
         <p class="py-2 text-gray-600 text-base"><%= t("views.mapping.areas.index.core_mapping_team_email_html", link: link_to("hello@bowda.rocks", "mailto:hello@bowda.rocks", class: "font-medium underline text-granite")) %></p>

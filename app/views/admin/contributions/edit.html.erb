@@ -63,6 +63,12 @@
           <p class="text-sm font-semibold text-gray-800 mb-1">Unlisted problem</p>
           <% if @contribution.problem_name.present? %><p class="text-sm">Name: <%= @contribution.problem_name %></p><% end %>
           <% if @contribution.problem_url.present? %><p class="text-sm break-all">URL: <%= @contribution.problem_url %></p><% end %>
+          <% if (suggestion = @contribution.crag_suggestion) %>
+            <p class="text-sm">
+              Sent with the suggested crag <%= link_to suggestion.name, admin_crag_suggestion_path(suggestion), class: "font-medium underline" %>
+              <% if suggestion.pending? %><span class="text-amber-700">: review the crag first, which makes its area.</span><% end %>
+            </p>
+          <% end %>
           <% if @contribution.area %>
             <p class="text-sm">Sent from the <%= @contribution.area.name %> mapping list</p>
           <% elsif @contribution.area_name.present? %>

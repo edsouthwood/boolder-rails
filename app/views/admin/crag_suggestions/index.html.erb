@@ -1,0 +1,36 @@
+<div class="flex items-baseline gap-3 mb-2 pt-4 px-4 sm:px-0">
+  <h2 class="text-2xl font-bold">Suggested crags</h2>
+</div>
+<p class="text-sm text-gray-600 px-4 sm:px-0 max-w-3xl">
+  Crags that aren't on the site, sent in from <%= link_to "Suggest a new crag", new_mapping_crag_suggestion_path, class: "underline" %>,
+  with any photos and problems sent for them. Accepting one makes a new unpublished area.
+</p>
+
+<%= form_with url: admin_crag_suggestions_path, method: :get, class: "my-4", data: { controller: "auto-submit" } do |form| %>
+  <label for="state" class="block text-sm font-medium text-gray-700">State</label>
+  <%= form.select :state, CragSuggestion::STATES, { selected: @state, include_blank: "All" }, { data: { action: "change->auto-submit#submit" }, class: "mt-1 block w-full md:w-48 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
+<% end %>
+
+<% if @crag_suggestions.empty? %>
+  <p class="my-8 text-sm text-gray-500 italic">No <%= @state %> crag suggestions.</p>
+<% else %>
+  <ul class="my-4 divide-y divide-gray-200 bg-white shadow rounded-md">
+    <% @crag_suggestions.each do |suggestion| %>
+      <li>
+        <%= link_to admin_crag_suggestion_path(suggestion), class: "block px-4 py-3 hover:bg-gray-50" do %>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <p class="font-medium text-gray-900">#<%= suggestion.id %> · <%= suggestion.name %></p>
+            <p class="text-sm text-gray-500">
+              <%= pluralize(@photo_counts[suggestion.id].to_i, "photo") %> · <%= pluralize(@problem_counts[suggestion.id].to_i, "problem") %>
+              · <%= suggestion.state %><% if suggestion.area %> as <%= suggestion.area.name %><% end %>
+            </p>
+          </div>
+          <p class="text-xs text-gray-500">
+            <%= suggestion.contributor_name.presence || "Anonymous" %> · <%= time_ago_in_words(suggestion.created_at) %> ago
+          </p>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <%= paginate @crag_suggestions %>
+<% end %>

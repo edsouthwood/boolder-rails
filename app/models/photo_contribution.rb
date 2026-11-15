@@ -8,7 +8,9 @@ class PhotoContribution < ApplicationRecord
     attachable.variant :large, resize_to_limit: [ 1600, 1600 ], saver: { quality: 70, strip: true }
   end
 
-  belongs_to :area
+  # Unset only while the photo waits with a suggested new crag, which sets it on accept
+  belongs_to :area, optional: true
+  belongs_to :crag_suggestion, optional: true
   # The boulder it shows: chosen by the visitor from the list, else matched by GPS
   belongs_to :boulder, optional: true
   # The boulder nearest the photo's position, whether or not it was chosen
@@ -29,13 +31,15 @@ class PhotoContribution < ApplicationRecord
   scope :pending, -> { where(state: "pending") }
   scope :accepted, -> { where(state: "accepted") }
   scope :closed, -> { where(state: "closed") }
-  # The ones an admin may review: all for super admins, else those in their areas
+  # The ones an admin may review: all for super admins, else those in their areas. Photos
+  # of a suggested crag are reviewed with the suggestion, so they wait until it gets an area.
   scope :reviewable_by, ->(admin) {
     slugs = admin.accessible_area_slugs
-    slugs.nil? ? all : joins(:area).where(areas: { slug: slugs })
+    slugs.nil? ? where.not(area_id: nil) : joins(:area).where(areas: { slug: slugs })
   }
 
   validates :state, inclusion: { in: STATES }
+  validates :area, presence: true, unless: :crag_suggestion
   validates :photo, presence: true, on: :create
   validates :location_source, inclusion: { in: LOCATION_SOURCES }, allow_nil: true
   validates :heading, numericality: { in: 0..360 }, allow_nil: true
@@ -68,7 +72,7 @@ class PhotoContribution < ApplicationRecord
   # this accepted. The photo's file moves to the topo rather than being copied. Returns the
   # topo, or nil when there's nothing to accept (already reviewed, or no photo).
   def accept!(reviewed_by:)
-    return unless pending? && photo.attached?
+    return unless pending? && photo.attached? && area
 
     transaction do
       self.topo = Topo.create!(area: area, photo: photo.blob, metadata: topo_metadata)

@@ -1,0 +1,16 @@
+<p>
+  New crag suggested: <%= @crag_suggestion.name %>
+  (photos and problems for it may follow).
+</p>
+
+<p><%= admin_crag_suggestion_url(@crag_suggestion) %></p>
+
+<ul>
+  <li>Position: <%= @crag_suggestion.location.lat.round(6) %>, <%= @crag_suggestion.location.lon.round(6) %></li>
+  <li>Name: <%= @crag_suggestion.contributor_name %></li>
+  <li>Email: <%= @crag_suggestion.contributor_email %></li>
+</ul>
+
+<% if @crag_suggestion.access_notes.present? %>
+  <p><%= @crag_suggestion.access_notes %></p>
+<% end %>

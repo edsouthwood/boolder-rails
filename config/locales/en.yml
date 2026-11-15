@@ -26,6 +26,15 @@ en:
       closed:
         one: "After review we weren't able to use one of your photos."
         other: "After review we weren't able to use %{count} of your photos."
+  crag_suggestion_mailer:
+    acknowledgement_email:
+      subject: "We received your new crag"
+      body: "Thanks for telling us about a crag that isn't on the site yet. Our team will look at it, along with any photos and problems you sent for it, and we'll let you know how it goes."
+    reviewed_email:
+      subject: "Your new crag has been reviewed"
+      accepted: "Good news: the crag you told us about has been added. It will appear on the site once its boulders and problems have been mapped."
+      closed: "Thanks for telling us about a crag. After review we won't be adding it to the site."
+      note: "A note from the team:"
   circuit:
     name:
       white_for_kids: White (kids)
@@ -99,13 +108,58 @@ en:
           top_contributors_title: Top contributors
           top_contributors_subtitle: Ranked by accepted contributions
           no_contributors: No accepted contributions yet — be the first!
-          new_crag: Found a problem at a crag that isn't listed?
-          new_crag_link: Tell us about it
+          new_crag: Know a crag that isn't listed?
+          new_crag_link: Suggest a new crag
+          new_problem: "Or just one problem from somewhere that isn't listed:"
+          new_problem_link: send the problem
           contribution_count:
             one: "1 contribution"
             other: "%{count} contributions"
           metas:
             title: Mapping
+      crag_suggestions:
+        new:
+          metas:
+            title: Suggest a new crag
+          title: Suggest a new crag
+          intro: "Know a bouldering spot that isn't on the site yet? Tell us where it is and how to get there. Next you can send photos of its boulders and its problems, and we'll review it all together."
+          name_label: Name of the crag
+          name_hint: "The name climbers use for it, or the nearest tor or landmark."
+          location_step: Where is it?
+          location_hint: "Tap the map where the boulders are. You can zoom and drag the map first."
+          lat_label: Latitude
+          lon_label: Longitude
+          access_label: Getting there (optional)
+          access_placeholder: "Where to park, the approach, and anything climbers should know about access: nesting birds, permission, livestock…"
+          about_step: About you
+          name_you_label: Your name (optional)
+          email_label: Email (optional)
+          email_hint: "So we can tell you when it's been reviewed."
+          submit: Next
+          too_many: "You've suggested several crags in the last hour. Please try again later."
+        show:
+          metas:
+            title: New crag sent
+          title: "Thanks: %{name} has been sent"
+          intro: "Now add what you can. Everything you send from here is kept with this crag and reviewed with it."
+          photos_title: Add boulder photos
+          photos_body: "A photo of each boulder face is the most useful thing. Photos with GPS show us where each boulder is."
+          photos_button: Add photos
+          problem_title: Add a problem
+          problem_body: "A name, grade, a line drawn on a photo, whatever you know. Add one at a time."
+          problem_button: Add a problem
+          sent: "Sent so far: %{photos}, %{problems}."
+          problem_count:
+            one: 1 problem
+            other: "%{count} problems"
+          photo_count:
+            one: 1 photo
+            other: "%{count} photos"
+          done: "That's all: we'll email you once it's been reviewed, if you gave your email."
+        photos:
+          title: "Photos of boulders at %{name}"
+          intro: "This crag isn't on the site yet, so there are no boulders to choose. Send a photo of each boulder face; we'll work out which is which from the photos and their GPS."
+          back: "Back to %{name}"
       photo_contributions:
         cta:
           title: Add boulder photos

@@ -3,6 +3,7 @@
 # Each photo waits in the admin queue until it's accepted as a topo.
 class Mapping::PhotoContributionsController < ApplicationController
   include RemembersContributor
+  include SuggestsCrags
 
   # invisible_captcha's timestamp is single-use, so it checks the first photo of an upload
   # session; the rest of that batch are let through by the session it started.
@@ -14,6 +15,10 @@ class Mapping::PhotoContributionsController < ApplicationController
 
   def new
     @photo_contribution = PhotoContribution.new(**remembered_contributor)
+    # Photos for a crag this visitor just suggested: no area or boulders to choose yet
+    @crag_suggestion = own_crag_suggestion(params[:crag_suggestion_id])
+    return if @crag_suggestion
+
     @areas = Area.published.order(:name)
     @area = @areas.find_by(id: params[:area_id])
     load_wanted if @area
@@ -32,7 +37,8 @@ class Mapping::PhotoContributionsController < ApplicationController
     session[:photo_contribution_batch] = @photo_contribution.batch if @photo_contribution.batch.to_s.match?(PhotoContribution::BATCH_FORMAT)
 
     if @photo_contribution.save
-      notify if @photo_contribution.first_in_batch?
+      # The suggestion's own email covers its photos
+      notify if @photo_contribution.first_in_batch? && !@photo_contribution.crag_suggestion
       render json: { id: @photo_contribution.id, boulder: @photo_contribution.boulder&.display_name,
                      located: @photo_contribution.located? }, status: :created
     else
@@ -49,10 +55,12 @@ class Mapping::PhotoContributionsController < ApplicationController
 
   # Where the photo was taken, and the boulder it shows: the one the visitor chose from
   # the list, else the one its GPS matches. The boulder decides the area, so a photo is
-  # filed correctly even when the wrong area was chosen.
+  # filed correctly even when the wrong area was chosen. A photo for a suggested crag has
+  # neither until the crag is accepted.
   def assign_position
-    @photo_contribution.area = Area.published.find_by(id: @photo_contribution.area_id)
-    if (chosen = published_boulders.find_by(id: params.dig(:photo_contribution, :boulder_id).presence))
+    @photo_contribution.crag_suggestion = own_crag_suggestion(params.dig(:photo_contribution, :crag_suggestion_id))
+    @photo_contribution.area = @photo_contribution.crag_suggestion ? nil : Area.published.find_by(id: @photo_contribution.area_id)
+    if !@photo_contribution.crag_suggestion && (chosen = published_boulders.find_by(id: params.dig(:photo_contribution, :boulder_id).presence))
       @photo_contribution.boulder = chosen
       @photo_contribution.boulder_chosen = true
       @photo_contribution.area = chosen.area
@@ -66,6 +74,8 @@ class Mapping::PhotoContributionsController < ApplicationController
     @photo_contribution.location_source = params[:location_source].presence_in(PhotoContribution::LOCATION_SOURCES) || "photo"
     heading = Float(params[:heading], exception: false)
     @photo_contribution.heading = heading if heading&.between?(0, 360)
+    # A new crag has no boulders yet; matching a listed one nearby would file it there
+    return if @photo_contribution.crag_suggestion
 
     @photo_contribution.gps_boulder = published_boulders.nearest_to(lat, lon)
     return if @photo_contribution.boulder_chosen || @photo_contribution.gps_boulder.nil?
