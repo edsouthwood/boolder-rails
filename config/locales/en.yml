@@ -212,7 +212,6 @@ en:
           gps: Ready · GPS found
           no_gps: "Ready · no GPS in this photo, so we'll place it by hand"
           device: "Ready · no GPS in this photo, so your phone's current position will be used"
-          portrait: Portrait photo. Please retake it in landscape.
           not_image: Not a JPEG, PNG or WebP photo
           too_big: "Over %{size} MB"
           remove: Remove

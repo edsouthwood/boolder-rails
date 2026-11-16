@@ -714,7 +714,7 @@ Visitors can send photos of boulders without picking a problem first, from **Add
 
 1. Chooses an area
 2. Chooses **which boulder** from a list of the area's boulders with **no photo at all**, most problems first. It uses the same rule as the admin Boulders list: a boulder has a photo once a line is drawn for one of its problems, the topo recompute linked one to it, or an inbox or contributed photo was matched to it. Only named boulders, or ones with problems, are listed; unnamed outlines aren't. Boulders without an outline are marked **Not on the map yet**, and ones with a photo waiting for review are marked so. The last option, **Another boulder, or not sure**, leaves it to GPS. A link can preselect a boulder with `&boulder_id=N`
-3. Chooses or drops photos. Each is checked in the browser before anything is sent: JPEG/PNG/WebP under 15 MB, landscape only (portrait photos are refused with a "retake in landscape" message, as topos are cropped to 4:3), and GPS + compass heading read from the photo
+3. Chooses or drops photos. Each is checked in the browser before anything is sent: JPEG/PNG/WebP under 15 MB (portrait or landscape: see [Portrait photos](#portrait-photos)), and GPS + compass heading read from the photo
 4. Optionally gives a name (for the contributors leaderboard), email and comment, then presses **Send photos**. Photos upload one at a time. **Photograph another boulder** goes back to the list for the next one
 
 Where each photo was taken:
@@ -1082,6 +1082,34 @@ Many Dartmoor problems rule out a feature (an arête, a crack, the neighbouring 
 Like start holds, not-in areas belong to the line's photo, and contributors can mark them on the contribution form too.
 
 **Zoom:** to place holds or area corners precisely, use the **Zoom − / +** controls (1× or 2×) in the line editor's toolbar, then scroll to pan. The contribution form has the same − / + buttons next to Undo and Clear. Zoom only changes the view. Points are saved the same way at any zoom level.
+
+### Portrait photos (whole photos, not cropped) {#portrait-photos}
+
+Topos show the **whole photo**, portrait or landscape. Upload a tall problem in portrait and the
+top-out stays in. On problem pages a portrait photo is kept to about 70% of the screen's
+height and centred on a dark band, so the problem's details stay in view. Lines, start holds
+and not-in areas are drawn on the whole photo in the line editor and workbench, as usual.
+
+Topos uploaded before November 2026 were stored **cropped to 4:3** (`topos.uncropped` false):
+they keep that crop, because their lines were drawn on it. Portrait ones lost the top and bottom
+of the photo. To show those whole:
+
+```
+bin/rails topos:uncrop_portraits            # dry run: lists the cropped portrait topos
+bin/rails topos:uncrop_portraits APPLY=1    # converts them
+bin/rails topos:uncrop_portraits TOPO=123 APPLY=1   # just one
+```
+
+For each one it makes a new, uncropped topo of the same file (nothing is uploaded again). It
+moves every line, start hold and not-in area to the same spot on the whole photo, then swaps the
+new topo in, as in [Replacing a photo](#replacing-photos). The old topo is kept unpublished
+with **Undo swap** on its workbench. Topos it leaves alone: landscape ones, ones already
+replaced or being replaced, and (left unpublished in the workbench to finish) any with an
+undrawn line. Look over the converted problem pages afterwards.
+
+Code: `Topo#display_photo` (`:full` variant, at most 1200 px on its long side, or `:medium`,
+the 1200×900 crop) and `Topo#aspect_ratio`; `TopoUncropper`; `topo_svg_height` sizes the
+drawing over the photo.
 
 ### Replacing a photo with a better one {#replacing-photos}
 

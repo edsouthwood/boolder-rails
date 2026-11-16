@@ -11,7 +11,9 @@ class ProxyController < ActiveStorage::BaseController
     # admin pages load photos through signed Active Storage URLs instead
     return head(:not_found) unless topo.publicly_visible?
 
-    representation = topo.photo.variant(:medium)
+    # Processed now if the background job hasn't made it yet: streaming a variant that isn't
+    # there sends an empty body, which would then be cached for ever
+    representation = topo.display_photo.processed
 
     http_cache_forever public: true do
       send_blob_stream representation, disposition: params[:disposition]

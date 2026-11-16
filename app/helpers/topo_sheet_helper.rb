@@ -1,8 +1,8 @@
 module TopoSheetHelper
-  # SVG path for a topo line on a 400x300 viewBox, smoothed exactly like
+  # SVG path for a topo line on a 400-wide viewBox (300 high for a 4:3 photo), smoothed exactly like
   # topo_line_controller.js#bezierCurve, so printed lines match the website's.
-  def topo_line_path(coordinates)
-    points = coordinates.map { |p| [ p["x"].to_f * 400, p["y"].to_f * 300 ] }
+  def topo_line_path(coordinates, height = 300)
+    points = coordinates.map { |p| [ p["x"].to_f * 400, p["y"].to_f * height ] }
     return "" if points.size < 2
     return "M #{points[0].join(' ')} L #{points[1].join(' ')}" if points.size == 2
 
@@ -23,7 +23,14 @@ module TopoSheetHelper
   end
 
   # Start-point position on the 400x300 viewBox
-  def topo_line_start(coordinates)
-    [ (coordinates.first["x"].to_f * 400).round(1), (coordinates.first["y"].to_f * 300).round(1) ]
+  def topo_line_start(coordinates, height = 300)
+    [ (coordinates.first["x"].to_f * 400).round(1), (coordinates.first["y"].to_f * height).round(1) ]
+  end
+
+  # Drawings over a topo are 400 wide; this is their height, so they have the photo's shape
+  # (300 for the 4:3 crop older topos have)
+  def topo_svg_height(topo)
+    height = (400 / topo.aspect_ratio).round(1)
+    height == height.round ? height.round : height
   end
 end

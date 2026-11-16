@@ -1,8 +1,14 @@
 class Topo < ApplicationRecord
   has_one_attached :photo do |attachable|
     attachable.variant :thumb,  resize_to_fill: [ 300, 200 ],   saver: { quality: 60, strip: true }, preprocessed: true
+    # Topos from before uncropped photos came in (uncropped false): cropped to 4:3, and their
+    # lines are fractions of the crop
     attachable.variant :medium, resize_to_fill: [ 1200, 900 ],  saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
+    # Every topo since: the whole photo, portrait or landscape, at most 1200px on its long side
+    attachable.variant :full,   resize_to_limit: [ 1200, 1200 ], saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
   end
+
+  CROPPED_ASPECT_RATIO = 4.0 / 3
 
   belongs_to :area, optional: true
   has_many :lines, dependent: :destroy
@@ -37,6 +43,34 @@ class Topo < ApplicationRecord
     where.not(id: Line.unscoped.select(:topo_id).where.not(topo_id: nil)).
       or(where(id: Line.unscoped.select(:topo_id).where(coordinates: nil)))
   }
+
+  # The photo as shown on the site, with lines drawn on it: the whole photo, or the 4:3 crop
+  # older topos were stored as
+  def display_variant
+    uncropped? ? :full : :medium
+  end
+
+  def display_photo
+    photo.variant(display_variant)
+  end
+
+  # Width over height of display_photo. Lines are fractions of the photo's width and height,
+  # so pages size the photo's box (and the drawing over it) with this. A photo not yet
+  # analysed (it is, a few seconds after upload) is analysed now: guessing 4:3 would put a
+  # portrait photo's lines in the wrong places.
+  def aspect_ratio
+    return CROPPED_ASPECT_RATIO unless uncropped? && photo.attached?
+
+    photo.analyze unless photo.analyzed?
+    width, height = photo.metadata.values_at("width", "height").map(&:to_f)
+    width.positive? && height.positive? ? width / height : CROPPED_ASPECT_RATIO
+  rescue ActiveStorage::FileNotFoundError
+    CROPPED_ASPECT_RATIO
+  end
+
+  def portrait?
+    aspect_ratio < 1
+  end
 
   # Set when the photo is uploaded; older topos fall back to their problems' area
   def area_id

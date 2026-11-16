@@ -43,7 +43,7 @@
     <%# Same structure as the line editor: the photo needs max-width:none or Tailwind shrinks it below the canvas when zoomed %>
     <div style="overflow:auto; max-width:100%; max-height:80vh" class="bg-gray-100 rounded" data-topo-workbench-target="viewport">
       <div style="position:relative" data-topo-workbench-target="container">
-        <%= cdn_image_tag(@topo.photo.variant(:medium), data: { "topo-workbench-target": "image" }, style: "position:absolute;z-index:1;max-width:none;") %>
+        <%= cdn_image_tag(@topo.display_photo, data: { "topo-workbench-target": "image" }, style: "position:absolute;z-index:1;max-width:none;") %>
         <canvas data-topo-workbench-target="canvas" data-action="click->topo-workbench#click" style="position:relative;z-index:20;cursor:crosshair"></canvas>
       </div>
     </div>
@@ -74,7 +74,7 @@
                    data-line-preview-coordinates-value="<%= old.coordinates.to_json %>"
                    data-line-preview-holds-value="<%= (old.start_holds || []).to_json %>"
                    data-line-preview-excluded-areas-value="<%= (old.excluded_areas || []).to_json %>">
-                <%= cdn_image_tag(old.topo.photo.variant(:medium), class: "w-full object-cover block rounded", data: { "line-preview-target": "image" }) %>
+                <%= cdn_image_tag(old.topo.display_photo, class: "w-full object-cover block rounded", data: { "line-preview-target": "image" }) %>
                 <canvas data-line-preview-target="canvas" class="absolute top-0 left-0 pointer-events-none rounded" style="width:100%;height:100%"></canvas>
               </div>
               <figcaption class="mt-1 text-xs text-gray-600">

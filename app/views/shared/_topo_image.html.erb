@@ -1,6 +1,11 @@
-<div class="w-full aspect-w-4 aspect-h-3 <%= klass %>">
-  <div class="bg-gray-300 animate-pulse <%= klass %>"></div>
+<%# The photo at its own shape (4:3 for older, cropped topos). Portrait photos are kept to
+    70% of the screen's height so the problem's details stay in view, centred on a dark band. %>
+<% ratio = topo.aspect_ratio %>
+<% width = ratio < 1 ? "width:min(100%, calc(70vh * #{ratio.round(4)}));" : "width:100%;" %>
+<div class="relative mx-auto <%= klass %>" style="aspect-ratio: <%= ratio.round(4) %>; <%= width %>" data-topo-image-box>
+  <div class="absolute inset-0 bg-gray-300 animate-pulse <%= klass %>"></div>
   <%# Admins may be looking at a photo the public proxy won't serve (unpublished) %>
-  <% src = admin_session? ? cdn_image_url(topo.photo.variant(:medium)) : topo_proxy_path(topo) %>
-  <%= image_tag src, class: "w-full object-cover #{klass}", data: { 'topo-line-target': 'image' } %>
+  <% src = admin_session? ? cdn_image_url(topo.display_photo) : topo_proxy_path(topo) %>
+  <%= image_tag src, class: "absolute inset-0 w-full h-full object-cover #{klass}", data: { 'topo-line-target': 'image' } %>
+  <%= yield %>
 </div>
