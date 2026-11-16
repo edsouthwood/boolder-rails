@@ -1113,9 +1113,10 @@ new topo in, as in [Replacing a photo](#replacing-photos). The exception is anyt
 exactly as a contributor sent it with that photo. Contributors draw on their whole photo, so
 those points were already fractions of the whole photo (and sat out of place on the crop).
 They're copied unchanged. The old topo is kept unpublished
-with **Undo swap** on its workbench. Topos it leaves alone: landscape ones, ones already
-replaced or being replaced, and (left unpublished in the workbench to finish) any with an
-undrawn line. Look over the converted problem pages afterwards.
+with **Undo swap** on its workbench. A photo with no lines yet is swapped for the whole
+photo straight away, so its lines get drawn on that. Topos it leaves alone: landscape ones,
+ones already replaced or being replaced, ones with no area, and (left unpublished in the
+workbench to finish) any with an undrawn line. Look over the converted problem pages afterwards.
 
 Code: `Topo#display_photo` (`:full` variant, at most 1200 px on its long side, or `:medium`,
 the 1200×900 crop) and `Topo#aspect_ratio`; `TopoUncropper`; `topo_svg_height` sizes the

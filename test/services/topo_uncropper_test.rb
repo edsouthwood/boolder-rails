@@ -142,4 +142,33 @@ class TopoUncropperTest < ActiveSupport::TestCase
     assert fresh.reload.photo.attached?
     assert blob.service.exist?(blob.key), "the file itself is still stored"
   end
+
+  test "a photo with no lines yet is swapped for the whole photo straight away" do
+    empty = topo(width: 900, height: 1200, uncropped: false)
+
+    result = TopoUncropper.new(empty).call
+
+    assert_equal :converted, result.status
+    assert result.new_topo.reload.published
+    assert_not empty.reload.published
+    assert_equal result.new_topo, empty.replaced_by_topo
+    empty.undo_swap!
+    assert empty.reload.published
+  end
+
+  test "skips a photo with no area to put the new one in" do
+    orphan = topo(width: 900, height: 1200, uncropped: false)
+    orphan.update_column(:area_id, nil)
+
+    assert_equal :skipped, TopoUncropper.new(orphan).call.status
+  end
+
+  test "an older photo with its area only through its problems keeps that area" do
+    @old.update_column(:area_id, nil)
+
+    result = TopoUncropper.new(@old.reload).call
+
+    assert_equal :converted, result.status
+    assert_equal @area.id, result.new_topo[:area_id]
+  end
 end
