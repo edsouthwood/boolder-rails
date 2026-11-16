@@ -59,7 +59,7 @@ class TopoUncropper
     new_topo = nil
     Topo.transaction do
       new_topo = Topo.create!(
-        area_id: @old[:area_id], published: false, uncropped: true, photo: @old.photo.blob,
+        area_id: @old.area_id, published: false, uncropped: true, photo: @old.photo.blob,
         metadata: (@old.metadata || {}).except("replaces_topo_id", "replaced_by_topo_id")
       )
       new_topo.replace!(@old)
@@ -67,6 +67,8 @@ class TopoUncropper
     end
 
     new_topo.reload
+    return swap_photo_without_lines(new_topo) if new_topo.lines.none?
+
     unless new_topo.all_drawn?
       return result(:needs_drawing, "some lines weren't drawn on the old photo: finish them in the workbench, then swap", new_topo)
     end
@@ -79,10 +81,22 @@ class TopoUncropper
 
   def skip_reason
     return "already uncropped" if @old.uncropped?
+    return "it has no area (no lines and no area set when uploaded)" unless @old.area_id
     return "it has been replaced by another photo" if @old.replaced_by_topo
     return "it is itself replacing another photo" if @old.replaces_topo
     return "another photo is replacing it" if Topo.where("metadata->>'replaces_topo_id' = ?", @old.id.to_s).exists?
     "its photo isn't portrait" unless ratio && ratio < 1
+  end
+
+  # Nothing drawn on it yet, so nothing to wait for: the whole photo takes its place now, the
+  # way swap_in! would (which needs a drawn line), so lines are drawn on the whole photo
+  def swap_photo_without_lines(new_topo)
+    was_published = @old.published
+    Topo.transaction do
+      @old.update!(published: false, metadata: (@old.metadata || {}).merge("replaced_by_topo_id" => new_topo.id))
+      new_topo.update!(published: was_published)
+    end
+    result(:converted, "no lines yet: the whole photo is in its place", new_topo)
   end
 
   def ratio
