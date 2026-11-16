@@ -76,4 +76,17 @@ class ProblemTest < ActiveSupport::TestCase
     problem.update!(lat: "", lon: "")
     assert_nil problem.reload.location
   end
+
+  test "each grade counts in exactly one level" do
+    area = Area.create!(name: "Level Tor", slug: "level-tor")
+    grades = %w[2 3 4 4+ 4c+ 5 5+ 5a 6a 6c+ 7a 7c+ 8a]
+    grades.each { |g| area.problems.create!(name: "P #{g}", grade: g, steepness: "wall") }
+
+    levels = 1.upto(8).map { |i| area.problems.level(i).pluck(:grade).sort }
+
+    assert_equal grades.size, levels.flatten.size, "no grade counted twice"
+    assert_equal %w[4 4+ 4c+], levels[3]
+    assert_equal %w[5 5+ 5a], levels[4]
+    assert_equal %w[6a 6c+], levels[5]
+  end
 end
