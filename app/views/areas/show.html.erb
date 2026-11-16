@@ -60,7 +60,8 @@
                 </div>
               </a>
               <div data-reveal-target="item" class="hidden px-4 py-4">
-                <% cache @area do %>
+                <%# Keyed on its problems and boulders too: adding, placing or hiding them doesn't touch the area %>
+                <% cache [ @area, "levels", @area.problems.maximum(:updated_at), @area.boulders.maximum(:updated_at) ] do %>
                   <%= render "levels_chart", area: @area %>
                 <% end %>
               </div>

@@ -102,13 +102,12 @@ class Problem < ApplicationRecord
     scope color, -> { joins(:circuit).where(circuits: { color: color }) }
   end
 
+  # Grades compare as text, so the top of the range is the next plain grade: "5" and "4+"
+  # sort between "4a" and "5a", and an upper bound of "5a" counted them in level 4 (and "4+" in
+  # level 3) as well as their own
   scope :level, ->(i) {
     tap { raise unless i.in?(1..8) }
-    if i <= 5
-      where("(grade >= ? AND grade < ?) OR grade IN (?)", "#{i}a", "#{i + 1}a", [ "#{i}", "#{i}+" ])
-    else
-      where("grade >= ? AND grade < ?", "#{i}a", "#{i + 1}a")
-    end
+    where("(grade >= ? AND grade < ?) OR grade IN (?)", "#{i}a", "#{i + 1}", [ "#{i}", "#{i}+" ])
   }
   scope :significant_ascents, -> { where("ascents >= ?", 20) }
   scope :exclude_bis, -> { where(circuit_letter: [ nil, "" ]) }
