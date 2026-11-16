@@ -25,4 +25,17 @@ class AreaLevelsChartTest < ActionDispatch::IntegrationTest
       assert_equal [ 0, 0, 0, 0, 1, 0, 0, 0 ], chart_counts
     end
   end
+
+  test "the levels page's squares follow problems added after the area was last edited" do
+    squares = -> {
+      get areas_levels_path
+      css_select("a[href='#{area_path(@area.slug)}'] span[style*='rgba(51, 57, 61']").map { |s| s.text.strip }
+    }
+    assert_equal [], squares.call
+
+    travel 1.minute do
+      @area.problems.create!(name: "Groove", grade: "5", steepness: "wall", location: FACTORY.point(-3.9, 50.6))
+      assert_equal [ "5" ], squares.call
+    end
+  end
 end

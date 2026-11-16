@@ -28,6 +28,12 @@ class Area < ApplicationRecord
   validates :slug, presence: true
 
 
+  # Cache key for things built from the area's problems (grade chart, level squares): adding,
+  # placing or hiding a problem or boulder doesn't touch the area itself
+  def problems_cache_key
+    [ self, problems.maximum(:updated_at), boulders.maximum(:updated_at) ]
+  end
+
   def levels
     @levels ||= 1.upto(8).map { |level| [ level, problems.shown.with_location.level(level).count ] }.to_h
   end
