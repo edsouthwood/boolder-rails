@@ -1,5 +1,7 @@
-<div class="relative" data-controller="topo-line" data-action="turbo:before-cache@window->topo-line#hidePath" data-topo-line-coordinates-value="<%= line.coordinates.to_json %>" data-topo-line-color-value="<%= grade_color(line.problem.grade) %>">
-  <%= render 'shared/topo_image', topo: line.topo, klass: "sm:rounded-lg" %>
+<% svg_height = topo_svg_height(line.topo) %>
+<%# Portrait photos sit on a dark band the width of the page %>
+<div class="relative <%= "bg-gray-900 sm:rounded-lg" if svg_height > 400 %>" data-controller="topo-line" data-action="turbo:before-cache@window->topo-line#hidePath" data-topo-line-coordinates-value="<%= line.coordinates.to_json %>" data-topo-line-color-value="<%= grade_color(line.problem.grade) %>" data-topo-line-height-value="<%= svg_height %>">
+<%= render layout: 'shared/topo_image', locals: { topo: line.topo, klass: "sm:rounded-lg" } do %>
 
   <% 
     # README
@@ -17,14 +19,14 @@
   <% if line.excluded_areas.present? %>
     <%# "Not in" areas sit underneath everything else (lines, circles, holds) %>
     <div class="absolute top-0 left-0 w-full pointer-events-none hidden" data-topo-line-target="circle">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" aria-label="<%= t("problem.not_in") %>">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 <%= svg_height %>" aria-label="<%= t("problem.not_in") %>">
         <defs>
           <pattern id="not-in-hatch-<%= line.id %>" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="8" stroke="#dc2626" stroke-width="3" stroke-opacity="0.7" />
           </pattern>
         </defs>
         <% line.excluded_areas.each do |area| %>
-          <polygon points="<%= area.map { |p| "#{(p['x'] * 400).round(1)},#{(p['y'] * 300).round(1)}" }.join(" ") %>"
+          <polygon points="<%= area.map { |p| "#{(p['x'] * 400).round(1)},#{(p['y'] * svg_height).round(1)}" }.join(" ") %>"
                    fill="url(#not-in-hatch-<%= line.id %>)" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" />
         <% end %>
       </svg>
@@ -38,7 +40,7 @@
       </div>
     </div>
     <div class="absolute top-0 left-0 w-full pointer-events-none">
-      <svg data-topo-line-target="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" class="topo-line-shadow"></svg>
+      <svg data-topo-line-target="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 <%= svg_height %>" class="topo-line-shadow"></svg>
     </div>
   <% end %>
 
@@ -80,4 +82,5 @@
       </div>
     </div>
   <% end %>
+<% end %>
 </div>

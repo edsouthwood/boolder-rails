@@ -28,15 +28,16 @@
   <div class="grid md:grid-cols-2 print:grid-cols-2 gap-x-6">
   <% @topos.each do |topo, lines| %>
     <section class="topo-block mb-6">
+      <% svg_height = topo_svg_height(topo) %>
       <div class="relative">
         <%= image_tag topo_proxy_path(topo), alt: "Topo photo", class: "w-full rounded border border-gray-200" %>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" class="absolute inset-0 w-full h-full">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 <%= svg_height %>" class="absolute inset-0 w-full h-full">
           <% lines.each do |line| %>
-            <path d="<%= topo_line_path(line.coordinates) %>" fill="none" stroke="#000" stroke-opacity="0.45" stroke-width="5" stroke-linecap="round" />
-            <path d="<%= topo_line_path(line.coordinates) %>" fill="none" stroke="<%= grade_color(line.problem.grade) %>" stroke-width="3" stroke-linecap="round" />
+            <path d="<%= topo_line_path(line.coordinates, svg_height) %>" fill="none" stroke="#000" stroke-opacity="0.45" stroke-width="5" stroke-linecap="round" />
+            <path d="<%= topo_line_path(line.coordinates, svg_height) %>" fill="none" stroke="<%= grade_color(line.problem.grade) %>" stroke-width="3" stroke-linecap="round" />
           <% end %>
           <% lines.each do |line| %>
-            <% x, y = topo_line_start(line.coordinates) %>
+            <% x, y = topo_line_start(line.coordinates, svg_height) %>
             <circle cx="<%= x %>" cy="<%= y %>" r="10" fill="<%= grade_color(line.problem.grade) %>" stroke="#000" stroke-opacity="0.6" stroke-width="1.5" />
             <text x="<%= x %>" y="<%= y %>" dy="4" text-anchor="middle" font-size="12" font-weight="700" font-family="sans-serif"
                   fill="<%= grade_text_color(line.problem.grade) %>"><%= @numbers[line.problem_id] %></text>

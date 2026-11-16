@@ -1,8 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
 import exifr from 'exifr/full'
 
-// "Add boulder photos": checks each chosen photo in the browser (type, size, landscape,
-// GPS and compass heading from EXIF), then on Send uploads them one at a time with the
+// "Add boulder photos": checks each chosen photo in the browser (type, size, GPS and
+// compass heading from EXIF), then on Send uploads them one at a time with the
 // form's fields. A photo without GPS that was taken in the last few minutes is placed
 // at the phone's current position instead, since the contributor is probably still there.
 //
@@ -71,9 +71,6 @@ export default class extends Controller {
     if (!this.typesValue.includes(file.type)) return this.reject(item, this.t('not_image'))
     if (file.size > this.maxSizeValue) return this.reject(item, this.t('too_big', { size: Math.round(this.maxSizeValue / 1048576) }))
 
-    const size = await this.imageSize(item.row.img)
-    if (size && size.height > size.width) return this.reject(item, this.t('portrait'))
-
     try {
       const gps = await exifr.gps(file)
       if (gps?.latitude && gps?.longitude) {
@@ -96,15 +93,6 @@ export default class extends Controller {
   reject(item, message) {
     item.ok = false
     this.setStatus(item, message, 'text-red-600')
-  }
-
-  // Browsers apply the EXIF orientation to <img>, so this is the size as it's seen
-  imageSize(img) {
-    return new Promise((resolve) => {
-      if (img.complete && img.naturalWidth) return resolve({ width: img.naturalWidth, height: img.naturalHeight })
-      img.addEventListener('load', () => resolve({ width: img.naturalWidth, height: img.naturalHeight }), { once: true })
-      img.addEventListener('error', () => resolve(null), { once: true })
-    })
   }
 
   remove(item) {

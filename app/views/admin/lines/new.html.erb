@@ -30,7 +30,7 @@
                   class="cursor-pointer rounded border-2 border-transparent hover:border-stone transition-colors"
                   data-topo-picker-target="thumbnail"
                   data-topo-id="<%= topo.id %>"
-                  data-medium-url="<%= cdn_image_url(topo.photo.variant(:medium)) %>"
+                  data-medium-url="<%= cdn_image_url(topo.display_photo) %>"
                   data-action="click->topo-picker#select"
                 >
                   <%= image_tag cdn_image_path(topo.photo.variant(:thumb)),

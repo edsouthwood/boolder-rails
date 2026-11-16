@@ -164,7 +164,7 @@
                         data-contribution-photo-target="topoThumbnail"
                         data-action="click->contribution-photo#selectExistingTopo"
                         data-topo-id="<%= topo.id %>"
-                        data-medium-url="<%= url_for(topo.photo.variant(:medium)) %>"
+                        data-medium-url="<%= url_for(topo.display_photo) %>"
                         class="border-2 border-transparent rounded-lg overflow-hidden hover:border-granite focus:outline-none focus:border-granite transition-colors">
                   <%= image_tag topo.photo.variant(:thumb), class: "block w-32 h-20 object-cover", alt: "Topo #{topo.id}" %>
                 </button>

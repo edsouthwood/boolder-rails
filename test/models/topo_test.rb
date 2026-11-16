@@ -1,6 +1,30 @@
 require "test_helper"
 
 class TopoTest < ActiveSupport::TestCase
+  # --- uncropped photos ---
+
+  def sized(topo, width, height)
+    topo.photo.blob.update!(metadata: { "analyzed" => true, "identified" => true, "width" => width, "height" => height })
+    topo
+  end
+
+  test "new topos keep the photo's shape; older, cropped ones are 4:3" do
+    portrait = sized(photo(bytes: "portrait"), 900, 1200)
+    assert portrait.uncropped?
+    assert_equal :full, portrait.display_variant
+    assert_in_delta 0.75, portrait.aspect_ratio, 1e-9
+    assert portrait.portrait?
+
+    portrait.update!(uncropped: false)
+    assert_equal :medium, portrait.display_variant
+    assert_in_delta 4.0 / 3, portrait.aspect_ratio, 1e-9
+  end
+
+  test "an uncropped photo with no size yet is taken as 4:3" do
+    topo = sized(photo(bytes: "no size"), nil, nil)
+    assert_in_delta 4.0 / 3, topo.aspect_ratio, 1e-9
+  end
+
   # --- replacing a photo with a better one ---
 
   LINE = [ { "x" => 0.5, "y" => 0.9 }, { "x" => 0.5, "y" => 0.5 }, { "x" => 0.4, "y" => 0.1 } ].freeze

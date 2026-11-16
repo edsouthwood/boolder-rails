@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -348,6 +348,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_120000) do
     t.integer "boulder_id"
     t.integer "position"
     t.bigint "area_id"
+    t.boolean "uncropped", default: true, null: false
     t.index ["area_id"], name: "index_topos_on_area_id"
     t.index ["boulder_id", "position"], name: "index_topos_on_boulder_id_and_position", unique: true
     t.index ["boulder_id"], name: "index_topos_on_boulder_id"

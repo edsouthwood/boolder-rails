@@ -189,7 +189,7 @@
                data-line-preview-coordinates-value="<%= @contribution.line_coordinates.presence || "[]" %>"
                data-line-preview-holds-value="<%= (@contribution.start_holds || []).to_json %>"
                data-line-preview-excluded-areas-value="<%= (@contribution.excluded_areas || []).to_json %>">
-            <%= cdn_image_tag(@existing_topo.photo.variant(:medium), class: "w-full object-cover block rounded",
+            <%= cdn_image_tag(@existing_topo.display_photo, class: "w-full object-cover block rounded",
                   data: { "line-preview-target": "image" }) %>
             <canvas data-line-preview-target="canvas"
                     class="absolute top-0 left-0 pointer-events-none rounded"

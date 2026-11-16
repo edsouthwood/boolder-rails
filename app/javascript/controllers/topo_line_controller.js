@@ -6,6 +6,8 @@ export default class extends Controller {
     coordinates: Array,
     color: String,
     strokeWidth: String,
+    // Height of the drawing for a 400-wide photo: 300 for the 4:3 crop older topos have
+    height: { type: Number, default: 300 },
   }
 
   connect() {
@@ -71,7 +73,7 @@ export default class extends Controller {
   }
 
   pathString() {
-    let scaledCoordinates = this.coordinatesValue.map(point => ({ "x": point.x*400, "y": point.y*300 }));
+    let scaledCoordinates = this.coordinatesValue.map(point => ({ "x": point.x*400, "y": point.y*this.heightValue }));
     return this.bezierCurve(scaledCoordinates);
   }
 
