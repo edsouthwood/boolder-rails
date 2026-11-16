@@ -14,7 +14,8 @@ class Admin::BouldersController < Admin::BaseController
     # Names from a problem list that haven't been drawn yet
     @unplaced = @area.boulders.unplaced.where.not(name: nil).order(:name).
       left_joins(:problems).group(:id).select("boulders.*, count(problems.id) AS problems_count").
-      map { |boulder| { id: boulder.id, name: boulder.name, problems: boulder.problems_count } }
+      map { |boulder| { id: boulder.id, name: boulder.name, problems: boulder.problems_count,
+                        lat: boulder.location&.lat, lon: boulder.location&.lon }.compact }
     @focus_id = params[:boulder].to_i if params[:boulder].present?
     @place_id = params[:place].to_i if params[:place].present?
     @maptiler_key = Rails.application.credentials.dig(:maptiler, :api_key)

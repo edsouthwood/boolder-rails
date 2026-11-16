@@ -1,6 +1,7 @@
 <% if current_admin_user.super_admin? %>
   <div class="my-4">
     <%= link_to "New area", new_admin_area_path, class: "btn" %>
+    <%= link_to "Import map points (KML)", admin_new_map_points_path, class: "ml-3 text-sm text-gray-600 hover:underline" %>
   </div>
 <% end %>
 
