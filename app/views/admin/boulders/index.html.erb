@@ -59,6 +59,12 @@
                   <% if boulder.placed? %>
                     <%= link_to "Show in boulder editor", admin_area_boulder_editor_path(area_slug: @area.slug, boulder: boulder.id), class: "text-granite hover:underline" %>
                   <% end %>
+                  <%= form_with url: rename_admin_boulder_path(boulder), method: :patch, class: "inline-flex items-center gap-1" do |f| %>
+                    <%= f.hidden_field :return_to, value: return_to %>
+                    <%= f.text_field :name, value: boulder.name, required: true, "aria-label": "New name for #{boulder.display_name}",
+                          class: "w-40 rounded border-gray-300 px-1.5 py-0.5 text-xs" %>
+                    <%= f.submit "Rename", class: "text-granite hover:underline bg-transparent cursor-pointer" %>
+                  <% end %>
                   <%= button_to "Hide boulder", visibility_admin_boulder_path(boulder), method: :patch,
                         params: { hidden: "1", return_to: admin_area_boulders_path(area_slug: @area.slug, show: params[:show], anchor: "hidden-boulders") },
                         form_class: "inline", title: "Leave the outline and all its problems off the public site and this list until you bring it back",

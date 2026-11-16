@@ -617,6 +617,13 @@ first:
 boulder's name to see its problems (✓ = has a line). Problems on no boulder are listed at the
 bottom.
 
+**Renaming a boulder:** click its name, change the name in the box and click **Rename**. This
+works for drawn outlines and for imported names that aren't on the map yet. Its problems and
+photos stay with it, and the new name shows on the map labels and problem breadcrumbs. A name
+another boulder in the area already has is refused: to put two boulders together, use the
+boulder editor (see below), which asks first. A drawn outline can also be renamed in the
+boulder editor.
+
 A photo counts for a boulder when it has a line for one of the boulder's problems, or the photo
 inbox matched it there by GPS.
 
