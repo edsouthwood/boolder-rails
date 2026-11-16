@@ -1,6 +1,6 @@
 class Admin::BouldersController < Admin::BaseController
   before_action :set_area_from_slug, only: [ :index, :editor, :create ]
-  before_action :set_boulder,        only: [ :update, :destroy, :visibility ]
+  before_action :set_boulder,        only: [ :update, :destroy, :visibility, :rename ]
   before_action -> { require_area_access((@area || @boulder.area).slug) }
 
   # Which boulders still need photos or lines (most urgent first)
@@ -39,7 +39,7 @@ class Admin::BouldersController < Admin::BaseController
     absorbed = relisted = nil
     Boulder.transaction do
       @boulder.update!(polygon: build_polygon(params[:coordinates])) if params.key?(:coordinates)
-      absorbed, relisted = rename(params[:name], params[:merge]) if params.key?(:name)
+      absorbed, relisted = apply_name(params[:name], params[:merge]) if params.key?(:name)
     end
     render json: { ok: true, name: @boulder.name, absorbed_id: absorbed&.id,
                    relisted: relisted && { id: relisted.id, name: relisted.name, problems: relisted.problems.count } }.compact
@@ -62,6 +62,25 @@ class Admin::BouldersController < Admin::BaseController
     end
   end
 
+  # Rename from the Boulders list: drawn outlines and listed names not on the map yet alike.
+  # Its problems and photos stay with it. A name another boulder in the area already has is
+  # refused: putting two boulders together is done in the boulder editor, which asks first.
+  def rename
+    name = params[:name].to_s.squish
+    back = url_from(params[:return_to]) || admin_area_boulders_path(area_slug: @boulder.area.slug)
+    old_name = @boulder.display_name
+
+    if name.blank?
+      flash[:alert] = "Give the boulder a name"
+    elsif (namesake = @boulder.area.boulders.where.not(id: @boulder.id).where("lower(name) = ?", name.downcase).first)
+      flash[:alert] = "#{namesake.display_name} is already a boulder at #{@boulder.area.name}. To put the two together, use the boulder editor."
+    else
+      @boulder.update!(name: name)
+      flash[:notice] = old_name == name ? "Name unchanged" : "#{old_name} renamed #{name}"
+    end
+    redirect_to back
+  end
+
   def destroy
     @boulder.destroy!
     render json: { ok: true }
@@ -79,7 +98,7 @@ class Admin::BouldersController < Admin::BaseController
   end
 
   # Returns [absorbed boulder, relisted boulder]; merge: nil (ask if it matters), "swap" or "merge"
-  def rename(raw, merge = nil)
+  def apply_name(raw, merge = nil)
     name = raw.to_s.squish.presence
     namesake = name && @boulder.area.boulders.where.not(id: @boulder.id).where("lower(name) = ?", name.downcase).first
     unless namesake

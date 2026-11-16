@@ -82,4 +82,57 @@ class Admin::BouldersIndexTest < ActionDispatch::IntegrationTest
     assert_equal :needs_lines, row.status
     assert_equal topo, row.next_topo
   end
+
+  # --- renaming from the list ---
+
+  test "renames a listed boulder that isn't on the map yet, keeping its problems" do
+    boulder = @mine.boulders.create!(name: "Big Boulder")
+    problem = @mine.problems.create!(name: "Crack", steepness: "wall", boulder: boulder)
+
+    patch rename_admin_boulder_url(boulder), params: { name: "  The  Big One ", return_to: admin_area_boulders_path(area_slug: "mine") }
+
+    assert_redirected_to admin_area_boulders_path(area_slug: "mine")
+    assert_equal "The Big One", boulder.reload.name
+    assert_equal boulder, problem.reload.boulder
+    assert_match "renamed The Big One", flash[:notice]
+  end
+
+  test "renames a boulder drawn on the map" do
+    boulder = @mine.boulders.create!(name: "Lump", polygon: square(LON))
+
+    patch rename_admin_boulder_url(boulder), params: { name: "Slab Block" }
+
+    assert_equal "Slab Block", boulder.reload.name
+    assert boulder.placed?
+  end
+
+  test "refuses a name another boulder in the area has, and an empty name" do
+    boulder = @mine.boulders.create!(name: "Lump")
+    @mine.boulders.create!(name: "Slab Block")
+
+    patch rename_admin_boulder_url(boulder), params: { name: "slab block" }
+    assert_equal "Lump", boulder.reload.name
+    assert_match "already a boulder", flash[:alert]
+
+    patch rename_admin_boulder_url(boulder), params: { name: " " }
+    assert_equal "Lump", boulder.reload.name
+  end
+
+  test "an area admin can't rename a boulder in someone else's area" do
+    theirs = Area.create!(name: "Theirs", slug: "theirs", published: true)
+    boulder = theirs.boulders.create!(name: "Lump")
+
+    patch rename_admin_boulder_url(boulder), params: { name: "Mine Now" }
+
+    assert_equal "Lump", boulder.reload.name
+  end
+
+  test "the list has a rename box for each boulder" do
+    boulder = @mine.boulders.create!(name: "Big Boulder")
+    @mine.problems.create!(name: "Crack", steepness: "wall", boulder: boulder)
+
+    get admin_area_boulders_url(area_slug: "mine", show: "all")
+
+    assert_select "form[action=?] input[name=name][value=?]", rename_admin_boulder_path(boulder), "Big Boulder"
+  end
 end

@@ -37,6 +37,7 @@ Rails.application.routes.draw do
     end
     resources :boulders, only: [ :update, :destroy ] do
       patch :visibility, on: :member
+      patch :rename, on: :member
     end
     resources :circuits
     resources :imports do
