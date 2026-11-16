@@ -368,6 +368,18 @@ en:
       levels:
         beginner_friendly: Beginner friendly
         areas: All areas by levels
+        your_level: What do you climb?
+        hint: Pick one or more levels and the crags with the most problems at those levels come first.
+        clear: Clear
+        problems_by_level: Problems at each level
+        total:
+          one: "%{count} problem"
+          other: "%{count} problems"
+        at_level:
+          zero: "No problems at level %{level}"
+          one: "1 problem at level %{level}"
+          other: "%{count} problems at level %{level}"
+        match: "%{n} at your level · "
         metas:
           title: Areas by levels Dartmoor
           description: Discover beginner friendly areas, and areas with the most problems graded 4, 5, 6, 7 or 8.

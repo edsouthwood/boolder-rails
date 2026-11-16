@@ -1692,6 +1692,14 @@ fallback page rather than erroring.
 
 Grades below 6a are entered in simplified form (`4`, `4+`). Older detailed grades still match: `4` covers 4a to 4b, and `4+` covers 4b+ to 4c+. The same grouping drives the map's grade filters (level buttons and the custom min–max range), so no problems are left out.
 
+**Areas by level** (`/dartmoor/levels`) lists every published crag with its total and the
+number of problems at each level (1–8, blank for none). Under **What do you climb?** a visitor
+picks one or more levels: crags re-sort by how many problems they have at those levels, showing
+"N at your level", and crags with none fade to the bottom. The choice is remembered in that
+browser. Counts are problems located on the map, and each grade counts in one level only.
+Code: `crag_levels_controller.js`; rows are cached with `Area#problems_cache_key`, so they
+update as problems are added or placed.
+
 ---
 
 ## Printable Topo Sheets {#topo-sheets}

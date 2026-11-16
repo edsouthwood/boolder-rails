@@ -32,35 +32,72 @@
   </div>
 </div>
 
-<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pb-8">
+<div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pb-8" data-controller="crag-levels"
+     data-crag-levels-match-value="<%= t("views.areas.levels.match", n: "{n}") %>">
   <div class="lg:grid lg:grid-cols-2 lg:gap-16 mb-4">
     <div class="col-span-1">
-      <h2 class="py-4 px-4 sm:px-0 text-2xl font-bold text-gray-900">
+      <h2 class="pt-4 pb-1 px-4 sm:px-0 text-2xl font-bold text-gray-900">
         <%= t("views.areas.levels.areas") %>
       </h2>
 
+      <%# Pick your levels: crags re-sort by how many problems they have at those levels %>
+      <div class="px-4 sm:px-0 py-3">
+        <p class="text-sm font-medium text-gray-700" id="crag-levels-label"><%= t("views.areas.levels.your_level") %></p>
+        <div class="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-labelledby="crag-levels-label">
+          <% 1.upto(8) do |level| %>
+            <button type="button" data-crag-levels-target="button" data-level="<%= level %>"
+                    data-action="crag-levels#toggle" aria-pressed="false"
+                    class="h-9 w-9 rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:border-granite aria-pressed:border-granite aria-pressed:bg-granite aria-pressed:text-white">
+              <%= level %>
+            </button>
+          <% end %>
+          <button type="button" data-crag-levels-target="clear" data-action="crag-levels#clear"
+                  class="hidden ml-2 text-sm text-granite hover:underline"><%= t("views.areas.levels.clear") %></button>
+        </div>
+        <p class="mt-2 text-xs text-gray-500" data-crag-levels-target="hint"><%= t("views.areas.levels.hint") %></p>
+      </div>
+
       <div class="overflow-hidden bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg text-sm sm:text-base">
-        <ul role="list" class="divide-y divide-gray-200">
-          <% @areas_with_count.each do |area, count| %>
-            <li>
-              <%= link_to area_path(area), class: "block hover:bg-gray-50" do %>
-                <div class="px-4 py-4 sm:px-6">
-                  <div class="flex justify-between">
-                    <p class="pr-2"><%= area.name %></p>
-                    <!-- Uncomment the next line if you need to display the count -->
-                    <!-- <span class="ml-1 text-gray-400"><%= "(#{count})" %></span> -->
-                    <div class="flex shrink-0 items-center space-x-2 text-gray-400">
-                      <% cache [ "level-squares", *area.problems_cache_key ] do %>
-                        <span class="flex shrink-0"><%= render "shared/area_levels", area: area %></span>
-                      <% end %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
+        <%# Column headings for the counts in each row %>
+        <div class="flex justify-end items-center px-4 sm:px-6 pt-3 pb-1 text-xs text-gray-400" aria-hidden="true">
+          <span class="mr-auto"><%= t("views.areas.levels.problems_by_level") %></span>
+          <span class="flex shrink-0">
+            <% 1.upto(8) do |level| %>
+              <span class="w-6 text-center" data-crag-levels-target="heading" data-level="<%= level %>"><%= level %></span>
+            <% end %>
+          </span>
+          <span class="w-4 ml-2"></span>
+        </div>
+        <ul role="list" class="divide-y divide-gray-200" data-crag-levels-target="list">
+          <% @areas_with_count.each_with_index do |(area, count), index| %>
+            <% cache [ "crag-levels-row", index, count, *area.problems_cache_key ] do %>
+              <% levels = area.levels %>
+              <li data-crag-levels-target="row" data-index="<%= index %>" data-total="<%= count %>"
+                  data-counts="<%= levels.values.to_json %>">
+                <%= link_to area_path(area), class: "block hover:bg-gray-50" do %>
+                  <div class="px-4 py-3 sm:px-6 flex items-center">
+                    <div class="mr-auto pr-2 min-w-0">
+                      <p class="font-medium text-gray-900 truncate"><%= area.name %></p>
+                      <p class="text-xs text-gray-500 whitespace-nowrap">
+                        <span class="hidden font-semibold text-granite" data-crag-levels-target="match"></span>
+                        <span><%= t("views.areas.levels.total", count: count) %></span>
+                      </p>
                     </div>
+                    <span class="flex shrink-0 tabular-nums text-sm">
+                      <% levels.each do |level, n| %>
+                        <span class="w-6 text-center rounded-sm <%= n.zero? ? "text-gray-300" : "text-gray-800" %>" data-level="<%= level %>"
+                              title="<%= t("views.areas.levels.at_level", count: n, level: level) %>">
+                          <%= n.zero? ? "·" : n %>
+                        </span>
+                      <% end %>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-                </div>
-              <% end %>
-            </li>
+                <% end %>
+              </li>
+            <% end %>
           <% end %>
         </ul>
       </div>

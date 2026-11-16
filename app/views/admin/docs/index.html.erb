@@ -806,6 +806,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       <div class="prose-content text-sm text-gray-700 space-y-4">
         <p><strong>Problems by grade</strong> (<%= link_to "/dartmoor/problems", problems_path, class: "text-blue-600 hover:underline" %>, linked from a card on the Dartmoor areas page) lists every published, located problem of one grade. Problems with a topo come first. The menu only offers grades that have problems.</p>
         <p>Sub-6a grades are entered simplified (4, 4+). Older detailed grades still match: 4 covers 4a–4b and 4+ covers 4b+–4c+. The map's grade filters use the same grouping.</p>
+        <p><strong>Areas by level</strong> (<%= link_to "/dartmoor/levels", areas_levels_path, class: "text-blue-600 hover:underline" %>) lists each crag with its total and the number of problems at each level. Under <strong>What do you climb?</strong> visitors pick their levels and the crags with the most problems at those levels come first, showing "N at your level". The choice is remembered in their browser.</p>
       </div>
     </section>
 
