@@ -94,6 +94,8 @@ class Area < ApplicationRecord
     @bounds ||=
       bounds_from(boulders.placed.shown.where(ignore_for_area_hull: false), :polygon) ||
       bounds_from(problems.with_location, :location) ||
+      # Approximate boulder positions from a map-points import, before anything is drawn
+      bounds_from(boulders.shown.where.not(location: nil), :location) ||
       { south_west: nil, north_east: nil }
   end
 

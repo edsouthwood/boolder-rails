@@ -14,6 +14,7 @@
     - [Boulder Photos from Visitors](#boulder-photos)
     - [New Crags Suggested by Visitors](#new-crags)
     - [Boulder Names and Importing a Problem List](#boulder-names)
+    - [Importing Map Points (KML)](#map-points)
 10. [Importing Problems from Photos](#importing-from-photos)
 11. [Location Editor (Drag-and-Drop)](#location-editor)
 12. [Adding Boulders (Polygon Map Data)](#adding-boulders)
@@ -652,6 +653,38 @@ On the public site, named outlines are labelled on the map when zoomed right in 
 problem grades take priority where they overlap), and a problem page's breadcrumb ends with its
 boulder's name (Dartmoor › Bell Tor › Photo Arête). Offline downloads pick up new or changed
 names as "Update available".
+
+## Importing Map Points (KML) {#map-points}
+
+Super admins only. **Areas** page → **Import map points (KML)**. Use it when you have a map of
+named pins for boulders (e.g. a web map exported as **KML**; a KMZ is zipped, so export KML or
+unzip it first). Get the map owner's OK before importing someone else's map.
+
+- **Folders** are usually crags. Each goes to the area with the same name, or becomes a **new
+  unpublished area** (rename it on the preview). A folder called Parking adds **parking spots**
+  (skipping any within 20 m of an existing one; link them to areas from the area's edit page).
+  Pick a different destination, or **Skip this folder**, then click **Update preview** (this resets
+  the per-point choices).
+- **Points** are matched by name to the area's boulders. Short forms are understood (B = Boulder,
+  Wl = Wall, Twr = Tower, Rf = Roof, Btrs = Buttress, Ftre = Feature, …), and a leading "The" or
+  an ending of Boulder or Block is ignored, so "Yak B" matches "The Yak".
+  - **matches**: the boulder (not drawn yet) gets the pin as its approximate location.
+    "A / B" pins locate both boulders, and "Name - note" pins are tried without the note.
+  - **check**: only similar names were found. Pick one ("Same as …"), add a new name, or skip (the default).
+  - **new**: added as a boulder name without an outline, located at the pin. Edit the name first if you like.
+  - **on the map**: that boulder is already drawn, so nothing changes. A warning shows if its
+    outline is more than 15 m from the pin.
+  - Pins ending in **?** are marked **unsure** and skipped unless you choose otherwise.
+  - An **unnamed outline** near the pin can be given the name (ticked when it's within 5 m).
+    The listed boulder merges into it, as when naming an outline in the editor.
+  - A boulder that already has a different saved location keeps it unless you tick **Move its saved location**.
+- Pins never draw outlines. Importing the same file again changes nothing.
+
+**In the boulder editor**, located names show as blue labelled pins, and "· pin" in the
+**Not on the map yet** list. Click a pin (or the name) to zoom there and draw its outline. A
+LiDAR suggestion with a pin on it offers **Add as <name> (pin)**, and **Add all N unmapped as
+boulders** names each shape after the pin on it. An area with nothing drawn yet opens on its pins.
+Pins are admin-only: they never appear on the public site.
 
 ## Photo Inbox (Upload Many Photos) {#photo-inbox}
 

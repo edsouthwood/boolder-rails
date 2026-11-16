@@ -1,0 +1,25 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb "Import map points", nil, class: "active" %>
+
+<h1 class="my-3">Import map points (KML)</h1>
+
+<div class="max-w-3xl space-y-4">
+  <p class="text-sm text-gray-600">
+    Choose a KML file of named pins, e.g. a web map exported as KML (not KMZ). Each folder in the file is
+    usually one crag: it goes to the area with the same name, or becomes a new unpublished area. A folder called
+    Parking adds parking spots.
+  </p>
+  <p class="text-sm text-gray-600">
+    Each pin is matched by name to the area's boulders (short forms like <em>B</em>, <em>Wl</em> and <em>Twr</em> are understood) and gives a
+    boulder that isn't drawn yet its approximate location, shown as a pin in the boulder editor. Pins never draw outlines.
+    Nothing changes until you've checked the preview.
+  </p>
+
+  <%= form_with url: admin_map_points_preview_path, multipart: true, class: "space-y-3" do %>
+    <label class="block">
+      <span class="block text-sm font-medium text-gray-700 mb-1">KML file</span>
+      <%= file_field_tag :file, accept: ".kml,application/vnd.google-earth.kml+xml,application/xml,text/xml", class: "text-sm" %>
+    </label>
+    <button type="submit" class="btn">Preview</button>
+  <% end %>
+</div>

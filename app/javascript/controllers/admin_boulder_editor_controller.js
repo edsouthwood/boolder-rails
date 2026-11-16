@@ -248,6 +248,7 @@ export default class extends Controller {
         this.renderBoulderList()
         this.renderUnplaced()
         this.updateCount(this.bouldersGeoJSON.features.length)
+        this.fitToPinsIfNothingDrawn()
         if (this.hasFocusIdValue) this.focusBoulder(this.focusIdValue)
         if (this.hasPlaceIdValue) this.startPlacing(this.placeIdValue)
       })
@@ -711,10 +712,15 @@ export default class extends Controller {
 
   renderUnplaced() {
     this.unplacedSectionTarget.classList.toggle('hidden', this.unplaced.length === 0)
+    this.renderPins()
     this.unplacedListTarget.replaceChildren(...this.unplaced.map(u => {
       const row = this.element_('button', 'block w-full text-left py-0.5 text-gray-700 hover:text-granite-dark', u.name)
       row.type = 'button'
       row.append(this.element_('span', 'text-gray-400', ` · ${u.problems}`))
+      if (u.lat != null) {
+        row.append(this.element_('span', 'text-sky-600', ' · pin'))
+        row.title = 'Has an approximate location from a map-points import: click to go there and draw it'
+      }
       row.dataset.boulderId = u.id
       row.dataset.action = 'click->admin-boulder-editor#placeClick'
       return row
@@ -725,10 +731,58 @@ export default class extends Controller {
     this.startPlacing(parseInt(e.currentTarget.dataset.boulderId, 10))
   }
 
+  // Pins for listed names that have an approximate location (from a map-points import) but
+  // no outline yet. Plain markers: not draggable, and their element's classes are set once,
+  // before maplibre adds its own (replacing className later drops maplibregl-marker).
+  renderPins() {
+    (this.pinMarkers || []).forEach(marker => marker.remove())
+    this.pinMarkers = this.unplaced.filter(u => u.lat != null).map(u => {
+      const el = document.createElement('button')
+      el.type = 'button'
+      el.className = 'flex items-center gap-1 text-[11px] leading-none text-white whitespace-nowrap'
+      el.title = `${u.name}: approximate position. Click to draw its outline here.`
+      const dot = this.element_('span', 'block w-2.5 h-2.5 rounded-full bg-sky-500 ring-2 ring-white', '')
+      const label = this.element_('span', 'px-1 py-0.5 rounded bg-black/60', u.name)
+      el.append(dot, label)
+      el.addEventListener('click', (e) => { e.stopPropagation(); if (this.state !== 'drawing') this.startPlacing(u.id) })
+      return new maplibregl.Marker({ element: el, anchor: 'left', offset: [-5, 0] }).setLngLat([u.lon, u.lat]).addTo(this.map)
+    })
+  }
+
+  // With no outlines yet, the area's view comes from a few located problems at most: show
+  // every pin (and those problems) instead
+  fitToPinsIfNothingDrawn() {
+    const pins = this.unplaced.filter(u => u.lat != null).map(u => [u.lon, u.lat])
+    if (this.bouldersGeoJSON.features.length || pins.length < 2) return
+    const points = [...pins, ...this.problemFeatures.map(f => f.geometry.coordinates)]
+    const lngs = points.map(p => p[0]), lats = points.map(p => p[1])
+    this.map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: this.fitPadding(60), maxZoom: 18, duration: 0 })
+  }
+
+  // The listed name whose pin sits on (or within a few metres of) a LiDAR suggestion, nearest first
+  pinnedNameFor(suggestion) {
+    const ring = suggestion.coordinates
+    const lngs = ring.map(c => c[0]), lats = ring.map(c => c[1])
+    const centre = [(Math.min(...lngs) + Math.max(...lngs)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]
+    const metres = (a, b) => {
+      const dx = (a[0] - b[0]) * 111320 * Math.cos(a[1] * Math.PI / 180)
+      const dy = (a[1] - b[1]) * 110540
+      return Math.hypot(dx, dy)
+    }
+    const radius = Math.max(...ring.map(c => metres(c, centre)))
+    const best = this.unplaced.filter(u => u.lat != null)
+      .map(u => ({ u, d: metres([u.lon, u.lat], centre) }))
+      .filter(({ d }) => d <= radius + 8)
+      .sort((a, b) => a.d - b.d)[0]
+    return best?.u
+  }
+
   // Draw mode for a listed name: the finished outline is saved onto that boulder
   startPlacing(id) {
     const listed = this.unplaced.find(u => u.id === id)
     if (!listed) return
+    if (listed.lat != null) this.map.easeTo({ center: [listed.lon, listed.lat], zoom: Math.min(Math.max(this.map.getZoom(), 17.5), 18) })
     if (this.state === 'drawing') this.exitDrawingMode()
     this.startDrawing()
     this.placing = listed
@@ -926,7 +980,9 @@ export default class extends Controller {
     s.overlaps.slice(0, 3).forEach(id =>
       button(`Replace outline of #${id}`, true, () => this.replaceWithSuggestion(id, s))
     )
-    button('Add as new boulder', s.overlaps.length === 0, () => this.addSuggestion(index))
+    const pinned = s.overlaps.length === 0 ? this.pinnedNameFor(s) : null
+    if (pinned) button(`Add as ${pinned.name} (pin)`, true, () => this.addSuggestion(index, pinned))
+    button('Add as new boulder', s.overlaps.length === 0 && !pinned, () => this.addSuggestion(index))
     if (this.unplaced.length) {
       const select = document.createElement('select')
       select.className = 'px-1 py-1 rounded border border-gray-300 bg-white text-gray-700'
@@ -971,7 +1027,10 @@ export default class extends Controller {
   async addAllUnmapped() {
     const indexes = this.unmappedSuggestions()
     if (!indexes.length) return
-    if (!confirm(`Add ${indexes.length} new boulder${indexes.length === 1 ? '' : 's'} from LiDAR? Check the amber shapes first: walls and parked cars can show up as rock.`)) return
+    const pinned = new Set(indexes.map(index => this.pinnedNameFor(this.suggestions[index])?.id).filter(Boolean)).size
+    if (!confirm(`Add ${indexes.length} new boulder${indexes.length === 1 ? '' : 's'} from LiDAR?` +
+      (pinned ? ` About ${pinned} will take the name of the pin on them.` : '') +
+      ' Check the amber shapes first: walls and parked cars can show up as rock.')) return
 
     this.addAllBtnTarget.disabled = true
     this.suggestBtnTarget.disabled = true
@@ -979,7 +1038,8 @@ export default class extends Controller {
     try {
       for (const index of indexes) {
         this.suggestStatusTarget.textContent = `Adding ${added + 1}/${indexes.length}…`
-        const id = await this.createBoulder(this.suggestions[index].coordinates)
+        // A pin on the shape names it (each listed name is used once: it leaves the list when placed)
+        const id = await this.createBoulder(this.suggestions[index].coordinates, this.pinnedNameFor(this.suggestions[index]))
         if (id == null) break
         this.suggestions[index] = null
         added++

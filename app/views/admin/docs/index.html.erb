@@ -19,6 +19,7 @@
       <li><a href="#boulder-photos" class="hover:underline">Boulder Photos from Visitors</a></li>
       <li><a href="#new-crags" class="hover:underline">New Crags Suggested by Visitors</a></li>
       <li><a href="#boulder-names" class="hover:underline">Boulder Names &amp; Problem Lists</a></li>
+      <li><a href="#map-points" class="hover:underline">Importing Map Points (KML)</a></li>
       <li><a href="#photo-import" class="hover:underline">Importing Problems from Photos</a></li>
       <li><a href="#location-editor" class="hover:underline">Location Editor (Drag-and-Drop)</a></li>
       <li><a href="#adding-boulders" class="hover:underline">Adding Boulders (GeoJSON)</a></li>
@@ -321,6 +322,21 @@ Unnamed Slab,,slab,false,,,,</pre>
           <li>The workbench lists problems on the photo's boulder first, even unlocated ones, and drawing one gives it a location on that boulder. With no boulder outline, a problem without a location takes the photo's GPS instead (where the photo was taken), so it shows on the map ready to nudge into place</li>
         </ul>
         <p>On the public site, names label their outlines on the map when zoomed right in, and end the problem page's breadcrumb.</p>
+      </div>
+    </section>
+
+    <%# Map points %>
+    <section id="map-points">
+      <%= render "admin/docs/section_header", title: "Importing Map Points (KML)" %>
+      <div class="prose-content text-sm text-gray-700 space-y-4">
+        <p>Super admins: <strong>Areas → Import map points (KML)</strong>. Upload a KML of named pins (not KMZ). Get the map owner's OK before importing someone else's map.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Each <strong>folder</strong> goes to the area with the same name, or becomes a new unpublished area. A <em>Parking</em> folder adds parking spots (not within 20 m of an existing one). Change a destination, then <strong>Update preview</strong></li>
+          <li>Each <strong>pin</strong> is matched by name (B = Boulder, Wl = Wall, Twr = Tower, Rf = Roof…; "The" and a Boulder/Block ending are ignored). <strong>matches</strong> gives the undrawn boulder an approximate location; <strong>check</strong> means similar names only (skipped unless you pick one); <strong>new</strong> adds a boulder name at the pin; <strong>on the map</strong> changes nothing (warns if the outline is over 15 m away)</li>
+          <li>Pins ending in <strong>?</strong> are skipped unless chosen. An unnamed outline near a pin can take its name (ticked within 5 m). Saved locations only move if you tick it</li>
+          <li>Pins never draw outlines, and importing again changes nothing</li>
+          <li>In the <strong>boulder editor</strong>, located names are blue pins: click one to draw it there. A LiDAR suggestion with a pin on it offers <strong>Add as … (pin)</strong>, and <strong>Add all</strong> names each shape after its pin. Pins never show on the public site</li>
+        </ul>
       </div>
     </section>
 

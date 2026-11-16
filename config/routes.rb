@@ -16,6 +16,9 @@ Rails.application.routes.draw do
     delete "session", to: "sessions#destroy", as: :session
     get "stats", to: "stats#show", as: :stats
     resources :accounts, except: :show
+    get  "map-points",         to: "map_points#new",     as: :new_map_points
+    post "map-points/preview", to: "map_points#preview", as: :map_points_preview
+    post "map-points",         to: "map_points#create",  as: :map_points
     resource :profile, only: [ :show, :update ], path: "my-account"
     resources :areas, param: :slug do
       resources :problems, only: :index

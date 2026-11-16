@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Sample Woods</name>
+    <Folder>
+      <name>Known Crag</name>
+      <Placemark><name>Owl B</name><Point><coordinates>-3.70000,50.60000,0</coordinates></Point></Placemark>
+      <Placemark><name>Big Twr</name><Point><coordinates>-3.70010,50.60010,0</coordinates></Point></Placemark>
+      <Placemark><name>Fox / Badger B</name><Point><coordinates>-3.70020,50.60020,0</coordinates></Point></Placemark>
+      <Placemark><name>Long Wl - Sunny Side</name><Point><coordinates>-3.70030,50.60030,0</coordinates></Point></Placemark>
+      <Placemark><name>Goalpost</name><Point><coordinates>-3.70040,50.60040,0</coordinates></Point></Placemark>
+      <Placemark><name>Tiny B?</name><Point><coordinates>-3.70050,50.60050,0</coordinates></Point></Placemark>
+      <Placemark><name>Brand New B</name><Point><coordinates>-3.70060,50.60060,0</coordinates></Point></Placemark>
+      <Placemark><name>Drawn Slab</name><Point><coordinates>-3.70500,50.60000,0</coordinates></Point></Placemark>
+      <Placemark><name>A Track</name><LineString><coordinates>-3.7,50.6,0 -3.71,50.61,0</coordinates></LineString></Placemark>
+    </Folder>
+    <Folder>
+      <name>Fresh Crag</name>
+      <Placemark><name>Acorn</name><Point><coordinates>-3.69000,50.61000,0</coordinates></Point></Placemark>
+      <Placemark><name>Acorn</name><Point><coordinates>-3.69010,50.61010,0</coordinates></Point></Placemark>
+    </Folder>
+    <Folder>
+      <name>Parking</name>
+      <Placemark><name>Lay-by</name><description>3 Cars</description><Point><coordinates>-3.68000,50.60000,0</coordinates></Point></Placemark>
+      <Placemark><name>Old Car Park</name><Point><coordinates>-3.68100,50.60100,0</coordinates></Point></Placemark>
+    </Folder>
+  </Document>
+</kml>

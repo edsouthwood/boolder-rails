@@ -1,0 +1,129 @@
+<% add_breadcrumb "Dartmoor", admin_areas_path %>
+<% add_breadcrumb "Import map points", admin_new_map_points_path %>
+<% add_breadcrumb "Preview", nil, class: "active" %>
+
+<% plans = @import.preview %>
+<% badge = "inline-block px-2 py-0.5 rounded-full text-xs font-medium" %>
+<% area_options = Area.order(:name).map { |area| [ "#{area.name}#{" (unpublished)" unless area.published}", "area:#{area.id}" ] } %>
+<% select_class = "text-sm rounded-md border-gray-300" %>
+
+<h1 class="my-3">Preview: map points</h1>
+
+<p class="text-sm text-gray-700 mb-4">
+  <strong><%= pluralize(plans.sum { |plan| plan.folder.points.size }, "point") %></strong> in
+  <strong><%= pluralize(plans.size, "folder") %></strong>. Pick where each folder goes (then <strong>Update preview</strong>),
+  and what each point does. Pins ending in <strong>?</strong> are marked <em>unsure</em> and skipped unless you choose otherwise.
+  Nothing is saved until you click <strong>Import</strong>.
+</p>
+
+<% if @import.parsed.skipped.any? %>
+  <details class="mb-4 text-sm">
+    <summary class="cursor-pointer text-gray-600"><%= pluralize(@import.parsed.skipped.size, "item") %> ignored</summary>
+    <ul class="mt-2 ml-4 list-disc text-gray-600">
+      <% @import.parsed.skipped.each do |skipped| %>
+        <li><%= skipped.folder %>: <%= skipped.text %> (<%= skipped.reason %>)</li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>
+
+<%= form_with url: admin_map_points_path, method: :post, class: "space-y-6" do %>
+  <%= hidden_field_tag :text, @text %>
+  <%= hidden_field_tag :parking_sent, "1" %>
+
+  <% plans.each do |plan| %>
+    <% folder = plan.folder %>
+    <section class="bg-white shadow sm:rounded-md">
+      <div class="px-4 py-3 border-b border-gray-200 flex items-center gap-3 flex-wrap">
+        <h2 class="text-base font-semibold text-gray-900"><%= folder.name %></h2>
+        <span class="text-sm text-gray-500"><%= pluralize(folder.points.size, "point") %></span>
+        <label class="text-sm text-gray-700">→
+          <%= select_tag "targets[#{folder.key}]",
+                options_for_select([ [ "New unpublished area", "new" ] ] + area_options + [ [ "Parking spots", "parking" ], [ "Skip this folder", "skip" ] ], plan.target),
+                class: select_class, id: "target-#{folder.key}" %>
+        </label>
+        <% if plan.kind == "new" %>
+          <label class="text-sm text-gray-700">named
+            <%= text_field_tag "area_names[#{folder.key}]", plan.new_area_name, class: "#{select_class} py-1", id: "area-name-#{folder.key}" %>
+          </label>
+        <% end %>
+      </div>
+
+      <% if plan.points.any? %>
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+          <tbody class="divide-y divide-gray-100">
+            <% plan.points.each do |point_plan| %>
+              <% point = point_plan.point %>
+              <tr class="align-top">
+                <td class="px-4 py-2 w-1/4">
+                  <%= point.name %>
+                  <% if point.uncertain? %><span class="<%= badge %> bg-amber-100 text-amber-800">unsure</span><% end %>
+                  <%= link_to "map", "https://www.openstreetmap.org/?mlat=#{point.lat}&mlon=#{point.lon}#map=19/#{point.lat}/#{point.lon}",
+                        target: "_blank", rel: "noopener", class: "block text-xs text-gray-400 hover:underline" %>
+                </td>
+                <td class="px-4 py-2">
+                  <% if plan.kind == "parking" %>
+                    <% if point_plan.action == :exists %>
+                      <span class="<%= badge %> bg-gray-100 text-gray-700">already there</span>
+                      <%= link_to point_plan.existing_poi.name, edit_admin_poi_path(point_plan.existing_poi), class: "text-gray-500 hover:underline" %>
+                    <% else %>
+                      <label class="text-gray-700">
+                        <%= check_box_tag "parking[]", point.key, true, id: "parking-#{point.key}" %>
+                        <span class="<%= badge %> bg-granite/10 text-granite-dark">new</span> add a parking spot
+                        <% if point.description %><span class="text-gray-500">(<%= point.description %>)</span><% end %>
+                      </label>
+                    <% end %>
+                  <% elsif point_plan.action == :on_map %>
+                    <span class="<%= badge %> bg-green-100 text-green-800">on the map</span>
+                    <%= point_plan.boulders.map(&:name).to_sentence %>: nothing to do
+                    <% if point_plan.far_metres %>
+                      <span class="<%= badge %> bg-amber-100 text-amber-800">its outline is <%= point_plan.far_metres.round %> m from this pin</span>
+                    <% end %>
+                  <% else %>
+                    <% options = [] %>
+                    <% if point_plan.action == :match %>
+                      <% options << [ "Locate #{point_plan.boulders.map(&:name).to_sentence}", "boulder:#{point_plan.boulders.map(&:id).join(",")}" ] %>
+                    <% end %>
+                    <% point_plan.similar.each do |boulder| %>
+                      <% options << [ "Same as #{boulder.name}#{" (on the map)" if boulder.placed?}", "boulder:#{boulder.id}" ] %>
+                    <% end %>
+                    <% options << [ "Add as a new boulder name", "new" ] << [ "Skip this point", "skip" ] %>
+                    <% label, colours = { match: [ "matches", "bg-green-100 text-green-800" ], possible_match: [ "check", "bg-amber-100 text-amber-800" ],
+                                          new: [ "new", "bg-granite/10 text-granite-dark" ] }[point_plan.action] %>
+                    <span class="<%= badge %> <%= colours %>"><%= label %></span>
+                    <% if point_plan.no_change? %><span class="<%= badge %> bg-gray-100 text-gray-600">already located here</span><% end %>
+                    <%= select_tag "choices[#{point.key}]", options_for_select(options, point_plan.default_choice),
+                          class: "ml-1 #{select_class}", id: "choice-#{point.key}" %>
+                    <% unless point_plan.action == :match %>
+                      <label class="block mt-1 text-xs text-gray-500">Name if added as new:
+                        <%= text_field_tag "names[#{point.key}]", point_plan.new_name, class: "#{select_class} py-0.5 text-xs", id: "name-#{point.key}" %>
+                      </label>
+                    <% end %>
+                    <% if point_plan.moves_location? %>
+                      <label class="block mt-1 text-gray-700">
+                        <%= check_box_tag "replace[]", point.key, false, id: "replace-#{point.key}" %>
+                        Move its saved location (<%= point_plan.saved_metres.round %> m away) to this pin
+                      </label>
+                    <% end %>
+                    <% if point_plan.outline %>
+                      <label class="block mt-1 text-gray-700">
+                        <%= check_box_tag "adopt[]", point.key, point_plan.adopt_by_default?, id: "adopt-#{point.key}" %>
+                        Give the name to the unnamed outline #<%= point_plan.outline.id %>, <%= point_plan.outline_metres.round(1) %> m away
+                      </label>
+                    <% end %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </section>
+  <% end %>
+
+  <div class="flex items-center gap-4">
+    <button type="submit" class="btn">Import</button>
+    <button type="submit" name="update_preview" value="1" class="px-3 py-2 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">Update preview (resets the choices below)</button>
+    <%= link_to "Start again", admin_new_map_points_path, class: "text-sm text-gray-600 hover:underline" %>
+  </div>
+<% end %>
