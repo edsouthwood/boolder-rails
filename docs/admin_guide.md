@@ -1732,6 +1732,21 @@ Visits are anonymous daily totals in the `page_views` table: one row per day and
 
 Only real visits count: pages opened in a browser (`Sec-Fetch-Mode: navigate`) or by following a link (Turbo). Not counted: Turbo's prefetch when hovering over a link, offline downloads (which fetch every problem page in the background), pages opened while signed in as an admin, bots and scripts (by user agent), error and "not found" pages, and pages served from the offline cache with no connection. Code: `CountsPageViews` (controller concern), `PageView`, `AdminStats`.
 
+### Instagram news digest {#news-digest}
+`bin/rails "news:digest[DAYS,OUT_DIR]"` (default 7 days, `tmp/news/<date>`) writes what's new on the public site, for a social media post. It only reads the database.
+
+- **`digest.json`** holds:
+  - counts of new problems, crags, lines and photos;
+  - the new crags (published in the period) and up to 8 highlight problems, those with a line first, then hardest;
+  - the featured photo: the public photo with the most new lines, with its lines numbered left to right.
+- **Credit** for each item is the visitor who sent it (the name typed on the contribution, photo or crag suggestion) or the admin who created it (from the audit log). It's empty for scripts and imports.
+- **`post.jpg`** is a 1080×1350 image: the featured photo with its lines drawn as on the site, and a footer with the logo, crag, counts and photo credit.
+  - `ADMINS=<yaml>` maps admin login names to the names to print.
+  - `PHOTO_CREDIT="…"` overrides the photo credit.
+- The Claude skill `bowda-news` (`.claude/skills/bowda-news`) runs this on production, drafts the caption and lists names to check before posting.
+- Nothing records consent to being named on social media, so **check first-time names before posting**.
+- Code: `NewsDigest`, `NewsDigest::Image`, `lib/tasks/news.rake`.
+
 ---
 
 ## Search engines {#search-engines}
