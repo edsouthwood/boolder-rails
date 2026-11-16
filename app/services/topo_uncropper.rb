@@ -6,6 +6,11 @@
 # rather than a new picture on the old one, because /proxy/topos/:id is cached forever by id.
 # Its lines are the old ones moved to where they sit on the whole photo, then it's swapped in,
 # so undo on the old topo's page puts things back.
+#
+# Lines drawn in the line editor or workbench were drawn on the crop and are moved. A line
+# imported from a contribution as it was sent was drawn by the contributor on their whole
+# photo (it was out of place on the crop), so it's copied as it is. Start holds and not-in
+# areas are judged the same way, each on its own.
 class TopoUncropper
   Result = Struct.new(:old, :new_topo, :status, :message, keyword_init: true)
 
@@ -91,12 +96,36 @@ class TopoUncropper
   def copy_line(line, new_topo)
     Line.create!(
       problem: line.problem, topo: new_topo,
-      coordinates: self.class.remap_points(line.coordinates, ratio),
-      start_holds: self.class.remap_points(line.start_holds, ratio),
-      excluded_areas: line.excluded_areas&.map { |area| self.class.remap_points(area, ratio) },
+      coordinates: on_whole_photo?(line.coordinates, :line_coordinates) ? line.coordinates : self.class.remap_points(line.coordinates, ratio),
+      start_holds: on_whole_photo?(line.start_holds, :start_holds) ? line.start_holds : self.class.remap_points(line.start_holds, ratio),
+      excluded_areas: on_whole_photo?(line.excluded_areas, :excluded_areas) ? line.excluded_areas : line.excluded_areas&.map { |area| self.class.remap_points(area, ratio) },
       reference_contribution: line.reference_contribution,
       reference_line: line.reference_line
     )
+  end
+
+  # Contributions sent with this very photo (the importer finds a photo's topo the same way)
+  def contributions
+    @contributions ||= Contribution.where(id: Contribution.joins(photos_attachments: :blob).
+      where(active_storage_blobs: { checksum: @old.photo.blob.checksum }).select(:id)).to_a
+  end
+
+  # Whether points are exactly as a contributor sent them with this photo. A line's ends are
+  # compared, as a two-click line gets a midpoint added when it's imported.
+  def on_whole_photo?(points, field)
+    return false if points.blank?
+
+    contributions.any? do |contribution|
+      sent = contribution.public_send(field)
+      sent = JSON.parse(sent) if sent.is_a?(String)
+      next false if sent.blank?
+
+      field == :line_coordinates ? same_ends?(points, sent) : sent == points
+    end
+  end
+
+  def same_ends?(a, b)
+    a.size >= 2 && b.size >= 2 && a.first == b.first && a.last == b.last && (b.size == 2 || a.size == b.size)
   end
 
   def result(status, message, new_topo = nil)

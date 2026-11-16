@@ -1102,7 +1102,10 @@ bin/rails topos:uncrop_portraits TOPO=123 APPLY=1   # just one
 
 For each one it makes a new, uncropped topo of the same file (nothing is uploaded again). It
 moves every line, start hold and not-in area to the same spot on the whole photo, then swaps the
-new topo in, as in [Replacing a photo](#replacing-photos). The old topo is kept unpublished
+new topo in, as in [Replacing a photo](#replacing-photos). The exception is anything still
+exactly as a contributor sent it with that photo. Contributors draw on their whole photo, so
+those points were already fractions of the whole photo (and sat out of place on the crop).
+They're copied unchanged. The old topo is kept unpublished
 with **Undo swap** on its workbench. Topos it leaves alone: landscape ones, ones already
 replaced or being replaced, and (left unpublished in the workbench to finish) any with an
 undrawn line. Look over the converted problem pages afterwards.

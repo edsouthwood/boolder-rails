@@ -1,6 +1,8 @@
 require "test_helper"
 
 class TopoUncropperTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   LINE = [ { "x" => 0.5, "y" => 0.0 }, { "x" => 0.5, "y" => 0.5 }, { "x" => 0.4, "y" => 1.0 } ].freeze
 
   setup do
@@ -103,5 +105,41 @@ class TopoUncropperTest < ActiveSupport::TestCase
     pending = topo(width: 900, height: 1200, uncropped: false)
     topo(width: 1200, height: 900, uncropped: true, published: false).replace!(pending)
     assert_equal :skipped, TopoUncropper.new(pending).call.status
+  end
+
+  test "a line imported from a contribution was drawn on the whole photo, so it isn't moved" do
+    sent = [ { "x" => 0.3, "y" => 0.1 }, { "x" => 0.3, "y" => 0.9 } ]
+    holds = [ { "x" => 0.3, "y" => 0.9 } ]
+    contribution = Contribution.create!(state: "accepted", problem: @crack, comment: "x",
+                                        line_coordinates: sent, start_holds: holds)
+    contribution.photos.attach(@old.photo.blob)
+    arete = @area.problems.create!(name: "Arete", steepness: "wall")
+    # As imported (a midpoint added to the two-click line), but its holds since redrawn on the crop
+    imported = Line.create!(problem: arete, topo: @old, coordinates: [ sent[0], { "x" => 0.3, "y" => 0.5 }, sent[1] ],
+                            start_holds: [ { "x" => 0.3, "y" => 0.5 } ])
+
+    fresh = TopoUncropper.new(@old).call.new_topo
+
+    assert_equal imported.coordinates, fresh.lines.find_by!(problem: arete).coordinates
+    assert_equal [ 0.5 ], fresh.lines.find_by!(problem: arete).start_holds.map { |p| p["y"] }
+    assert_equal [ 0.2188, 0.5, 0.7813 ], fresh.lines.find_by!(problem: @crack).coordinates.map { |p| p["y"] },
+                 "a line drawn by an admin on the crop still moves"
+
+    imported.update!(start_holds: holds)
+    other = topo(width: 900, height: 1200, uncropped: false)
+    other.photo.attach(@old.photo.blob)
+    Line.create!(problem: arete, topo: other, coordinates: imported.coordinates, start_holds: holds)
+    assert_equal holds, TopoUncropper.new(other).call.new_topo.lines.find_by!(problem: arete).start_holds
+  end
+
+  test "deleting the old topo leaves the photo file the new one shares" do
+    fresh = TopoUncropper.new(@old).call.new_topo
+    blob = fresh.photo.blob
+
+    perform_enqueued_jobs { @old.reload.destroy! }
+
+    assert ActiveStorage::Blob.exists?(blob.id)
+    assert fresh.reload.photo.attached?
+    assert blob.service.exist?(blob.key), "the file itself is still stored"
   end
 end
