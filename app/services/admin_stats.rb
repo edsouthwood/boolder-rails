@@ -117,10 +117,13 @@ class AdminStats
   # ─── Admin activity ──────────────────────────────────────────────────────
 
   # [[username, {type => count}, total]] for the last 30 days
+  # How admin_activity labels changes made with no admin signed in
+  NO_NAME = "site and background jobs".freeze
+
   def admin_activity
     by = Hash.new { |h, k| h[k] = Hash.new(0) }
     Audited::Audit.where("created_at > ?", 30.days.ago).group(:username, :auditable_type).count.
-      each { |(user, type), n| by[user.presence || "site and background jobs"][type] += n }
+      each { |(user, type), n| by[user.presence || NO_NAME][type] += n }
     by.map { |user, types| [ user, types, types.values.sum ] }.sort_by { |_, _, total| -total }
   end
 

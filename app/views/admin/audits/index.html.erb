@@ -1,3 +1,19 @@
+<h2 class="text-2xl font-bold pt-4 px-4 sm:px-0">Audit log</h2>
+
+<%= form_with url: admin_audits_path, method: :get, class: "my-4 flex flex-wrap gap-4 px-4 sm:px-0", data: { controller: "auto-submit" } do |form| %>
+  <div>
+    <label for="user" class="block text-sm font-medium text-gray-700">Who</label>
+    <%= form.select :user, @usernames + [ [ "No name (visitors, jobs, scripts)", Admin::AuditsController::NO_NAME ] ], { selected: @user, include_blank: "Everyone" }, { data: { action: "change->auto-submit#submit" }, class: "mt-1 block w-full md:w-56 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
+  </div>
+  <div>
+    <label for="type" class="block text-sm font-medium text-gray-700">What</label>
+    <%= form.select :type, @types.map { |t| [ t.underscore.humanize, t ] }, { selected: @type, include_blank: "Everything" }, { data: { action: "change->auto-submit#submit" }, class: "mt-1 block w-full md:w-56 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-granite focus:outline-none focus:ring-granite sm:text-sm" } %>
+  </div>
+<% end %>
+
+<% if @audits.empty? %>
+  <p class="my-8 text-sm text-gray-500 italic px-4 sm:px-0">No changes match.</p>
+<% else %>
 <div class="flex flex-col my-6">
   <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
     <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -65,4 +81,8 @@
   </div>
 </div>
 
-<p><%= "#{@audits.count} results" %></p>
+<div class="my-4 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-0">
+  <p class="text-sm text-gray-600"><%= page_entries_info @audits, entry_name: "change" %></p>
+  <%= paginate @audits %>
+</div>
+<% end %>

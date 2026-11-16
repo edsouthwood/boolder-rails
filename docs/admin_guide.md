@@ -1722,7 +1722,10 @@ left off. Unpublished areas' sheets return "not found" like their other pages.
 - **Activity, last 12 weeks**: problems added, lines drawn, photos added, contributions and reports, photos from visitors and admin edits, per week.
 - **Community**: contributions/reports and visitor photos waiting, accepted and closed, and the typical wait for a decision over the last 90 days.
 - **Mapping progress**: per area, problems placed by hand, estimated, with no location and with a line, photos and photos still to draw, and boulders on the map. Click an area for its Boulders list.
-- **Admin edits, last 30 days**: who changed what, with a link to the full audit log.
+- **Admin edits, last 30 days**: who changed what, with a link to the full audit log. Click a name to see just their changes.
+
+### Audit log
+**Admin → Stats → Full audit log** (`/admin/audits`, super admins only) lists every recorded change, newest first, 100 a page. Filter by **Who** (an admin, or "No name" for visitors' contributions, background jobs and scripts) and by **What** (the kind of record), and page back with the links at the bottom. Records that have their own admin page are linked.
 
 ### How visits are counted
 Visits are anonymous daily totals in the `page_views` table: one row per day and page (home, an area, a problem, or the map), holding only a count. No IP address, cookie, browser details or visitor ID is stored, so visits can't be linked to anyone; the [privacy policy](/privacy) says so. Counting started on the day this was deployed (4 November 2026), so earlier periods are empty.
