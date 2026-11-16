@@ -1118,8 +1118,11 @@ photo straight away, so its lines get drawn on that. Topos it leaves alone: land
 ones already replaced or being replaced, ones with no area, and (left unpublished in the
 workbench to finish) any with an undrawn line. Look over the converted problem pages afterwards.
 
+After changing topo photo sizes or format, `RAILS_ENV=production bin/rails
+active_storage:process_topo_variants` makes them all ahead of time.
+
 Code: `Topo#display_photo` (`:full` variant, at most 1200 px on its long side, or `:medium`,
-the 1200×900 crop) and `Topo#aspect_ratio`; `TopoUncropper`; `topo_svg_height` sizes the
+the 1200×900 crop, both always JPEG, even for a PNG upload) and `Topo#aspect_ratio`; `TopoUncropper`; `topo_svg_height` sizes the
 drawing over the photo.
 
 ### Replacing a photo with a better one {#replacing-photos}

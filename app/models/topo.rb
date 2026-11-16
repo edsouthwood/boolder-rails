@@ -1,11 +1,12 @@
 class Topo < ApplicationRecord
+  # Every size is served as a JPEG, whatever was uploaded: a PNG photo was over 1 MB at 1200px
   has_one_attached :photo do |attachable|
-    attachable.variant :thumb,  resize_to_fill: [ 300, 200 ],   saver: { quality: 60, strip: true }, preprocessed: true
+    attachable.variant :thumb,  resize_to_fill: [ 300, 200 ],   format: :jpeg, saver: { quality: 60, strip: true }, preprocessed: true
     # Topos from before uncropped photos came in (uncropped false): cropped to 4:3, and their
     # lines are fractions of the crop
-    attachable.variant :medium, resize_to_fill: [ 1200, 900 ],  saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
+    attachable.variant :medium, resize_to_fill: [ 1200, 900 ],  format: :jpeg, saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
     # Every topo since: the whole photo, portrait or landscape, at most 1200px on its long side
-    attachable.variant :full,   resize_to_limit: [ 1200, 1200 ], saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
+    attachable.variant :full,   resize_to_limit: [ 1200, 1200 ], format: :jpeg, saver: { quality: 50, strip: true, interlace: true }, preprocessed: true
   end
 
   CROPPED_ASPECT_RATIO = 4.0 / 3
