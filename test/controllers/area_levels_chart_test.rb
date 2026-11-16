@@ -26,16 +26,28 @@ class AreaLevelsChartTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the levels page's squares follow problems added after the area was last edited" do
-    squares = -> {
+  test "the levels page counts each crag's problems by level, following problems added later" do
+    row = -> {
       get areas_levels_path
-      css_select("a[href='#{area_path(@area.slug)}'] span[style*='rgba(51, 57, 61']").map { |s| s.text.strip }
+      css_select("li[data-crag-levels-target=row]").find { |li| li.at_css("a[href='#{area_path(@area.slug)}']") }
     }
-    assert_equal [], squares.call
+    assert_equal [ 0 ] * 8, JSON.parse(row.call["data-counts"])
 
     travel 1.minute do
       @area.problems.create!(name: "Groove", grade: "5", steepness: "wall", location: FACTORY.point(-3.9, 50.6))
-      assert_equal [ "5" ], squares.call
+      @area.problems.create!(name: "Slab", grade: "5+", steepness: "slab", location: FACTORY.point(-3.9, 50.6))
+      li = row.call
+      assert_equal [ 0, 0, 0, 0, 2, 0, 0, 0 ], JSON.parse(li["data-counts"])
+      assert_equal "2", li["data-total"]
+      assert_match "2 problems", li.text
+      assert_equal "2", li.at_css("[data-level='5']").text.strip
     end
+  end
+
+  test "the levels page has the level picker" do
+    get areas_levels_path
+
+    assert_select "[data-controller=crag-levels] button[data-level]", 8
+    assert_select "[data-crag-levels-match-value='{n} at your level · ']"
   end
 end
