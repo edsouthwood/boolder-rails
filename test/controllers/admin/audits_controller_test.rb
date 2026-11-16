@@ -37,4 +37,36 @@ class Admin::AuditsControllerTest < ActionDispatch::IntegrationTest
       assert_select "a", text: label, count: 0
     end
   end
+
+  test "filters by who and what, and pages back through older changes" do
+    area = Area.create!(name: "Bell Tor", slug: "belltor", published: true)
+    Audited.audit_class.as_user("stamper") { area.problems.create!(name: "Stamped", grade: "4", steepness: "wall") }
+    Audited.audit_class.as_user("dale") { area.update!(name: "Bell Tor East") }
+
+    get admin_audits_path(user: "stamper")
+    assert_response :success
+    assert_select "option[selected][value=?]", "stamper"
+    assert_select "td", text: "stamper"
+    assert_select "td", text: "dale", count: 0
+
+    get admin_audits_path(type: "Area")
+    assert_select "td", text: "dale"
+    assert_select "td", text: "stamper", count: 0
+
+    get admin_audits_path(user: Admin::AuditsController::NO_NAME, type: "Area")
+    assert_select "td", text: "dale", count: 0
+    assert_select "td div", text: "Area ##{area.id}" # its create, with no one signed in
+
+    get admin_audits_path(user: "nobody")
+    assert_select "p", text: "No changes match."
+
+    Audited.audit_class.as_user("stamper") do
+      Admin::AuditsController::PER_PAGE.times { |i| area.update!(name: "Bell Tor #{i}") }
+    end
+    get admin_audits_path(user: "stamper")
+    assert_select "td", text: "stamper", count: Admin::AuditsController::PER_PAGE
+    assert_select "a[href=?]", admin_audits_path(user: "stamper", page: 2)
+    get admin_audits_path(user: "stamper", page: 2)
+    assert_select "td", text: "stamper", count: 1
+  end
 end

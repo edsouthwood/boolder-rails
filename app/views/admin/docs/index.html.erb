@@ -839,6 +839,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
       <%= render "admin/docs/section_header", title: "Stats" %>
       <div class="prose-content text-sm text-gray-700 space-y-4">
         <p><strong>Admin → Stats</strong> (super admins only): page views for the chosen period (7–365 days) with a daily chart and the most viewed areas and problems; weekly activity over 12 weeks (problems, lines, photos, contributions, visitor photos, admin edits); contributions waiting and the typical wait for a decision; mapping progress per area; and who edited what in the last 30 days.</p>
+        <p><strong>Full audit log</strong> (linked from Stats): every recorded change, 100 a page, newest first. Filter by who made it (an admin, or "No name" for visitors, background jobs and scripts) and by kind of record; clicking a name on Stats opens their changes.</p>
         <p><strong>How visits are counted:</strong> anonymous daily totals per page (home, area, problem, map) in <code>page_views</code>, with no IP address, cookie, browser details or visitor ID, as the privacy policy says. Only real visits count (a page opened in the browser or by following a link); hover prefetches, offline downloads, admins, bots and error pages don't. Counting started on 4 November 2026.</p>
       </div>
     </section>
