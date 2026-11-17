@@ -26,6 +26,16 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes script.to_html, "</script> ("
   end
 
+  test "the description keeps its line breaks and escapes HTML" do
+    @problem.update!(description: "Sit start matched on crimp\r\nBlocky ledge <b>isn't</b> used\r\n\r\nTop out right")
+
+    get area_problem_path(@area, @problem)
+
+    paragraphs = css_select("p").map(&:inner_html)
+    assert_includes paragraphs, "Sit start matched on crimp\n<br>Blocky ledge &lt;b&gt;isn't&lt;/b&gt; used"
+    assert_includes paragraphs, "Top out right"
+  end
+
   test "breadcrumb structured data runs Dartmoor, area, problem" do
     get area_problem_path(@area, @problem)
 
