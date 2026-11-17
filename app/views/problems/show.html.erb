@@ -122,8 +122,8 @@
       </div>
 
       <% if @problem.description.present? %>
-        <div class="px-4 sm:px-0 py-2 text-sm text-gray-700">
-          <%= @problem.description %>
+        <div class="px-4 sm:px-0 py-2 text-sm text-gray-700 space-y-2">
+          <%= simple_format(h(@problem.description)) %>
         </div>
       <% end %>
 
