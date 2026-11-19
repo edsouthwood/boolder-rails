@@ -8,6 +8,7 @@ export default class extends Controller {
   static targets = [
     'viewport', 'container', 'image', 'canvas', 'zoomLabel', 'modeRadio',
     'list', 'candidates', 'suggestions', 'filter', 'guide', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
+    'clearBtn', 'removePointBtn',
   ]
   static values = {
     lines: Array, candidates: Array, topoId: Number,
@@ -26,6 +27,18 @@ export default class extends Controller {
     this.onBeforeUnload = (event) => { if (this.draft?.dirty) { event.preventDefault(); event.returnValue = '' } }
     document.addEventListener('keydown', this.onKeydown)
     window.addEventListener('beforeunload', this.onBeforeUnload)
+
+    // Line points: drag to move, faint mid-segment dots to add, pick then remove
+    const canvas = this.canvasTarget
+    canvas.addEventListener('pointerdown', (event) => this.pointerDown(event))
+    canvas.addEventListener('pointermove', (event) => this.pointerMove(event))
+    canvas.addEventListener('pointerup', (event) => this.pointerUp(event))
+    canvas.addEventListener('pointercancel', () => { this.dragging = null })
+    // On a touch screen, a finger on a point drags it instead of scrolling the photo
+    canvas.addEventListener('touchstart', (event) => {
+      const touch = event.touches[0]
+      if (touch && this.handleAt(touch.clientX, touch.clientY)) event.preventDefault()
+    }, { passive: false })
 
     const image = this.imageTarget
     image.onload = () => {
@@ -59,7 +72,10 @@ export default class extends Controller {
       points: [...(line.coordinates || [])],
       holds: [...(line.start_holds || [])],
       excluded: (line.excluded_areas || []).map(area => [...area]),
-      replaceOnClick: !!line.coordinates, // redrawing a drawn line starts it afresh, like the line editor
+      // Clicks add points only while drawing; a drawn line is changed point by point, or
+      // started again with Redraw line
+      drawing: !line.coordinates,
+      picked: null, // index of the point picked for removal
       newArea: true,
       dirty: false,
     }
@@ -67,7 +83,7 @@ export default class extends Controller {
     this.showGuide(line.problem_id)
     this.renderList()
     this.redraw()
-    this.setStatus(line.coordinates ? `Editing ${line.name}` : `Drawing ${line.name}: click along the line`)
+    this.setStatus(line.coordinates ? `Editing ${line.name}: drag a point to move it` : `Drawing ${line.name}: click along the line`)
   }
 
   // Drawing guides (how a problem was drawn on another photo): only the selected problem's,
@@ -89,15 +105,22 @@ export default class extends Controller {
   // ─── Drawing ─────────────────────────────────────────────────────────────────
 
   setMode(event) {
-    this.mode = event.target.value
+    this.selectMode(event.target.value)
   }
 
   selectMode(mode) {
     this.mode = mode
     this.modeRadioTargets.forEach(radio => { radio.checked = radio.value === mode })
+    if (this.hasClearBtnTarget) {
+      this.clearBtnTarget.textContent = { line: 'Redraw line', holds: 'Clear start holds', excluded: 'Clear not-in areas' }[mode]
+    }
+    if (this.draft) this.draft.picked = null
+    this.redraw()
   }
 
   click(event) {
+    // The click that ends a drag or a tap on a point has been dealt with already
+    if (this.suppressClick) return
     if (!this.draft) return this.setStatus('Pick a problem on the right first.', true)
 
     const point = pointFromClick(event, this.canvasTarget)
@@ -109,8 +132,11 @@ export default class extends Controller {
       if (draft.newArea || !draft.excluded.length) { draft.excluded.push([]); draft.newArea = false }
       draft.excluded[draft.excluded.length - 1].push(point)
     } else {
-      if (draft.replaceOnClick) { draft.points = []; draft.replaceOnClick = false }
+      if (!draft.drawing) {
+        return this.setStatus('Drag a point to move it, or a faint dot to add one. Redraw line starts the line again.')
+      }
       draft.points.push(point)
+      draft.picked = null
     }
     draft.dirty = true
     this.redraw()
@@ -124,7 +150,7 @@ export default class extends Controller {
       const last = draft.excluded[draft.excluded.length - 1]
       last?.pop()
       if (last && !last.length) { draft.excluded.pop(); draft.newArea = true }
-    } else draft.points.pop()
+    } else { draft.points.pop(); draft.picked = null }
     draft.dirty = true
     this.redraw()
   }
@@ -134,9 +160,131 @@ export default class extends Controller {
     if (!draft) return
     if (this.mode === 'holds') draft.holds = []
     else if (this.mode === 'excluded') { draft.excluded = []; draft.newArea = true }
-    else { draft.points = []; draft.replaceOnClick = false }
+    else {
+      draft.points = []
+      draft.drawing = true
+      draft.picked = null
+      this.setStatus('Click along the line from bottom to top to redraw it.')
+    }
     draft.dirty = true
     this.redraw()
+  }
+
+  // ─── Editing line points ─────────────────────────────────────────────────────
+  // A point can be dragged; a faint dot halfway along each segment adds a point there (drag
+  // it, or tap it); a tapped point is picked, then Remove point / Delete removes it (Alt-click
+  // removes straight away).
+
+  // The point or mid-segment dot under the pointer: { type: 'point' | 'mid', index }
+  handleAt(clientX, clientY) {
+    const draft = this.draft
+    if (!draft || this.mode !== 'line' || !draft.points.length) return null
+    const rect = this.canvasTarget.getBoundingClientRect()
+    const toScreen = p => [rect.left + p.x * rect.width, rect.top + p.y * rect.height]
+    const near = (p, radius) => { const [x, y] = toScreen(p); return Math.hypot(x - clientX, y - clientY) <= radius }
+
+    for (let i = draft.points.length - 1; i >= 0; i--) {
+      if (near(draft.points[i], 12)) return { type: 'point', index: i }
+    }
+    for (const i of this.midpointIndexes()) {
+      if (near(this.midpoint(i), 10)) return { type: 'mid', index: i }
+    }
+    return null
+  }
+
+  // Segments long enough on screen to show their mid dot (short ones would crowd the points)
+  midpointIndexes() {
+    const points = this.draft?.points || []
+    const { width, height } = this.canvasTarget.getBoundingClientRect()
+    const indexes = []
+    for (let i = 0; i < points.length - 1; i++) {
+      const length = Math.hypot((points[i + 1].x - points[i].x) * width, (points[i + 1].y - points[i].y) * height)
+      if (length >= 28) indexes.push(i)
+    }
+    return indexes
+  }
+
+  midpoint(i) {
+    const [a, b] = [this.draft.points[i], this.draft.points[i + 1]]
+    const round = value => parseFloat(value.toFixed(4))
+    return { x: round((a.x + b.x) / 2), y: round((a.y + b.y) / 2) }
+  }
+
+  pointerDown(event) {
+    if (event.button !== 0) return
+    const hit = this.handleAt(event.clientX, event.clientY)
+    if (!hit) return
+    event.preventDefault()
+    this.canvasTarget.setPointerCapture?.(event.pointerId)
+    this.dragging = { ...hit, startX: event.clientX, startY: event.clientY, moved: false, alt: event.altKey }
+  }
+
+  pointerMove(event) {
+    const drag = this.dragging
+    if (!drag) {
+      const hit = this.handleAt(event.clientX, event.clientY)
+      const drawingHere = this.mode !== 'line' || this.draft?.drawing
+      this.canvasTarget.style.cursor = hit ? (hit.type === 'mid' ? 'copy' : 'move') : (drawingHere ? 'crosshair' : 'default')
+      return
+    }
+    if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 4) return
+    drag.moved = true
+
+    const draft = this.draft
+    const point = this.clamp(pointFromClick(event, this.canvasTarget))
+    if (drag.type === 'mid') {
+      // Dragging a mid dot makes it a point, then carries on dragging that
+      draft.points.splice(drag.index + 1, 0, point)
+      this.dragging = { ...drag, type: 'point', index: drag.index + 1 }
+    } else {
+      draft.points[drag.index] = point
+    }
+    draft.picked = null
+    draft.dirty = true
+    this.redraw()
+  }
+
+  pointerUp() {
+    const drag = this.dragging
+    if (!drag) return
+    this.dragging = null
+    this.suppressClick = true
+    setTimeout(() => { this.suppressClick = false }, 0)
+
+    const draft = this.draft
+    if (drag.moved) {
+      this.setStatus('Point moved. Enter saves, Esc undoes.')
+    } else if (drag.type === 'mid') {
+      draft.points.splice(drag.index + 1, 0, this.midpoint(drag.index))
+      draft.picked = null
+      draft.dirty = true
+      this.setStatus('Point added. Drag it into place, then Enter saves.')
+    } else if (drag.alt) {
+      this.removePoint(drag.index)
+    } else {
+      draft.picked = draft.picked === drag.index ? null : drag.index
+      if (draft.picked != null) this.setStatus('Point picked: Remove point (or Delete) removes it.')
+    }
+    this.redraw()
+  }
+
+  removePickedPoint() {
+    if (this.draft?.picked != null) this.removePoint(this.draft.picked)
+  }
+
+  removePoint(index) {
+    const draft = this.draft
+    if (!draft || index == null || index >= draft.points.length) return
+    if (draft.points.length <= 3) return this.setStatus('A line needs at least 3 points.', true)
+    draft.points.splice(index, 1)
+    draft.picked = null
+    draft.dirty = true
+    this.setStatus('Point removed. Enter saves, Esc undoes.')
+    this.redraw()
+  }
+
+  clamp(point) {
+    return { x: Math.min(1, Math.max(0, point.x)), y: Math.min(1, Math.max(0, point.y)) }
   }
 
   newExcludedArea() {
@@ -291,6 +439,8 @@ export default class extends Controller {
       Enter: () => this.save(),
       Escape: () => this.revert(),
       z: () => this.undo(),
+      Delete: () => this.removePickedPoint(),
+      Backspace: () => this.removePickedPoint(),
       n: () => this.nextUndrawn(),
       1: () => this.selectMode('line'),
       2: () => this.selectMode('holds'),
@@ -355,9 +505,37 @@ export default class extends Controller {
     const draft = this.draft
     if (!draft) return
     draft.excluded.forEach(area => drawExcludedArea(ctx, area))
-    drawPath(ctx, draft.points, draft.replaceOnClick ? 'rgba(0,0,255,0.7)' : RED, 3)
-    draft.points.forEach(point => drawDot(ctx, point, draft.replaceOnClick ? '#0000ff' : RED))
+    drawPath(ctx, draft.points, RED, 3)
+    draft.points.forEach(point => drawDot(ctx, point, RED))
+    if (this.mode === 'line') {
+      this.midpointIndexes().forEach(i => this.drawMidDot(ctx, this.midpoint(i)))
+      if (draft.picked != null && draft.points[draft.picked]) this.drawPicked(ctx, draft.points[draft.picked])
+    }
     draft.holds.forEach(point => drawHold(ctx, point))
+    if (this.hasRemovePointBtnTarget) this.removePointBtnTarget.disabled = draft.picked == null
+  }
+
+  // A faint dot halfway along a segment: drag or tap it to add a point
+  drawMidDot(ctx, point) {
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
+    ctx.strokeStyle = RED
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 4.5, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+  }
+
+  // A ring round the point picked for removal
+  drawPicked(ctx, point) {
+    ctx.lineWidth = 3
+    ctx.strokeStyle = '#ffffff'
+    ctx.beginPath()
+    ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 11, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.lineWidth = 1.5
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.stroke()
   }
 
   drawLabel(ctx, point, text) {

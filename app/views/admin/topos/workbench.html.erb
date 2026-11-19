@@ -51,13 +51,14 @@
     <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
       <button type="button" class="btn" data-action="topo-workbench#save" data-topo-workbench-target="saveBtn">Save <kbd class="ml-1 text-xs opacity-70">Enter</kbd></button>
       <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#undo">Undo point <kbd class="text-xs text-gray-400">Z</kbd></button>
-      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#clearMode">Clear</button>
+      <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#clearMode" data-topo-workbench-target="clearBtn">Redraw line</button>
+      <button type="button" class="px-2 py-1 rounded border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed" data-action="topo-workbench#removePickedPoint" data-topo-workbench-target="removePointBtn" disabled>Remove point <kbd class="text-xs opacity-60">Del</kbd></button>
       <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#newExcludedArea">New not-in area</button>
       <button type="button" class="px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100" data-action="topo-workbench#revert">Undo changes <kbd class="text-xs text-gray-400">Esc</kbd></button>
       <span data-topo-workbench-target="status" class="text-gray-600" aria-live="polite"></span>
     </div>
     <p class="mt-1 text-xs text-gray-500">
-      Pick a problem on the right, click along its line from bottom to top, then press Enter. On a line that's already drawn, the first click starts it again.
+      Pick a problem on the right, click along its line from bottom to top, then press Enter. On a line that's already drawn, drag a point to move it, drag or click a faint dot to add one, or click a point then <strong>Remove point</strong> (Alt-click removes it straight away). <strong>Redraw line</strong> starts it again.
       <kbd>N</kbd> jumps to the next problem with no line.
     </p>
 

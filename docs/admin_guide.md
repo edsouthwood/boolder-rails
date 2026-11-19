@@ -1065,9 +1065,15 @@ How to use it:
 3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
 4. When every problem has a line, click **Next photo to draw →**
 
-Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point · **N** next problem without a line · **1 / 2 / 3** switch between line, start holds and not-in areas. Picking a problem always switches back to line mode. Zoom to 2× with **+** for detail.
+Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point · **Delete** remove the picked point · **N** next problem without a line · **1 / 2 / 3** switch between line, start holds and not-in areas. Picking a problem always switches back to line mode. Zoom to 2× with **+** for detail.
 
-On a line that's already drawn, the first click starts it afresh (the old line shows in blue until then). **✕** removes a problem from the photo (its line here is deleted; the problem stays). **↗** opens the problem in a new tab.
+**Changing a line that's already drawn:** clicks on the photo don't touch it, so a slip can't wipe it. Instead:
+- **Move a point:** drag it
+- **Add a point:** a faint dot sits halfway along each segment (on segments long enough to grab; zoom in for short ones). Drag it to where the new point should go, or click it to add a point right there
+- **Remove a point:** click it (a ring shows it's picked), then **Remove point** or Delete/Backspace. Alt-click removes a point straight away. A line keeps at least 3 points
+- **Redraw line** clears it so you can click it in again from scratch; **Esc** undoes everything since the last save
+
+On a touch screen (iPad), a finger on a point or faint dot drags it; anywhere else scrolls the photo as usual. **✕** removes a problem from the photo (its line here is deleted; the problem stays). **↗** opens the problem in a new tab.
 
 ### Drawing lines (one problem at a time)
 1. Open a problem's show page
