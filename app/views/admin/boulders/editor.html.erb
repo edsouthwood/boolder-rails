@@ -77,6 +77,17 @@
           <p data-admin-boulder-editor-target="hiddenNote" class="hidden text-xs px-2 py-1 rounded bg-amber-50 text-amber-800">
             Hidden: this outline and its problems are off the public site.
           </p>
+          <div class="flex flex-col gap-1">
+            <p class="text-xs text-gray-500">Drag a corner to move it. Drag or click a faint dot to add a corner. Click a corner, then <strong>Remove point</strong> (or Alt-click it).</p>
+            <button
+              data-action="click->admin-boulder-editor#removePickedPoint"
+              data-admin-boulder-editor-target="removePointBtn"
+              disabled
+              class="w-full px-3 py-1.5 text-sm font-medium rounded border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed transition-colors"
+            >
+              Remove point
+            </button>
+          </div>
           <button
             data-action="click->admin-boulder-editor#saveSelected"
             class="w-full px-3 py-2 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -123,8 +134,10 @@
         <ul class="space-y-1 list-disc list-inside">
           <li>Zoom in on satellite image</li>
           <li>Click <strong>Draw boulder</strong> to trace a new outline</li>
-          <li>Click an existing boulder to select and edit vertices</li>
-          <li>Drag vertices to reshape</li>
+          <li>Click an existing boulder to select and edit its corners</li>
+          <li>Drag corners to reshape; drag or click a faint mid-edge dot to add one</li>
+          <li>Click a corner, then <strong>Remove point</strong> (or Delete) to remove it</li>
+          <li>While drawing, Delete/Backspace takes back the last point</li>
         </ul>
       </div>
 

@@ -901,15 +901,20 @@ The boulder editor lets you trace boulder outlines directly in the browser over 
 1. Click **Draw boulder** — the cursor changes to a crosshair
 2. Click on the satellite image to place vertices around the boulder outline
 3. **Double-click** to finish and save the polygon — it appears on the map immediately
-4. Press **Escape** to cancel without saving
+4. Press **Delete** or **Backspace** to take back the last point
+5. Press **Escape** to cancel without saving
 
 ### Editing an existing boulder
 
 1. Click any grey polygon on the map to select it (it turns blue)
 2. Its vertices appear as small draggable blue dots
 3. Drag any vertex to reshape the outline
-4. Click **Save changes** to save
-5. Click the selected boulder again (or another boulder) to deselect without saving — any unsaved changes are undone
+4. **Add a corner:** a fainter dot sits halfway along each edge. Drag it to where the new corner should go, or click it to add a corner right there. On edges too short to grab, the dot is hidden until you zoom in.
+5. **Remove a corner:** click it (it turns red), then click **Remove point** or press Delete/Backspace. Alt-click removes a corner in one go. An outline keeps at least 3 corners; Esc un-picks the corner.
+6. The status line says **unsaved changes** until you click **Save changes** to save
+7. Click the selected boulder again (or another boulder) to deselect without saving — any unsaved changes are undone
+
+An edited outline whose edges cross each other (a "bow-tie") isn't saved: a red ring marks the crossing, so move or remove a corner there and save again. A few older outlines and some LiDAR shapes have small crossings like this; you'll only meet them when you next edit one. New outlines (drawn or from LiDAR) aren't checked, so **Add all** never stops on one.
 
 ### Deleting a boulder
 

@@ -9,7 +9,7 @@ export default class extends Controller {
     'toggleProblemsBtn', 'lidarBtn', 'lidarOpacity',
     'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
     'nameInput', 'nameOptions', 'nameOptionsBox', 'unplacedSection', 'unplacedList',
-    'hideBtn', 'hiddenNote',
+    'hideBtn', 'hiddenNote', 'removePointBtn',
   ]
   static values = {
     geojsonUrl: String,
@@ -37,6 +37,9 @@ export default class extends Controller {
     this.drawCoords = []
     this.drawMarkers = []
     this.vertexMarkers = []
+    this.midpointMarkers = []
+    this.pickedIndex = null // the corner picked for removal
+    this.dirty = false // unsaved changes to the selected outline
     this.selectedBoulderId = null
     this.bouldersGeoJSON = { type: 'FeatureCollection', features: [] }
     this.problemFeatures = []
@@ -84,8 +87,21 @@ export default class extends Controller {
       }
     })
 
-    // Keyboard: Escape cancels drawing
-    this._onKeyDown = (e) => { if (e.key === 'Escape') this.cancelDrawing() }
+    // Small edges' midpoint dots show or hide as the zoom changes
+    this.map.on('zoomend', () => this.positionMidpoints())
+
+    // Keyboard: Escape cancels drawing or un-picks a corner; Delete/Backspace removes the
+    // last point drawn, or the picked corner. Not while typing (the Name box).
+    this._onKeyDown = (e) => {
+      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return
+      if (e.key === 'Escape') {
+        if (this.state === 'drawing') this.cancelDrawing()
+        else this.unpickVertex()
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (this.state === 'drawing') { e.preventDefault(); this.removeLastDrawnPoint() }
+        else if (this.pickedIndex != null) { e.preventDefault(); this.removePickedPoint() }
+      }
+    }
     document.addEventListener('keydown', this._onKeyDown)
   }
 
@@ -293,6 +309,16 @@ export default class extends Controller {
     })
   }
 
+  removeLastDrawnPoint() {
+    if (!this.drawCoords.length) return
+    this.drawCoords.pop()
+    this.drawMarkers.pop()?.remove()
+    this.map.getSource('draw-preview').setData({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: this.drawCoords }
+    })
+  }
+
   finishPolygon(e) {
     e.preventDefault?.()
     if (this.state !== 'drawing') return
@@ -413,21 +439,151 @@ export default class extends Controller {
     this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(boulderId))
   }
 
+  // Corner dots (drag to move; click to pick for removal; Alt-click removes) and, halfway
+  // along each edge, fainter dots that add a corner there (drag one, or click it)
   placeVertexMarkers(coords) {
     this.clearVertexMarkers()
     coords.forEach(([lng, lat]) => {
       const el = document.createElement('div')
       el.className = 'w-3 h-3 rounded-full bg-blue-500 border-2 border-white cursor-move shadow'
+      el.title = 'Drag to move. Click to pick it, then Remove point (or Alt-click to remove it)'
 
       const marker = new maplibregl.Marker({ element: el, draggable: true })
         .setLngLat([lng, lat])
         .addTo(this.map)
 
       // Live-update polygon outline while dragging
-      marker.on('drag', () => this.refreshSelectedPolygon())
+      marker.on('dragstart', () => { this.unpickVertex() })
+      marker.on('drag', () => { this.refreshSelectedPolygon(); this.positionMidpoints() })
+      marker.on('dragend', () => { this.justDragged = true; setTimeout(() => { this.justDragged = false }, 0); this.markUnsaved() })
+      // Stop the click reaching the map, which would deselect the boulder
+      el.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (this.justDragged) return
+        const index = this.vertexMarkers.indexOf(marker)
+        if (e.altKey) this.removePoint(index)
+        else if (this.pickedIndex === index) this.unpickVertex()
+        else this.pickVertex(index)
+      })
 
       this.vertexMarkers.push(marker)
     })
+    this.placeMidpoints()
+  }
+
+  vertexCoords() {
+    return this.vertexMarkers.map(m => {
+      const ll = m.getLngLat()
+      return [ll.lng, ll.lat]
+    })
+  }
+
+  // One faint dot per edge, between corner i and the next
+  placeMidpoints() {
+    this.midpointMarkers.forEach(m => m.remove())
+    this.midpointMarkers = this.vertexMarkers.map((_, i) => {
+      const el = document.createElement('div')
+      el.className = 'w-2.5 h-2.5 rounded-full bg-white/70 border border-blue-500 cursor-copy'
+      el.title = 'Drag (or click) to add a corner here'
+      const marker = new maplibregl.Marker({ element: el, draggable: true })
+        .setLngLat(this.midpointOf(i))
+        .addTo(this.map)
+
+      // Dragging it previews the new corner; it becomes one when let go
+      marker.on('dragstart', () => { this.unpickVertex(); this.draggingMidpoint = { index: i + 1, marker } })
+      marker.on('drag', () => this.refreshSelectedPolygon())
+      marker.on('dragend', () => {
+        this.draggingMidpoint = null
+        this.justDragged = true
+        setTimeout(() => { this.justDragged = false }, 0)
+        const ll = marker.getLngLat()
+        this.insertPoint(i + 1, [ll.lng, ll.lat])
+      })
+      el.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (this.justDragged) return
+        this.insertPoint(i + 1, this.midpointOf(i))
+      })
+      return marker
+    })
+    this.positionMidpoints()
+  }
+
+  midpointOf(i) {
+    const a = this.vertexMarkers[i].getLngLat()
+    const b = this.vertexMarkers[(i + 1) % this.vertexMarkers.length].getLngLat()
+    return [(a.lng + b.lng) / 2, (a.lat + b.lat) / 2]
+  }
+
+  // Keeps the midpoints halfway along their edges, hiding them on edges too short on screen
+  // to grab without catching a corner
+  positionMidpoints() {
+    this.midpointMarkers.forEach((marker, i) => {
+      if (this.draggingMidpoint?.marker === marker) return
+      const a = this.map.project(this.vertexMarkers[i].getLngLat())
+      const b = this.map.project(this.vertexMarkers[(i + 1) % this.vertexMarkers.length].getLngLat())
+      marker.setLngLat(this.midpointOf(i))
+      marker.getElement().style.visibility = Math.hypot(a.x - b.x, a.y - b.y) < 24 ? 'hidden' : ''
+    })
+  }
+
+  insertPoint(index, lngLat) {
+    const coords = this.vertexCoords()
+    coords.splice(index, 0, lngLat)
+    this.placeVertexMarkers(coords)
+    this.refreshSelectedPolygon()
+    this.markUnsaved()
+  }
+
+  removePoint(index) {
+    if (index < 0 || index >= this.vertexMarkers.length) return
+    if (this.vertexMarkers.length <= 3) {
+      this.showToast('An outline needs at least 3 points', true)
+      return
+    }
+    const coords = this.vertexCoords()
+    coords.splice(index, 1)
+    this.placeVertexMarkers(coords)
+    this.refreshSelectedPolygon()
+    this.markUnsaved()
+  }
+
+  removePickedPoint() {
+    if (this.pickedIndex != null) this.removePoint(this.pickedIndex)
+  }
+
+  pickVertex(index) {
+    this.unpickVertex()
+    this.pickedIndex = index
+    // classList, not className: maplibre's own marker classes are on the element too
+    this.vertexMarkers[index]?.getElement().classList.add('ring-2', 'ring-red-500', 'bg-red-500')
+    this.vertexMarkers[index]?.getElement().classList.remove('bg-blue-500')
+    if (this.hasRemovePointBtnTarget) this.removePointBtnTarget.disabled = false
+    this.setStatus('Point picked: Remove point (or Delete) removes it, Esc keeps it')
+  }
+
+  unpickVertex() {
+    const el = this.pickedIndex != null && this.vertexMarkers[this.pickedIndex]?.getElement()
+    if (el) {
+      el.classList.remove('ring-2', 'ring-red-500', 'bg-red-500')
+      el.classList.add('bg-blue-500')
+    }
+    const wasPicked = this.pickedIndex != null
+    this.pickedIndex = null
+    if (this.hasRemovePointBtnTarget) this.removePointBtnTarget.disabled = true
+    if (wasPicked) this.showSelectedStatus()
+  }
+
+  markUnsaved() {
+    this.dirty = true
+    this.showSelectedStatus()
+  }
+
+  showSelectedStatus() {
+    if (this.selectedBoulderId == null) return
+    this.setStatus(this.dirty
+      ? `${this.labelFor(this.selectedBoulderId)}: unsaved changes. Save changes to keep them`
+      : `${this.labelFor(this.selectedBoulderId)} selected`)
   }
 
   refreshSelectedPolygon() {
@@ -436,10 +592,11 @@ export default class extends Controller {
     )
     if (!feature) return
 
-    const coords = this.vertexMarkers.map(m => {
-      const ll = m.getLngLat()
-      return [ll.lng, ll.lat]
-    })
+    const coords = this.vertexCoords()
+    if (this.draggingMidpoint) {
+      const ll = this.draggingMidpoint.marker.getLngLat()
+      coords.splice(this.draggingMidpoint.index, 0, [ll.lng, ll.lat])
+    }
     const closed = [...coords, coords[0]]
     feature.geometry.coordinates = [closed]
     this.map.getSource('boulders').setData(this.bouldersGeoJSON)
@@ -457,6 +614,8 @@ export default class extends Controller {
       this.selectedBoulderId = null
     }
     this.originalRing = null
+    this.dirty = false
+    this.crossingMarker?.remove()
     this.suggestionPopup?.remove()
     this.state = 'idle'
     this.clearVertexMarkers()
@@ -467,10 +626,7 @@ export default class extends Controller {
   saveSelected() {
     if (!this.selectedBoulderId || this.vertexMarkers.length < 3) return
 
-    const coordinates = this.vertexMarkers.map(m => {
-      const ll = m.getLngLat()
-      return [ll.lng, ll.lat]
-    })
+    const coordinates = this.vertexCoords()
 
     const url = this.updateUrlTemplateValue.replace('BOULDER_ID', this.selectedBoulderId)
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
@@ -486,11 +642,28 @@ export default class extends Controller {
     })
       .then(r => r.json())
       .then(data => {
-        if (data.error) { this.showToast(data.error, true); return }
+        if (data.error) {
+          this.showToast(data.error, true)
+          if (data.crossing) this.showCrossing(data.crossing)
+          return
+        }
+        this.crossingMarker?.remove()
         this.originalRing = [...coordinates, coordinates[0]]
+        this.dirty = false
+        this.showSelectedStatus()
         this.showToast(`Boulder #${this.selectedBoulderId} saved`)
       })
       .catch(() => this.showToast('Network error — not saved', true))
+  }
+
+  // A red ring where the server found the outline crossing itself, panned into view
+  showCrossing([lng, lat]) {
+    this.crossingMarker?.remove()
+    const el = document.createElement('div')
+    el.className = 'w-6 h-6 rounded-full border-4 border-red-500 pointer-events-none'
+    this.crossingMarker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(this.map)
+    this.map.easeTo({ center: [lng, lat] })
+    this.setStatus('The outline crosses itself at the red ring: move or remove a point there')
   }
 
   deleteSelected() {
@@ -826,8 +999,11 @@ export default class extends Controller {
   }
 
   clearVertexMarkers() {
+    this.unpickVertex()
     this.vertexMarkers.forEach(m => m.remove())
     this.vertexMarkers = []
+    this.midpointMarkers.forEach(m => m.remove())
+    this.midpointMarkers = []
   }
 
   updateCount(n) {
@@ -1059,6 +1235,7 @@ export default class extends Controller {
     if (this.selectedBoulderId != boulderId) this.selectBoulder(boulderId)
     this.placeVertexMarkers(suggestion.coordinates)
     this.refreshSelectedPolygon()
+    this.dirty = true
     const others = suggestion.overlaps.filter(id => id != boulderId)
     const merged = others.length
       ? ` It also covers ${others.map(id => `#${id}`).join(', ')}, so it may be several rocks: trim it before saving.`

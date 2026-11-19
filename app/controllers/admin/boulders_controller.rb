@@ -38,13 +38,15 @@ class Admin::BouldersController < Admin::BaseController
   def update
     absorbed = relisted = nil
     Boulder.transaction do
-      @boulder.update!(polygon: build_polygon(params[:coordinates])) if params.key?(:coordinates)
+      @boulder.update!(polygon: untangled!(build_polygon(params[:coordinates]))) if params.key?(:coordinates)
       absorbed, relisted = apply_name(params[:name], params[:merge]) if params.key?(:name)
     end
     render json: { ok: true, name: @boulder.name, absorbed_id: absorbed&.id,
                    relisted: relisted && { id: relisted.id, name: relisted.name, problems: relisted.problems.count } }.compact
   rescue NeedsChoice => e
     render json: e.details, status: :conflict
+  rescue CrossesItself => e
+    render json: { error: e.message, crossing: e.crossing }.compact, status: :unprocessable_entity
   rescue => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -95,6 +97,25 @@ class Admin::BouldersController < Admin::BaseController
   class NeedsChoice < StandardError
     attr_reader :details
     def initialize(details) = (@details = details) && super("needs a choice")
+  end
+
+  # An edited outline whose edges cross (a "bow-tie"), with roughly where: [lng, lat]
+  class CrossesItself < StandardError
+    attr_reader :crossing
+    def initialize(crossing) = (@crossing = crossing) && super("Outline crosses itself: move or remove a point to untangle it")
+  end
+
+  # Checked when an edited outline is saved, not when one is first drawn: LiDAR suggestions
+  # can come out slightly tangled, and "Add all" shouldn't stop on them (tidy them after).
+  def untangled!(polygon)
+    sql = ActiveRecord::Base.sanitize_sql_array([ <<~SQL.squish, polygon.as_text ])
+      SELECT (d).valid, ST_X((d).location), ST_Y((d).location)
+      FROM (SELECT ST_IsValidDetail(ST_GeomFromText(?, 4326)) AS d) checked
+    SQL
+    valid, lng, lat = ActiveRecord::Base.connection.select_rows(sql).first
+    return polygon if ActiveModel::Type::Boolean.new.cast(valid)
+
+    raise CrossesItself.new(lng && [ lng.to_f, lat.to_f ])
   end
 
   # Returns [absorbed boulder, relisted boulder]; merge: nil (ask if it matters), "swap" or "merge"
