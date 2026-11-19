@@ -539,6 +539,17 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Served live by the Environment Agency (England only). If it doesn't load, their service is down</li>
         </ul>
 
+        <p class="font-medium text-gray-800">Tracing image</p>
+        <p>Under <strong>Tracing image</strong>, click <strong>Import image…</strong> and pick a JPEG or PNG from your computer (a drone or phone photo looking down, a sketch map). It appears in the middle of the map, over the satellite and LiDAR but under the outlines, with handles to line it up:</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Drag the round <strong>✥</strong> handle in the middle to move the whole image</li>
+          <li>Drag a square corner handle to stretch or turn it, until rocks line up with the satellite. Dragging one corner well out of line puts a slight bend along a diagonal, so where you can, move opposite corners by similar amounts</li>
+          <li>Use the slider to fade it in and out against the satellite image</li>
+          <li>Click <strong>Done moving</strong> to hide the handles before you trace (drawing a boulder hides them too); <strong>Move / resize</strong> brings them back. Clicks go straight through the image, so drawing and selecting work as normal</li>
+          <li><strong>Replace image…</strong> loads another, <strong>Remove</strong> takes it away</li>
+        </ul>
+        <p>The image stays on your computer: it's never uploaded or saved, and it's gone when you reload the page. Only use images you have the rights to, such as your own photos or open-licence maps. That rules out screenshots of the council aerials (see above).</p>
+
         <p class="font-medium text-gray-800">LiDAR boulder suggestions</p>
         <p>Click <strong>Suggest boulders in this view</strong>. The editor analyses the Environment Agency's LiDAR heights for the current view and outlines anything that looks like rock: <strong>amber</strong> where nothing is mapped, <strong>green</strong> where it overlaps a mapped boulder (the LiDAR is often the more accurate outline).</p>
         <p>It finds both freestanding boulders and <strong>outcrops that rise out of the hillside</strong> (one vertical face, the back melting into the slope, as at Saddle Tor). For outcrops it looks for a vertical face and adds a 1.5&nbsp;m strip uphill for the top, so drag that uphill edge to where the rock really ends. A tor whose faces join up can come out as one big shape covering several boulders: trim it before using it. Earth banks and track cuttings can also look like faces.</p>
@@ -553,7 +564,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         </ul>
 
         <div class="bg-blue-50 border border-blue-200 rounded-md p-3 text-xs text-blue-800">
-          <strong>Tip:</strong> Zoom in to level 19 or higher before tracing — satellite detail is much clearer at high zoom. Click a boulder ID in the sidebar to fly the map to it. On a phone the sidebar sits above the map — scroll it to reach Basemap and LiDAR.
+          <strong>Tip:</strong> Zoom in to level 19 or higher before tracing — satellite detail is much clearer at high zoom. Click a boulder ID in the sidebar to fly the map to it. On a phone the sidebar sits above the map — scroll it to reach Basemap, LiDAR and Tracing image.
         </div>
 
         <p class="font-medium text-gray-800">Topo order on a boulder (automatic)</p>
