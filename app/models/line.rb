@@ -19,14 +19,19 @@ class Line < ApplicationRecord
 
   MAX_START_HOLDS = StartHoldsValidator::MAX_HOLDS
   MAX_EXCLUDED_AREAS = ExcludedAreasValidator::MAX_AREAS
+  MAX_START_AREAS = ExcludedAreasValidator::MAX_AREAS
 
   validate :validate_line_length
   validates :start_holds, start_holds: true
   validates :excluded_areas, excluded_areas: true
+  # Start areas: a patch of rock to start on, drawn round as a shape (shown smoothed, so
+  # four corners make an oval). Same shape rules as not-in areas.
+  validates :start_areas, excluded_areas: true
 
   before_validation -> {
     self.start_holds = nil if start_holds.blank?
     self.excluded_areas = nil if excluded_areas.blank?
+    self.start_areas = nil if start_areas.blank?
   }
 
   scope :published, -> { joins(:topo).where(topos: { published: true }) }
@@ -38,7 +43,7 @@ class Line < ApplicationRecord
   def workbench_json
     {
       id: id, problem_id: problem_id, name: problem.name_with_fallback, grade: problem.grade,
-      coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas,
+      coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas, start_areas: start_areas,
       on_boulder: problem.boulder_id.present? && problem.boulder_id == topo&.matched_boulder_id
     }
   end

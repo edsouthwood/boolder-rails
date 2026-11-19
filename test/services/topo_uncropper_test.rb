@@ -11,7 +11,8 @@ class TopoUncropperTest < ActiveSupport::TestCase
     @old = topo(width: 900, height: 1200, uncropped: false)
     @line = Line.create!(problem: @crack, topo: @old, coordinates: LINE,
                          start_holds: [ { "x" => 0.5, "y" => 0.5 } ],
-                         excluded_areas: [ [ { "x" => 0.1, "y" => 0.0 }, { "x" => 0.2, "y" => 1.0 }, { "x" => 0.3, "y" => 0.5 } ] ])
+                         excluded_areas: [ [ { "x" => 0.1, "y" => 0.0 }, { "x" => 0.2, "y" => 1.0 }, { "x" => 0.3, "y" => 0.5 } ] ],
+                         start_areas: [ [ { "x" => 0.4, "y" => 0.0 }, { "x" => 0.6, "y" => 1.0 }, { "x" => 0.5, "y" => 0.5 } ] ])
   end
 
   def topo(width:, height:, uncropped:, published: true)
@@ -68,6 +69,7 @@ class TopoUncropperTest < ActiveSupport::TestCase
     assert_equal [ 0.5, 0.5, 0.4 ], line.coordinates.map { |p| p["x"] }
     assert_equal [ 0.5 ], line.start_holds.map { |p| p["y"] }
     assert_equal [ 0.2188, 0.7813, 0.5 ], line.excluded_areas.first.map { |p| p["y"] }
+    assert_equal [ 0.2188, 0.7813, 0.5 ], line.start_areas.first.map { |p| p["y"] }
     assert_equal fresh, @crack.lines.published.first.topo
     assert_equal @line.reload.coordinates, LINE, "the old line is kept as it was, for undo"
 

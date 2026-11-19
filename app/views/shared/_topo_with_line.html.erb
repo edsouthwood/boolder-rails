@@ -64,6 +64,20 @@
     <% end %>
   <% end %>
 
+  <% if line.start_areas.present? %>
+    <%# Start areas: a patch of rock to start on, drawn like a big start hold %>
+    <% area_color = grade_outline_color(line.problem.grade) || grade_color(line.problem.grade) %>
+    <div class="absolute z-10 top-0 left-0 w-full pointer-events-none hidden" data-topo-line-target="circle">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 <%= svg_height %>" aria-label="<%= t("problem.start_area") %>">
+        <% line.start_areas.each do |area| %>
+          <% path = start_area_path(area, 400, svg_height) %>
+          <path d="<%= path %>" fill="<%= area_color %>" fill-opacity="0.18" stroke="white" stroke-width="3.5" stroke-linejoin="round" />
+          <path d="<%= path %>" fill="none" stroke="<%= area_color %>" stroke-width="2" stroke-linejoin="round" />
+        <% end %>
+      </svg>
+    </div>
+  <% end %>
+
   <% if line.start_holds.present? %>
     <% hold_color = grade_outline_color(line.problem.grade) || grade_color(line.problem.grade) %>
     <% line.start_holds.each do |hold| %>

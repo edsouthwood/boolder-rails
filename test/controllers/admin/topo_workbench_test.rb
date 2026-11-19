@@ -260,6 +260,23 @@ class Admin::TopoWorkbenchTest < ActionDispatch::IntegrationTest
     assert_match "Grade", response.parsed_body["error"]
   end
 
+  test "start areas are saved from the workbench, and kept when the line editor saves" do
+    area = [ { "x" => 0.4, "y" => 0.7 }, { "x" => 0.5, "y" => 0.7 }, { "x" => 0.5, "y" => 0.8 }, { "x" => 0.4, "y" => 0.8 } ]
+    line = Line.create!(problem: @mine.problems.create!(name: "Sit Start", steepness: "wall"), topo: @topo, coordinates: POINTS)
+
+    patch admin_line_path(line), params: { line: { coordinates: POINTS.to_json, start_holds: "", excluded_areas: "", start_areas: [ area ].to_json } }, as: :json
+    assert_response :success
+    assert_equal [ area ], line.reload.start_areas
+    assert_equal [ area ], response.parsed_body["start_areas"]
+
+    # The line editor has no start areas field: its saves leave them alone
+    patch admin_line_path(line), params: { line: { coordinates: POINTS.to_json, start_holds: "", excluded_areas: "" } }
+    assert_equal [ area ], line.reload.start_areas
+
+    patch admin_line_path(line), params: { line: { coordinates: POINTS.to_json, start_areas: "" } }, as: :json
+    assert_nil line.reload.start_areas
+  end
+
   test "lines can be added, drawn and removed over JSON" do
     problem = @mine.problems.create!(name: "Arete", steepness: "wall")
 

@@ -90,12 +90,19 @@
               <% end %>
             <% end %>
           </div>
-          <% if @line.start_holds.present? || @line.excluded_areas.present? %>
+          <% if @line.start_holds.present? || @line.start_areas.present? || @line.excluded_areas.present? %>
             <div class="mt-2 px-4 sm:px-0 flex items-center space-x-4 text-sm text-gray-500">
               <% if @line.start_holds.present? %>
                 <div class="flex items-center space-x-2">
                   <span class="inline-block rounded-full" style="width:14px; height:14px; border:2px solid <%= grade_outline_color(@problem.grade) || grade_color(@problem.grade) %>;"></span>
                   <span><%= t("problem.start_holds") %></span>
+                </div>
+              <% end %>
+              <% if @line.start_areas.present? %>
+                <div class="flex items-center space-x-2">
+                  <% area_color = grade_outline_color(@problem.grade) || grade_color(@problem.grade) %>
+                  <span class="inline-block rounded-full" style="width:20px; height:12px; border:2px solid <%= area_color %>; background:color-mix(in srgb, <%= area_color %> 18%, transparent);"></span>
+                  <span><%= t("problem.start_area") %></span>
                 </div>
               <% end %>
               <% if @line.excluded_areas.present? %>

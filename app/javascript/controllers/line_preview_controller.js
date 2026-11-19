@@ -1,8 +1,9 @@
 import { Controller } from '@hotwired/stimulus'
+import { drawStartArea } from 'topo_drawing'
 
 export default class extends Controller {
   static targets = ['image', 'canvas']
-  static values = { coordinates: Array, holds: Array, excludedAreas: Array }
+  static values = { coordinates: Array, holds: Array, excludedAreas: Array, startAreas: Array }
 
   connect() {
     // Redraw when the photo changes size: a window resize, or shown after being hidden
@@ -46,6 +47,8 @@ export default class extends Controller {
       ctx.fill()
       ctx.stroke()
     })
+
+    this.startAreasValue.forEach(area => drawStartArea(ctx, area))
 
     ctx.strokeStyle = '#10b981'
     ctx.lineWidth = 3

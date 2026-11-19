@@ -60,3 +60,56 @@ function tracePath(ctx, points) {
     i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)
   })
 }
+
+// ─── Start areas ────────────────────────────────────────────────────────────────
+// A patch of rock to start on, drawn as a smooth closed curve through its corners (a closed
+// Catmull-Rom spline as cubic Béziers), so four corners round a hold make an oval. The
+// public topo draws the same curve (start_area_path in topo_sheet_helper.rb).
+
+// The Bézier control points for the curve from corner i to the next, in canvas pixels
+function startAreaSegment(points, i, width, height) {
+  const n = points.length
+  const at = k => { const p = points[((k % n) + n) % n]; return [p.x * width, p.y * height] }
+  const [before, from, to, after] = [at(i - 1), at(i), at(i + 1), at(i + 2)]
+  return {
+    from, to,
+    control1: [from[0] + (to[0] - before[0]) / 6, from[1] + (to[1] - before[1]) / 6],
+    control2: [to[0] - (after[0] - from[0]) / 6, to[1] - (after[1] - from[1]) / 6],
+  }
+}
+
+export function drawStartArea(ctx, area, color = HOLD_GREEN) {
+  if (area.length < 2) return
+  const { width, height } = ctx.canvas
+  ctx.beginPath()
+  ctx.moveTo(area[0].x * width, area[0].y * height)
+  if (area.length < 3) {
+    ctx.lineTo(area[1].x * width, area[1].y * height) // still being drawn: a plain line
+  } else {
+    area.forEach((_, i) => {
+      const { control1, control2, to } = startAreaSegment(area, i, width, height)
+      ctx.bezierCurveTo(...control1, ...control2, ...to)
+    })
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.2)'
+    ctx.fill()
+  }
+  ctx.lineJoin = 'round'
+  ctx.lineWidth = 4
+  ctx.strokeStyle = '#ffffff'
+  ctx.stroke()
+  ctx.lineWidth = 2
+  ctx.strokeStyle = color
+  ctx.stroke()
+}
+
+// The point halfway along the curve from corner i to the next, as a fraction of the photo
+// (where a mid dot sits, so adding a corner there keeps the shape)
+export function startAreaMidpoint(area, i) {
+  const { from, to, control1, control2 } = startAreaSegment(area, i, 1, 1)
+  const round = value => parseFloat(value.toFixed(4))
+  return {
+    x: round((from[0] + 3 * control1[0] + 3 * control2[0] + to[0]) / 8),
+    y: round((from[1] + 3 * control1[1] + 3 * control2[1] + to[1]) / 8),
+  }
+}

@@ -84,6 +84,15 @@ class ProblemsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Not in", response.body
   end
 
+  test "draws start areas as smooth shapes, with a legend" do
+    @line.update!(start_areas: [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.3, "y" => 0.3 }, { "x" => 0.1, "y" => 0.3 } ] ])
+
+    get area_problem_url(@area.slug, @problem)
+
+    assert_select "svg[aria-label='Start area'] path[d^='M 40.0,30.0 C ']", 2
+    assert_match "Start area", response.body
+  end
+
   test "a portrait photo is shown whole, with its drawing the same shape" do
     @line.topo.photo.blob.update!(metadata: { "analyzed" => true, "identified" => true, "width" => 900, "height" => 1200 })
     @line.update!(excluded_areas: [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ])

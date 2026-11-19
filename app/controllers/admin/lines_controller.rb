@@ -28,7 +28,13 @@ class Admin::LinesController < Admin::BaseController
     start_holds = params[:line][:start_holds].presence && JSON.parse(params[:line][:start_holds])
     excluded_areas = params[:line][:excluded_areas].presence && JSON.parse(params[:line][:excluded_areas])
 
-    if @line.update(coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas)
+    changes = { coordinates: coordinates, start_holds: start_holds, excluded_areas: excluded_areas }
+    # Only the workbench draws start areas: a save from the line editor leaves them as they are
+    if params[:line].key?(:start_areas)
+      changes[:start_areas] = params[:line][:start_areas].presence && JSON.parse(params[:line][:start_areas])
+    end
+
+    if @line.update(changes)
       auto_close_contribution_request(@line)
       locate_from_photo(@line)
 
@@ -49,7 +55,7 @@ class Admin::LinesController < Admin::BaseController
       end
     end
   rescue JSON::ParserError
-    message = "Coordinates, start holds and not-in areas must be valid JSON"
+    message = "Coordinates, start holds, start areas and not-in areas must be valid JSON"
     respond_to do |format|
       format.html do
         flash.now[:error] = message
