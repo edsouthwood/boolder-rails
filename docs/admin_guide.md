@@ -1073,6 +1073,8 @@ Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point ·
 - **Remove a point:** click it (a ring shows it's picked), then **Remove point** or Delete/Backspace. Alt-click removes a point straight away. A line keeps at least 3 points
 - **Redraw line** clears it so you can click it in again from scratch; **Esc** undoes everything since the last save
 
+**Changing a not-in area:** switch to **Not-in** (key **3**) and each area shows its corners and faint mid-edge dots, including on the edge from the last corner back to the first. Move, add and remove corners exactly as for the line. An area needs 3 corners, so removing a corner from a 3-corner area removes that whole area (the status line says so when you pick it). Clicks on empty photo still add corners to the area you're drawing; **New not-in area** starts another.
+
 On a touch screen (iPad), a finger on a point or faint dot drags it; anywhere else scrolls the photo as usual. **✕** removes a problem from the photo (its line here is deleted; the problem stays). **↗** opens the problem in a new tab.
 
 ### Drawing lines (one problem at a time)
