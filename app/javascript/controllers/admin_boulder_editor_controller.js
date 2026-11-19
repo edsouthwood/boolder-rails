@@ -11,6 +11,7 @@ export default class extends Controller {
     'suggestBtn', 'suggestStatus', 'useLidarBtn', 'addAllBtn',
     'nameInput', 'nameOptions', 'nameOptionsBox', 'unplacedSection', 'unplacedList',
     'hideBtn', 'hiddenNote', 'removePointBtn',
+    'imageInput', 'imageChooseBtn', 'imageControls', 'imageOpacity', 'imageAdjustBtn',
   ]
   static values = {
     geojsonUrl: String,
@@ -285,6 +286,7 @@ export default class extends Controller {
 
   startDrawing() {
     this.deselect()
+    if (this.overlayHandles) this.setOverlayAdjusting(false) // handles would catch the clicks
     this.state = 'drawing'
     this.drawCoords = []
     this.drawHistory = []
@@ -1385,8 +1387,163 @@ export default class extends Controller {
     this.lidarOpacityTarget.disabled = !active
   }
 
+  // ─── Tracing image ────────────────────────────────────────────────────────────
+  // An image from the admin's own computer (a drone photo, a sketch map) pinned to the
+  // map at four corners, to trace outlines from. It lives only in this page: drawn to a
+  // canvas and shown as a MapLibre canvas source, never uploaded or stored, so it's gone
+  // on reload. (A canvas rather than a blob: URL also keeps it inside the CSP.)
+
+  static OVERLAY_MAX_SIDE = 4096 // bigger textures render black on some iPads and laptops
+
+  chooseOverlayImage() {
+    this.imageInputTarget.click()
+  }
+
+  loadOverlayImage() {
+    const file = this.imageInputTarget.files[0]
+    this.imageInputTarget.value = '' // so choosing the same file again still fires change
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      this.showOverlayImage(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      this.showToast("Couldn't read that image. Try a JPEG or PNG", true)
+    }
+    img.src = url
+  }
+
+  showOverlayImage(img) {
+    // Downscaled copy on a canvas; drawing it also applies the photo's EXIF rotation
+    const scale = Math.min(1, this.constructor.OVERLAY_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale))
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale))
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+
+    this.removeOverlayImage()
+    this.overlayCanvas = canvas
+    this.overlayCorners = this.initialOverlayCorners(canvas.width / canvas.height)
+
+    const opacity = parseFloat(localStorage.getItem('boulder-editor-image-opacity') ?? '0.6')
+    this.imageOpacityTarget.value = Math.round(opacity * 100)
+    this.map.addSource('overlay-image', {
+      type: 'canvas', canvas, animate: false, coordinates: this.overlayCorners,
+    })
+    // Over the satellite and LiDAR, under suggestions and outlines; a raster layer
+    // takes no clicks, so tracing and selecting work straight through it
+    this.map.addLayer({
+      id: 'overlay-image',
+      type: 'raster',
+      source: 'overlay-image',
+      paint: { 'raster-opacity': opacity, 'raster-fade-duration': 0 },
+    }, this.map.getLayer('suggestions-fill') ? 'suggestions-fill' : undefined)
+
+    this.imageControlsTarget.classList.remove('hidden')
+    this.imageChooseBtnTarget.textContent = 'Replace image…'
+    this.setOverlayAdjusting(true)
+    this.setStatus('Drag the middle handle to move the image, the corners to fit it')
+  }
+
+  // Centred in the view, at the image's shape, about 60% of the view: [tl, tr, br, bl]
+  initialOverlayCorners(aspect) {
+    const { clientWidth: w, clientHeight: h } = this.map.getContainer()
+    let boxW = w * 0.6
+    let boxH = boxW / aspect
+    if (boxH > h * 0.6) { boxH = h * 0.6; boxW = boxH * aspect }
+    const x0 = (w - boxW) / 2, y0 = (h - boxH) / 2
+    return [[x0, y0], [x0 + boxW, y0], [x0 + boxW, y0 + boxH], [x0, y0 + boxH]]
+      .map(p => this.map.unproject(p).toArray())
+  }
+
+  setOverlayOpacity() {
+    const opacity = this.imageOpacityTarget.value / 100
+    if (this.map.getLayer('overlay-image')) this.map.setPaintProperty('overlay-image', 'raster-opacity', opacity)
+    localStorage.setItem('boulder-editor-image-opacity', opacity)
+  }
+
+  toggleOverlayAdjust() {
+    this.setOverlayAdjusting(!this.overlayHandles)
+  }
+
+  // Handles only while adjusting: left on the map they'd sit over boulder corners and
+  // swallow the clicks meant for tracing
+  setOverlayAdjusting(on) {
+    this.overlayHandles?.forEach(m => m.remove())
+    this.overlayHandles = null
+    if (on && this.overlayCorners) {
+      const corners = this.overlayCorners.map((corner, i) => {
+        const el = document.createElement('div')
+        el.className = 'w-3.5 h-3.5 bg-white border-2 border-fuchsia-600 shadow cursor-crosshair'
+        el.title = 'Drag to stretch or turn the image'
+        const marker = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(corner).addTo(this.map)
+        marker.on('drag', () => {
+          this.overlayCorners[i] = marker.getLngLat().toArray()
+          this.updateOverlayCorners({ skip: marker })
+        })
+        return marker
+      })
+
+      const el = document.createElement('div')
+      el.className = 'w-7 h-7 rounded-full bg-fuchsia-600/80 border-2 border-white shadow text-white text-sm leading-6 text-center cursor-move select-none'
+      el.textContent = '✥'
+      el.title = 'Drag to move the image'
+      const move = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(this.overlayCentre()).addTo(this.map)
+      // Moves in screen pixels, so the image keeps its shape on screen
+      move.on('dragstart', () => {
+        this.moveStart = { at: this.map.project(move.getLngLat()), corners: this.overlayCorners.map(c => this.map.project(c)) }
+      })
+      move.on('drag', () => {
+        const at = this.map.project(move.getLngLat())
+        const dx = at.x - this.moveStart.at.x, dy = at.y - this.moveStart.at.y
+        this.overlayCorners = this.moveStart.corners.map(p => this.map.unproject([p.x + dx, p.y + dy]).toArray())
+        this.updateOverlayCorners({ skip: move })
+      })
+      this.overlayHandles = [...corners, move]
+    }
+    if (this.hasImageAdjustBtnTarget) {
+      const active = !!this.overlayHandles
+      const btn = this.imageAdjustBtnTarget
+      btn.textContent = active ? 'Done moving' : 'Move / resize'
+      btn.classList.toggle('bg-gray-800', active)
+      btn.classList.toggle('text-white', active)
+      btn.classList.toggle('border-gray-800', active)
+      btn.classList.toggle('bg-white', !active)
+      btn.classList.toggle('text-gray-700', !active)
+      btn.classList.toggle('border-gray-300', !active)
+    }
+  }
+
+  overlayCentre() {
+    const c = this.overlayCorners
+    return [c.reduce((s, p) => s + p[0], 0) / 4, c.reduce((s, p) => s + p[1], 0) / 4]
+  }
+
+  // Pushes the corners to the map and keeps the handles on them (except the one being dragged)
+  updateOverlayCorners({ skip } = {}) {
+    this.map.getSource('overlay-image')?.setCoordinates(this.overlayCorners)
+    this.overlayHandles?.forEach((m, i) => {
+      if (m !== skip) m.setLngLat(i < 4 ? this.overlayCorners[i] : this.overlayCentre())
+    })
+  }
+
+  removeOverlayImage() {
+    this.overlayHandles?.forEach(m => m.remove())
+    this.overlayHandles = null
+    if (this.map.getLayer('overlay-image')) this.map.removeLayer('overlay-image')
+    if (this.map.getSource('overlay-image')) this.map.removeSource('overlay-image')
+    this.overlayCanvas = null
+    this.overlayCorners = null
+    if (this.hasImageControlsTarget) this.imageControlsTarget.classList.add('hidden')
+    if (this.hasImageChooseBtnTarget) this.imageChooseBtnTarget.textContent = 'Import image…'
+  }
+
   disconnect() {
     document.removeEventListener('keydown', this._onKeyDown)
+    this.overlayHandles?.forEach(m => m.remove())
     this.map?.remove()
   }
 }

@@ -217,6 +217,38 @@
         </button>
       </div>
 
+      <%# Tracing image: stays in this browser, never uploaded %>
+      <div class="px-3 py-2 border-b flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1.5">Tracing image</p>
+        <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+               data-admin-boulder-editor-target="imageInput"
+               data-action="change->admin-boulder-editor#loadOverlayImage">
+        <button data-action="click->admin-boulder-editor#chooseOverlayImage"
+                data-admin-boulder-editor-target="imageChooseBtn"
+                class="w-full px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors">
+          Import image…
+        </button>
+        <div data-admin-boulder-editor-target="imageControls" class="hidden mt-2 flex flex-col gap-2">
+          <input type="range" min="0" max="100" value="60"
+                 aria-label="Tracing image opacity"
+                 data-action="input->admin-boulder-editor#setOverlayOpacity"
+                 data-admin-boulder-editor-target="imageOpacity"
+                 class="w-full accent-gray-800">
+          <div class="flex gap-1">
+            <button data-action="click->admin-boulder-editor#toggleOverlayAdjust"
+                    data-admin-boulder-editor-target="imageAdjustBtn"
+                    class="flex-1 px-2 py-1 text-xs rounded border transition-colors">
+              Move / resize
+            </button>
+            <button data-action="click->admin-boulder-editor#removeOverlayImage"
+                    class="px-2 py-1 text-xs rounded border border-red-300 bg-white text-red-700 hover:bg-red-50 transition-colors">
+              Remove
+            </button>
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-gray-400">A JPEG or PNG laid over the map to trace from. Only on this computer: never uploaded, gone when you reload. Use images you have the rights to (your own drone or phone photos, open-licence maps).</p>
+      </div>
+
       <%# Listed names without an outline yet %>
       <div data-admin-boulder-editor-target="unplacedSection" class="hidden px-3 py-2 border-b flex-shrink-0">
         <p class="text-xs font-medium text-gray-600 mb-1">Not on the map yet</p>

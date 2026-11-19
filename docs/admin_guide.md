@@ -941,6 +941,20 @@ Under **LiDAR hillshade** in the sidebar, click **LiDAR off** to switch it on. T
 - Trees and gorse also show as bumps; they usually look softer and lumpier than rock.
 - The layer is served live by the Environment Agency (England only, Open Government Licence). If it fails to load, their service is down; the rest of the editor still works.
 
+### Tracing image
+
+Under **Tracing image** in the sidebar, click **Import image…** and choose a JPEG or PNG from your computer: a drone photo or a phone photo taken looking down, or a sketch map. It appears in the middle of the map, above the satellite image and LiDAR but below the outlines, with handles for lining it up:
+
+- Drag the round **✥** handle in the middle to move the whole image.
+- Drag a square corner handle to stretch or turn the image until the rocks line up with the satellite image. The image is drawn as two triangles, so dragging one corner a long way out of line puts a slight bend along a diagonal. Where you can, move opposite corners by similar amounts.
+- The slider fades the image against the satellite image. The opacity is remembered in this browser.
+- Click **Done moving** to hide the handles before you trace. Drawing a boulder hides them too, and **Move / resize** brings them back. Clicks go straight through the image, so drawing and selecting outlines work as normal.
+- **Replace image…** loads a different image, and **Remove** takes it off the map.
+
+The image never leaves your computer: it isn't uploaded or saved anywhere, and it's gone when you reload the page. Large photos are scaled down to 4096 px on the long side so they display on iPads too. Phone HEIC photos won't load, so export them as JPEG first.
+
+Only use images you have the rights to, such as your own photos or open-licence maps. That rules out screenshots of the council aerials (see **Council aerials** above).
+
 ### LiDAR boulder suggestions
 
 Click **Suggest boulders in this view** (under LiDAR in the sidebar). The editor downloads the Environment Agency's LiDAR heights for the current view (under a second for a crag-sized view) and outlines anything that looks like rock:

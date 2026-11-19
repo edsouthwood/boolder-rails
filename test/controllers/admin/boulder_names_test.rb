@@ -85,6 +85,15 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='click->admin-boulder-editor#openCouncilAerials']", text: /Open DCC aerial view here/
   end
 
+  test "the editor offers a tracing image that stays in the browser" do
+    get admin_area_boulder_editor_path(area_slug: "mine")
+
+    # A file picker only: no form, so the image can't be posted to the server
+    assert_select "input[type=file][data-action='change->admin-boulder-editor#loadOverlayImage']"
+    assert_select "form input[type=file]", count: 0
+    assert_select "p", text: /never uploaded, gone when you reload/
+  end
+
   test "the editor's map data carries boulder names" do
     @outline.update!(name: "Named")
     get admin_map_path(area_id: @mine.id, format: :geojson)
