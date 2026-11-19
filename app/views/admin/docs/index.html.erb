@@ -506,14 +506,18 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Click <strong>Draw boulder</strong> — cursor changes to a crosshair</li>
           <li>Click on the map to place each vertex around the boulder outline</li>
           <li><strong>Double-click</strong> to finish and save — the polygon appears immediately</li>
+          <li>Press <strong>Delete</strong> or <strong>Backspace</strong> to take back the last point</li>
           <li>Press <strong>Escape</strong> to cancel</li>
         </ol>
 
         <p class="font-medium text-gray-800">Editing an existing boulder</p>
         <ol class="list-decimal list-inside space-y-1">
           <li>Click any grey polygon on the map to select it (turns blue)</li>
-          <li>Drag the blue vertex dots to reshape the outline</li>
-          <li>Click <strong>Save changes</strong> to save, or click away to discard</li>
+          <li>Drag the blue corner dots to reshape the outline</li>
+          <li><strong>Add a corner:</strong> a fainter dot sits halfway along each edge. Drag it to where the new corner should go, or click it to add a corner right there. (On very short edges the dot is hidden until you zoom in.)</li>
+          <li><strong>Remove a corner:</strong> click it (it turns red), then click <strong>Remove point</strong> or press Delete. On a computer, Alt-click removes it in one go. An outline keeps at least 3 corners; Esc un-picks.</li>
+          <li>The status line says <strong>unsaved changes</strong> until you save. Click <strong>Save changes</strong> to save, or click away to discard</li>
+          <li>An outline whose edges cross (a bow-tie) won't save: a red ring shows where, so move or remove a corner there and save again. Some older outlines and LiDAR shapes have small crossings like this; they show up the first time you edit them</li>
         </ol>
 
         <p class="font-medium text-gray-800">Deleting a boulder</p>
