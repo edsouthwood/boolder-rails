@@ -52,6 +52,18 @@ class LineTest < ActiveSupport::TestCase
     end
   end
 
+  test "start areas follow the same shape rules as not-in areas" do
+    @line.start_areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.3, "y" => 0.1 }, { "x" => 0.2, "y" => 0.4 } ] ]
+    assert @line.valid?
+
+    @line.start_areas = [ [ { "x" => 0.1, "y" => 0.1 }, { "x" => 0.2, "y" => 0.2 } ] ]
+    assert_not @line.valid?
+    assert_includes @line.errors.attribute_names, :start_areas
+
+    @line.update!(start_areas: [])
+    assert_nil @line.reload.start_areas
+  end
+
   test "empty not-in areas are stored as nil" do
     @line.update!(excluded_areas: [])
     assert_nil @line.reload.excluded_areas

@@ -29,6 +29,23 @@ module TopoSheetHelper
 
   # Drawings over a topo are 400 wide; this is their height, so they have the photo's shape
   # (300 for the 4:3 crop older topos have)
+  # A start area as an SVG path: a smooth closed curve through its corners (a closed
+  # Catmull-Rom spline drawn as cubic Béziers), so four corners round a hold make an oval.
+  # Points are fractions of the photo; width and height are the SVG's units.
+  # The workbench draws the same curve (smoothClosedPath in topo_drawing.js).
+  def start_area_path(area, width, height)
+    points = area.map { |point| [ point["x"] * width, point["y"] * height ] }
+    count = points.size
+    format = ->(x, y) { "#{x.round(1)},#{y.round(1)}" }
+    curves = count.times.map do |i|
+      before, from, to, after = points[(i - 1) % count], points[i], points[(i + 1) % count], points[(i + 2) % count]
+      control1 = format.(from[0] + (to[0] - before[0]) / 6, from[1] + (to[1] - before[1]) / 6)
+      control2 = format.(to[0] - (after[0] - from[0]) / 6, to[1] - (after[1] - from[1]) / 6)
+      "C #{control1} #{control2} #{format.(*to)}"
+    end
+    "M #{format.(*points.first)} #{curves.join(" ")} Z"
+  end
+
   def topo_svg_height(topo)
     height = (400 / topo.aspect_ratio).round(1)
     height == height.round ? height.round : height

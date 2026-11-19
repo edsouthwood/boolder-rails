@@ -113,6 +113,8 @@ class TopoUncropper
       coordinates: on_whole_photo?(line.coordinates, :line_coordinates) ? line.coordinates : self.class.remap_points(line.coordinates, ratio),
       start_holds: on_whole_photo?(line.start_holds, :start_holds) ? line.start_holds : self.class.remap_points(line.start_holds, ratio),
       excluded_areas: on_whole_photo?(line.excluded_areas, :excluded_areas) ? line.excluded_areas : line.excluded_areas&.map { |area| self.class.remap_points(area, ratio) },
+      # Only drawn in the workbench, never sent by a contributor, so always on the cropped photo
+      start_areas: line.start_areas&.map { |area| self.class.remap_points(area, ratio) },
       reference_contribution: line.reference_contribution,
       reference_line: line.reference_line
     )

@@ -1065,7 +1065,7 @@ How to use it:
 3. Press **Enter** (or **Save**). The next problem without a line is picked automatically
 4. When every problem has a line, click **Next photo to draw →**
 
-Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point · **Delete** remove the picked point · **N** next problem without a line · **1 / 2 / 3** switch between line, start holds and not-in areas. Picking a problem always switches back to line mode. Zoom to 2× with **+** for detail.
+Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point · **Delete** remove the picked point · **N** next problem without a line · **1 / 2 / 3 / 4** switch between line, start holds, not-in areas and start areas. Picking a problem always switches back to line mode. Zoom to 2× with **+** for detail.
 
 **Changing a line that's already drawn:** clicks on the photo don't touch it, so a slip can't wipe it. Instead:
 - **Move a point:** drag it
@@ -1091,6 +1091,15 @@ You can mark up to 4 starting hand holds on a line's photo. They appear as small
 4. Save. To remove them, click **Clear start holds** (or empty the box) and save again
 
 Holds belong to the line, so they are positioned on that particular photo. If the line is redrawn on a different topo, mark the holds again. Contributors can also mark start holds on the public contribution form; they're copied onto the line when the contribution is accepted (see [Contributions](#contributions)).
+
+### Marking a start area (optional)
+When a problem starts from a patch of rock rather than particular holds (a ledge, a flake, "sit start on the shelf"), draw a **start area** in the [Topo workbench](#topo-workbench). On the public problem page it shows as a lightly shaded, rounded shape in the grade colour, with a "Start area" key under the photo.
+1. In the workbench, switch **Clicks add** to **Start area** (key **4**)
+2. Click round the patch of rock. The shape is drawn as a smooth curve through your clicks, so **4 clicks round a hold make an oval**; more clicks follow an irregular edge. It needs at least 3 corners
+3. To mark another patch, click **New start area** and keep clicking (up to 4 per line)
+4. Press **Enter** to save. Corners can be moved, added and removed afterwards like the line's points; **Clear start areas** removes them all
+
+Start areas and start-hold rings can be used together. Start areas are only drawn in the workbench: the single-line editor and the contribution form don't show them, and saving in the line editor leaves them as they are.
 
 ### Marking "not in" areas (optional)
 Many Dartmoor problems rule out a feature (an arête, a crack, the neighbouring boulder). You can shade those parts of the photo. On the public problem page they appear as red hatched areas, with a "Not in" key under the photo.

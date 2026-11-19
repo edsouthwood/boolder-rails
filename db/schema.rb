@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_144951) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -238,6 +238,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_150000) do
     t.json "excluded_areas"
     t.bigint "reference_contribution_id"
     t.bigint "reference_line_id"
+    t.json "start_areas"
     t.index ["problem_id"], name: "index_lines_on_problem_id"
     t.index ["reference_contribution_id"], name: "index_lines_on_reference_contribution_id"
     t.index ["reference_line_id"], name: "index_lines_on_reference_line_id"

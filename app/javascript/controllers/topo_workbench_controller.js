@@ -1,5 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
-import { LINE_RED as RED, NOT_IN_RED, pointFromClick, drawDot, drawHold, drawExcludedArea, drawPath } from 'topo_drawing'
+import {
+  LINE_RED as RED, NOT_IN_RED, HOLD_GREEN, pointFromClick, drawDot, drawHold, drawExcludedArea, drawPath,
+  drawStartArea, startAreaMidpoint,
+} from 'topo_drawing'
 
 // Topo workbench: every line on one photo, drawn and saved without leaving the page.
 // Points are stored like the line editor's: { x, y } as fractions of the photo size.
@@ -8,7 +11,7 @@ export default class extends Controller {
   static targets = [
     'viewport', 'container', 'image', 'canvas', 'zoomLabel', 'modeRadio',
     'list', 'candidates', 'suggestions', 'filter', 'guide', 'nameField', 'gradeField', 'status', 'saveBtn', 'nextPhoto',
-    'clearBtn', 'removePointBtn',
+    'clearBtn', 'removePointBtn', 'newAreaBtn',
   ]
   static values = {
     lines: Array, candidates: Array, topoId: Number,
@@ -71,12 +74,16 @@ export default class extends Controller {
     this.draft = {
       points: [...(line.coordinates || [])],
       holds: [...(line.start_holds || [])],
-      excluded: (line.excluded_areas || []).map(area => [...area]),
+      // Closed shapes: not-in areas and start areas (a patch of rock to start on)
+      areas: {
+        excluded: (line.excluded_areas || []).map(area => [...area]),
+        start: (line.start_areas || []).map(area => [...area]),
+      },
       // Clicks add points only while drawing; a drawn line is changed point by point, or
       // started again with Redraw line
       drawing: !line.coordinates,
       picked: null, // the point picked for removal: { path, index } (see paths())
-      newArea: true,
+      newArea: { excluded: true, start: true }, // the next click starts a new shape
       dirty: false,
     }
     this.selectMode('line') // a new problem always starts with its line, not holds left over from the last one
@@ -112,8 +119,9 @@ export default class extends Controller {
     this.mode = mode
     this.modeRadioTargets.forEach(radio => { radio.checked = radio.value === mode })
     if (this.hasClearBtnTarget) {
-      this.clearBtnTarget.textContent = { line: 'Redraw line', holds: 'Clear start holds', excluded: 'Clear not-in areas' }[mode]
+      this.clearBtnTarget.textContent = { line: 'Redraw line', holds: 'Clear start holds', start: 'Clear start areas', excluded: 'Clear not-in areas' }[mode]
     }
+    if (this.hasNewAreaBtnTarget) this.newAreaBtnTarget.textContent = mode === 'start' ? 'New start area' : 'New not-in area'
     if (this.draft) this.draft.picked = null
     this.redraw()
   }
@@ -128,9 +136,10 @@ export default class extends Controller {
 
     if (this.mode === 'holds') {
       draft.holds.push(point)
-    } else if (this.mode === 'excluded') {
-      if (draft.newArea || !draft.excluded.length) { draft.excluded.push([]); draft.newArea = false }
-      draft.excluded[draft.excluded.length - 1].push(point)
+    } else if (this.isAreaMode()) {
+      const areas = draft.areas[this.mode]
+      if (draft.newArea[this.mode] || !areas.length) { areas.push([]); draft.newArea[this.mode] = false }
+      areas[areas.length - 1].push(point)
       draft.picked = null
     } else {
       if (!draft.drawing) {
@@ -147,10 +156,11 @@ export default class extends Controller {
     const draft = this.draft
     if (!draft) return
     if (this.mode === 'holds') draft.holds.pop()
-    else if (this.mode === 'excluded') {
-      const last = draft.excluded[draft.excluded.length - 1]
+    else if (this.isAreaMode()) {
+      const areas = draft.areas[this.mode]
+      const last = areas[areas.length - 1]
       last?.pop()
-      if (last && !last.length) { draft.excluded.pop(); draft.newArea = true }
+      if (last && !last.length) { areas.pop(); draft.newArea[this.mode] = true }
       draft.picked = null
     } else { draft.points.pop(); draft.picked = null }
     draft.dirty = true
@@ -161,7 +171,7 @@ export default class extends Controller {
     const draft = this.draft
     if (!draft) return
     if (this.mode === 'holds') draft.holds = []
-    else if (this.mode === 'excluded') { draft.excluded = []; draft.newArea = true; draft.picked = null }
+    else if (this.isAreaMode()) { draft.areas[this.mode] = []; draft.newArea[this.mode] = true; draft.picked = null }
     else {
       draft.points = []
       draft.drawing = true
@@ -172,24 +182,40 @@ export default class extends Controller {
     this.redraw()
   }
 
+  // Modes that draw closed shapes: not-in areas and start areas
+  isAreaMode(mode = this.mode) {
+    return mode === 'excluded' || mode === 'start'
+  }
+
   // ─── Editing points ──────────────────────────────────────────────────────────
-  // In line mode the line's points, in not-in mode each not-in shape's corners: a point can
+  // In line mode the line's points, in not-in or start-area mode each shape's corners: a point can
   // be dragged; a faint dot halfway along each segment adds a point there (drag it, or tap
   // it); a tapped point is picked, then Remove point / Delete removes it (Alt-click removes
   // straight away).
 
-  // What can be edited in this mode: the line (path 'line'), or each not-in shape (path = its
-  // index), which is closed, so it also has a mid dot on the edge from its last corner back
+  // What can be edited in this mode: the line (path 'line'), or each shape of this mode's
+  // kind (path 'excluded:0', 'start:1'…), which is closed, so it also has a mid dot on the
+  // edge from its last corner back
   paths() {
     const draft = this.draft
     if (!draft) return []
     if (this.mode === 'line') return [{ path: 'line', points: draft.points, closed: false }]
-    if (this.mode === 'excluded') return draft.excluded.map((points, path) => ({ path, points, closed: points.length >= 3 }))
+    if (this.isAreaMode()) {
+      return draft.areas[this.mode].map((points, i) => ({ path: `${this.mode}:${i}`, points, closed: points.length >= 3 }))
+    }
     return []
   }
 
+  // 'excluded:2' → ['excluded', 2]
+  shapeOf(path) {
+    const [kind, index] = path.split(':')
+    return [kind, Number(index)]
+  }
+
   pointsOf(path) {
-    return path === 'line' ? this.draft.points : this.draft.excluded[path]
+    if (path === 'line') return this.draft.points
+    const [kind, index] = this.shapeOf(path)
+    return this.draft.areas[kind]?.[index]
   }
 
   // The point or mid-segment dot under the pointer: { type: 'point' | 'mid', path, index }
@@ -205,7 +231,7 @@ export default class extends Controller {
     }
     for (const shape of paths) {
       for (const i of this.midpointIndexes(shape)) {
-        if (near(this.midpoint(shape.points, i), 10)) return { type: 'mid', path: shape.path, index: i }
+        if (near(this.midpoint(shape.path, shape.points, i), 10)) return { type: 'mid', path: shape.path, index: i }
       }
     }
     return null
@@ -223,7 +249,9 @@ export default class extends Controller {
     return indexes
   }
 
-  midpoint(points, i) {
+  // Halfway along the segment from point i: on the curve for a start area (drawn smoothed)
+  midpoint(path, points, i) {
+    if (path.startsWith('start:') && points.length >= 3) return startAreaMidpoint(points, i)
     const [a, b] = [points[i], points[(i + 1) % points.length]]
     const round = value => parseFloat(value.toFixed(4))
     return { x: round((a.x + b.x) / 2), y: round((a.y + b.y) / 2) }
@@ -281,7 +309,7 @@ export default class extends Controller {
       this.setStatus('Point moved. Enter saves, Esc undoes.')
     } else if (drag.type === 'mid') {
       const points = this.pointsOf(drag.path)
-      points.splice(drag.index + 1, 0, this.midpoint(points, drag.index))
+      points.splice(drag.index + 1, 0, this.midpoint(drag.path, points, drag.index))
       draft.picked = null
       draft.dirty = true
       this.setStatus('Point added. Drag it into place, then Enter saves.')
@@ -292,7 +320,7 @@ export default class extends Controller {
       if (draft.picked != null) {
         const lastOfShape = drag.path !== 'line' && this.pointsOf(drag.path).length <= 3
         this.setStatus(lastOfShape
-          ? 'Point picked: removing it removes this whole not-in area (it needs 3 corners).'
+          ? `Point picked: removing it removes this whole ${this.shapeName(drag.path)} (it needs 3 corners).`
           : 'Point picked: Remove point (or Delete) removes it.')
       }
     }
@@ -304,7 +332,11 @@ export default class extends Controller {
     if (picked != null) this.removePoint(picked.path, picked.index)
   }
 
-  // A line keeps at least 3 points; a not-in area with 3 corners goes altogether
+  shapeName(path) {
+    return path.startsWith('start:') ? 'start area' : 'not-in area'
+  }
+
+  // A line keeps at least 3 points; a not-in or start area with 3 corners goes altogether
   removePoint(path, index) {
     const draft = this.draft
     const points = draft && this.pointsOf(path)
@@ -314,9 +346,11 @@ export default class extends Controller {
       points.splice(index, 1)
       this.setStatus('Point removed. Enter saves, Esc undoes.')
     } else if (points.length <= 3) {
-      draft.excluded.splice(path, 1)
-      draft.newArea = true // clicks start a new area rather than extending another one
-      this.setStatus('Not-in area removed. Enter saves, Esc undoes.')
+      const [kind, shape] = this.shapeOf(path)
+      draft.areas[kind].splice(shape, 1)
+      draft.newArea[kind] = true // clicks start a new area rather than extending another one
+      const name = this.shapeName(path)
+      this.setStatus(`${name[0].toUpperCase()}${name.slice(1)} removed. Enter saves, Esc undoes.`)
     } else {
       points.splice(index, 1)
       this.setStatus('Corner removed. Enter saves, Esc undoes.')
@@ -330,11 +364,13 @@ export default class extends Controller {
     return { x: Math.min(1, Math.max(0, point.x)), y: Math.min(1, Math.max(0, point.y)) }
   }
 
-  newExcludedArea() {
+  // Starts another shape: a start area in start-area mode, otherwise a not-in area
+  newArea() {
     if (!this.draft) return
-    this.selectMode('excluded')
-    this.draft.newArea = true
-    this.setStatus('Click round the next not-in area.')
+    const kind = this.mode === 'start' ? 'start' : 'excluded'
+    this.selectMode(kind)
+    this.draft.newArea[kind] = true
+    this.setStatus(kind === 'start' ? 'Click round the next start area.' : 'Click round the next not-in area.')
   }
 
   revert() {
@@ -360,8 +396,8 @@ export default class extends Controller {
       line: {
         coordinates: JSON.stringify(draft.points),
         start_holds: draft.holds.length ? JSON.stringify(draft.holds) : '',
-        excluded_areas: draft.excluded.filter(area => area.length).length
-          ? JSON.stringify(draft.excluded.filter(area => area.length)) : '',
+        excluded_areas: this.areasParam(draft.areas.excluded),
+        start_areas: this.areasParam(draft.areas.start),
       },
     })
     this.saveBtnTarget.disabled = false
@@ -378,6 +414,12 @@ export default class extends Controller {
       this.setStatus(`Saved ${saved.name}. Every problem on this photo has a line.`)
       if (this.hasNextPhotoTarget) this.nextPhotoTarget.focus()
     }
+  }
+
+  // Shapes as sent to the server: unfinished ones (under 3 corners) are left out
+  areasParam(areas) {
+    const finished = areas.filter(area => area.length >= 3)
+    return finished.length ? JSON.stringify(finished) : ''
   }
 
   async addExisting(candidate) {
@@ -488,6 +530,7 @@ export default class extends Controller {
       1: () => this.selectMode('line'),
       2: () => this.selectMode('holds'),
       3: () => this.selectMode('excluded'),
+      4: () => this.selectMode('start'),
     }
     const action = actions[event.key.length === 1 ? event.key.toLowerCase() : event.key]
     if (!action) return
@@ -547,15 +590,16 @@ export default class extends Controller {
 
     const draft = this.draft
     if (!draft) return
-    draft.excluded.forEach(area => drawExcludedArea(ctx, area))
+    draft.areas.excluded.forEach(area => drawExcludedArea(ctx, area))
+    draft.areas.start.forEach(area => drawStartArea(ctx, area))
     drawPath(ctx, draft.points, RED, 3)
     draft.points.forEach(point => drawDot(ctx, point, RED))
     // The handles for this mode: not-in corners as small dots (the line's are drawn above),
     // mid dots, and the picked point's ring
     this.paths().forEach(shape => {
-      const color = shape.path === 'line' ? RED : NOT_IN_RED
+      const color = shape.path === 'line' ? RED : shape.path.startsWith('start:') ? HOLD_GREEN : NOT_IN_RED
       if (shape.path !== 'line') shape.points.forEach(point => drawDot(ctx, point, color, 4.5))
-      this.midpointIndexes(shape).forEach(i => this.drawMidDot(ctx, this.midpoint(shape.points, i), color))
+      this.midpointIndexes(shape).forEach(i => this.drawMidDot(ctx, this.midpoint(shape.path, shape.points, i), color))
     })
     const picked = draft.picked && this.pointsOf(draft.picked.path)?.[draft.picked.index]
     if (picked) this.drawPicked(ctx, picked)
