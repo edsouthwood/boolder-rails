@@ -3,6 +3,7 @@ import {
   LINE_RED as RED, NOT_IN_RED, HOLD_GREEN, pointFromClick, drawDot, drawHold, drawExcludedArea, drawPath,
   drawStartArea, startAreaMidpoint,
 } from 'topo_drawing'
+import { insertionIndex, crossingEdges } from 'polygon_geometry'
 
 // Topo workbench: every line on one photo, drawn and saved without leaving the page.
 // Points are stored like the line editor's: { x, y } as fractions of the photo size.
@@ -84,6 +85,7 @@ export default class extends Controller {
       drawing: !line.coordinates,
       picked: null, // the point picked for removal: { path, index } (see paths())
       newArea: { excluded: true, start: true }, // the next click starts a new shape
+      added: [], // corners clicked into shapes, latest last, for Undo point: { kind, area, point }
       dirty: false,
     }
     this.selectMode('line') // a new problem always starts with its line, not holds left over from the last one
@@ -139,7 +141,10 @@ export default class extends Controller {
     } else if (this.isAreaMode()) {
       const areas = draft.areas[this.mode]
       if (draft.newArea[this.mode] || !areas.length) { areas.push([]); draft.newArea[this.mode] = false }
-      areas[areas.length - 1].push(point)
+      // Corners clicked in any order: each goes where it makes no crossing (usually the end)
+      const area = areas[areas.length - 1]
+      area.splice(insertionIndex(area.map(p => this.toPixels(p)), this.toPixels(point)), 0, point)
+      draft.added.push({ kind: this.mode, area, point })
       draft.picked = null
     } else {
       if (!draft.drawing) {
@@ -158,9 +163,12 @@ export default class extends Controller {
     if (this.mode === 'holds') draft.holds.pop()
     else if (this.isAreaMode()) {
       const areas = draft.areas[this.mode]
-      const last = areas[areas.length - 1]
-      last?.pop()
-      if (last && !last.length) { areas.pop(); draft.newArea[this.mode] = true }
+      // The corner clicked last, wherever it went in its shape; else the last shape's last corner
+      const latest = draft.added.findLast(entry => entry.kind === this.mode && entry.area.includes(entry.point))
+      if (latest) draft.added.splice(draft.added.indexOf(latest), 1)
+      const area = latest?.area || areas[areas.length - 1]
+      if (area) area.splice(latest ? area.indexOf(latest.point) : area.length - 1, 1)
+      if (area && !area.length) { areas.splice(areas.indexOf(area), 1); draft.newArea[this.mode] = true }
       draft.picked = null
     } else { draft.points.pop(); draft.picked = null }
     draft.dirty = true
@@ -180,6 +188,11 @@ export default class extends Controller {
     }
     draft.dirty = true
     this.redraw()
+  }
+
+  // A point as canvas pixels: the photo isn't square, so distances in fractions would be skewed
+  toPixels(point) {
+    return [point.x * this.canvasTarget.width, point.y * this.canvasTarget.height]
   }
 
   // Modes that draw closed shapes: not-in areas and start areas
@@ -325,6 +338,7 @@ export default class extends Controller {
       }
     }
     this.redraw()
+    this.warnIfCrossing()
   }
 
   removePickedPoint() {
@@ -358,6 +372,7 @@ export default class extends Controller {
     draft.picked = null
     draft.dirty = true
     this.redraw()
+    this.warnIfCrossing()
   }
 
   clamp(point) {
@@ -603,8 +618,28 @@ export default class extends Controller {
     })
     const picked = draft.picked && this.pointsOf(draft.picked.path)?.[draft.picked.index]
     if (picked) this.drawPicked(ctx, picked)
+    this.showCrossings(ctx)
     draft.holds.forEach(point => drawHold(ctx, point))
     if (this.hasRemovePointBtnTarget) this.removePointBtnTarget.disabled = draft.picked == null
+  }
+
+  // Edges of a not-in or start area that cross another edge of the same shape (a bow-tie),
+  // drawn thick red, with a warning when one first appears
+  showCrossings(ctx) {
+    const draft = this.draft
+    let count = 0
+    for (const area of [...draft.areas.excluded, ...draft.areas.start]) {
+      const edges = crossingEdges(area.map(p => this.toPixels(p)))
+      count += edges.length
+      edges.forEach(i => drawPath(ctx, [area[i], area[(i + 1) % area.length]], NOT_IN_RED, 5))
+    }
+    if (count && !this.crossingCount) this.setStatus('Edges cross (shown in red): drag or remove a corner to untangle them.', true)
+    this.crossingCount = count
+  }
+
+  // After an edit, the crossing warning wins over the usual "point moved" message
+  warnIfCrossing() {
+    if (this.crossingCount) this.setStatus('Edges cross (shown in red): drag or remove a corner to untangle them.', true)
   }
 
   // A faint dot halfway along a segment: drag or tap it to add a point

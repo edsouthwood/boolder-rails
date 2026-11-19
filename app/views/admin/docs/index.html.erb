@@ -507,6 +507,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Click on the map to place each vertex around the boulder outline</li>
           <li><strong>Double-click</strong> to finish and save — the polygon appears immediately</li>
           <li>Press <strong>Delete</strong> or <strong>Backspace</strong> to take back the last point</li>
+          <li>Corners don't have to be clicked in order: a click that would make the outline cross itself is slotted in where it belongs. Crossing edges show thick red while drawing or editing</li>
           <li>Press <strong>Escape</strong> to cancel</li>
         </ol>
 
@@ -633,7 +634,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
         <p><strong>Boulder</strong> (top of the sidebar): the boulder the photo shows, tied by you, linked by its drawn problems, or matched by GPS. Pick another and click <strong>Tie</strong> (useful with no GPS, or for listed boulders not on the map yet); <strong>Not tied to a boulder</strong> goes back to the automatic match. New problems go on that boulder.</p>
         <p>A problem with no location gets an <strong>estimated</strong> one when it's added to a photo: from the photo's GPS (moved onto its boulder's outline), else from a problem already placed on the photo. Several from one photo, or any that would land on another problem, are spread about 2 m apart. Estimates show as amber pins in the location editor until you drag them into place.</p>
         <p>The yellow box lists that boulder's problems not on the photo yet: click one to add it, or <strong>Add all N</strong> to add them all and draw them in turn.</p>
-        <p class="text-xs text-gray-500">Keys: Enter save · Esc undo changes · Z undo point · N next undrawn problem · 1/2/3/4 line, start holds, not-in, start area. Delete removes the picked point. On an already-drawn line, drag a point to move it, drag or click a faint mid-segment dot to add one, click a point then Remove point (or Alt-click) to remove it; Redraw line starts it again. In Not-in mode, not-in areas' corners can be moved, added and removed the same way; removing a corner from a 3-corner area removes the area. ✕ removes a problem from the photo.</p>
+        <p class="text-xs text-gray-500">Keys: Enter save · Esc undo changes · Z undo point · N next undrawn problem · 1/2/3/4 line, start holds, not-in, start area. Delete removes the picked point. On an already-drawn line, drag a point to move it, drag or click a faint mid-segment dot to add one, click a point then Remove point (or Alt-click) to remove it; Redraw line starts it again. In Not-in mode, not-in areas' corners can be moved, added and removed the same way; removing a corner from a 3-corner area removes the area. Not-in and start area corners can be clicked in any order (a click that would cross is slotted in where it belongs); crossing edges show thick red. ✕ removes a problem from the photo.</p>
 
         <p class="font-medium text-gray-800">Drawing lines (one problem at a time)</p>
         <ol class="list-decimal list-inside space-y-1">

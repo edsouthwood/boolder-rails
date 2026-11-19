@@ -904,6 +904,10 @@ The boulder editor lets you trace boulder outlines directly in the browser over 
 4. Press **Delete** or **Backspace** to take back the last point
 5. Press **Escape** to cancel without saving
 
+You don't have to click the corners in order round the boulder. A click that would make the outline cross itself (a "bow-tie") is slotted in between the corners it belongs between instead; clicking round in order works exactly as before, hollows included. Once there are 3 corners the preview closes up, so you can see the shape it will make.
+
+Edges that cross are drawn **thick red** while you draw or edit, and the status line says so. This also shows up straight away when you select one of the older outlines that already cross themselves.
+
 ### Editing an existing boulder
 
 1. Click any grey polygon on the map to select it (it turns blue)
@@ -1074,6 +1078,8 @@ Keys: **Enter** save · **Esc** undo unsaved changes · **Z** undo last point ·
 - **Redraw line** clears it so you can click it in again from scratch; **Esc** undoes everything since the last save
 
 **Changing a not-in area:** switch to **Not-in** (key **3**) and each area shows its corners and faint mid-edge dots, including on the edge from the last corner back to the first. Move, add and remove corners exactly as for the line. An area needs 3 corners, so removing a corner from a 3-corner area removes that whole area (the status line says so when you pick it). Clicks on empty photo still add corners to the area you're drawing; **New not-in area** starts another.
+
+**No bow-ties:** you don't have to click a not-in or start area's corners in order round it. A click that would make the shape cross itself is slotted in between the corners it belongs between instead (clicking round in order works as before, hollows included). If edges do end up crossing, say after dragging a corner across, they're drawn **thick red** with a warning: drag or remove a corner to untangle them. **Undo point** takes back the corner you clicked last, wherever it went.
 
 On a touch screen (iPad), a finger on a point or faint dot drags it; anywhere else scrolls the photo as usual. **✕** removes a problem from the photo (its line here is deleted; the problem stays). **↗** opens the problem in a new tab.
 
