@@ -1105,6 +1105,28 @@ export default class extends Controller {
     }
   }
 
+  // Devon County Council's Environment Viewer in a new tab, centred on the selected boulder
+  // (or the middle of the map) at roughly the same scale. A link out only: the council's
+  // licence lets us view its aerials on its own site, not copy or re-serve them.
+  openCouncilAerials() {
+    const feature = this.bouldersGeoJSON.features.find(f => f.properties.boulderId == this.selectedBoulderId)
+    let lng, lat
+    if (feature) {
+      const ring = feature.geometry.coordinates[0]
+      lng = ring.reduce((sum, c) => sum + c[0], 0) / ring.length
+      lat = ring.reduce((sum, c) => sum + c[1], 0) / ring.length
+    } else {
+      ({ lng, lat } = this.map.getCenter())
+    }
+    // MapLibre's 512px tiles: metres per pixel at this zoom, then a map scale at 96 dpi
+    const metresPerPixel = 40075016.686 * Math.cos(lat * Math.PI / 180) / (512 * 2 ** this.map.getZoom())
+    const scale = Math.max(500, Math.round(metresPerPixel * 96 / 0.0254))
+    const point = `${lng.toFixed(6)},${lat.toFixed(6)}`
+    const params = new URLSearchParams({ id: 'fdc6c6d25dde46f09a81a725c53a7034', center: point, scale })
+    if (feature) params.set('marker', `${point},4326,${(feature.properties.name || 'Boulder').replace(/,/g, ' ')},,`)
+    window.open(`https://map.devon.gov.uk/portal/apps/webappviewer/index.html?${params}`, '_blank', 'noopener')
+  }
+
   setBasemap(event) {
     const name = event.currentTarget.dataset.basemap
     const source = this.basemapSources[name]
