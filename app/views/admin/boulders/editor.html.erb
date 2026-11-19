@@ -27,7 +27,7 @@
   <div class="flex flex-col md:flex-row border rounded overflow-hidden bg-white shadow" style="height: calc(100vh - 15rem)">
 
     <%# Sidebar %>
-    <div class="w-full md:w-64 max-h-[45%] md:max-h-none flex-shrink-0 flex flex-col border-b md:border-b-0 md:border-r overflow-y-auto md:overflow-hidden bg-gray-50">
+    <div class="w-full md:w-64 max-h-[45%] md:max-h-none flex-shrink-0 flex flex-col border-b md:border-b-0 md:border-r overflow-y-auto bg-gray-50">
 
       <div class="px-3 py-2 bg-gray-800 text-white text-sm font-semibold flex-shrink-0">
         <%= @area.name %> — Boulder Editor
@@ -224,7 +224,7 @@
         <div data-admin-boulder-editor-target="unplacedList" class="text-xs max-h-40 overflow-y-auto"></div>
       </div>
 
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex-1 min-h-48 overflow-y-auto">
         <div data-admin-boulder-editor-target="boulderList" class="divide-y text-xs text-gray-500 px-3 py-2">
           <p class="italic text-gray-400">Loading boulders…</p>
         </div>
