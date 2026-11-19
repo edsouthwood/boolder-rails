@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { insertionIndex, crossingEdges } from 'polygon_geometry'
 
 // States: 'idle' | 'drawing' | 'selected'
 
@@ -36,6 +37,7 @@ export default class extends Controller {
     this.state = 'idle'
     this.drawCoords = []
     this.drawMarkers = []
+    this.drawHistory = [] // markers in the order they were clicked, for Backspace
     this.vertexMarkers = []
     this.midpointMarkers = []
     this.pickedIndex = null // the corner picked for removal
@@ -185,6 +187,15 @@ export default class extends Controller {
       paint: { 'line-color': '#f59e0b', 'line-width': 2, 'line-dasharray': [2, 2] },
     })
 
+    // Edges of the outline being drawn or edited that cross another of its edges (a bow-tie)
+    this.map.addSource('crossings', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+    this.map.addLayer({
+      id: 'crossings',
+      type: 'line',
+      source: 'crossings',
+      paint: { 'line-color': '#dc2626', 'line-width': 5 },
+    })
+
     // Problem markers (toggled on/off; starts hidden)
     this.map.addSource('problems', {
       type: 'geojson',
@@ -276,6 +287,7 @@ export default class extends Controller {
     this.deselect()
     this.state = 'drawing'
     this.drawCoords = []
+    this.drawHistory = []
     this.map.getCanvas().style.cursor = 'crosshair'
 
     this.drawingActionsTarget.classList.remove('hidden')
@@ -293,38 +305,73 @@ export default class extends Controller {
 
   addVertex(e) {
     if (this.state !== 'drawing') return
-    this.drawCoords.push([e.lngLat.lng, e.lngLat.lat])
+    // A click on (or within a few pixels of) a corner already placed adds nothing: that's
+    // the second click of a double-click, or a slip. Recorded as null so Backspace skips it.
+    if (this.drawMarkers.some(m => this.map.project(m.getLngLat()).dist(e.point) < 5)) {
+      this.drawHistory.push(null)
+      return
+    }
+    const coord = [e.lngLat.lng, e.lngLat.lat]
+    // Corners clicked in any order: each goes where it makes no crossing (usually the end)
+    const index = insertionIndex(this.drawCoords.map(c => this.flat(c)), this.flat(coord))
+    this.drawCoords.splice(index, 0, coord)
 
     // Add a small yellow dot marker at this vertex
     const el = document.createElement('div')
     el.className = 'w-2 h-2 rounded-full bg-amber-400 border border-white'
-    const marker = new maplibregl.Marker({ element: el }).setLngLat([e.lngLat.lng, e.lngLat.lat]).addTo(this.map)
-    this.drawMarkers = this.drawMarkers || []
-    this.drawMarkers.push(marker)
-
-    // Update preview line
-    this.map.getSource('draw-preview').setData({
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: this.drawCoords }
-    })
+    const marker = new maplibregl.Marker({ element: el }).setLngLat(coord).addTo(this.map)
+    this.drawMarkers.splice(index, 0, marker)
+    this.drawHistory.push(marker)
+    this.updateDrawPreview()
   }
 
+  // Takes back the point clicked last, wherever it went in the outline
   removeLastDrawnPoint() {
-    if (!this.drawCoords.length) return
-    this.drawCoords.pop()
-    this.drawMarkers.pop()?.remove()
-    this.map.getSource('draw-preview').setData({
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: this.drawCoords }
+    let marker = this.drawHistory.pop()
+    while (marker === null) marker = this.drawHistory.pop()
+    if (!marker) return
+    const index = this.drawMarkers.indexOf(marker)
+    this.drawCoords.splice(index, 1)
+    this.drawMarkers.splice(index, 1)
+    marker.remove()
+    this.updateDrawPreview()
+  }
+
+  // The outline so far, closed once it has 3 corners so you can see the shape it will make
+  updateDrawPreview() {
+    const coords = this.drawCoords.length >= 3 ? [...this.drawCoords, this.drawCoords[0]] : this.drawCoords
+    this.map.getSource('draw-preview').setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } })
+    this.showCrossings(this.drawCoords)
+  }
+
+  // lng/lat with lng scaled by cos(latitude), so distances are fair for choosing where a corner goes
+  flat([lng, lat]) {
+    return [lng * Math.cos(lat * Math.PI / 180), lat]
+  }
+
+  // Edges of this outline that cross another of its edges, drawn thick red, with a warning
+  // when one first appears. The server refuses to save an edited outline like that.
+  showCrossings(coords) {
+    const edges = coords.length ? crossingEdges(coords.map(c => this.flat(c))) : []
+    this.map.getSource('crossings')?.setData({
+      type: 'FeatureCollection',
+      features: edges.map(i => ({
+        type: 'Feature', properties: {},
+        geometry: { type: 'LineString', coordinates: [coords[i], coords[(i + 1) % coords.length]] },
+      })),
     })
+    if (edges.length && !this.crossingCount) this.setStatus('Edges cross (shown in red): move or remove a corner to untangle them')
+    this.crossingCount = edges.length
   }
 
   finishPolygon(e) {
     e.preventDefault?.()
     if (this.state !== 'drawing') return
 
-    // dblclick fires after 2 click events — drop the last coord added by the 2nd click
-    const coordinates = this.drawCoords.slice(0, -1)
+    // dblclick fires after 2 click events: the 2nd landed on the corner the 1st placed, so
+    // added nothing (see addVertex). If the mouse moved between them it did add one: drop it.
+    const second = this.drawHistory[this.drawHistory.length - 1]
+    const coordinates = second ? this.drawCoords.filter((_, i) => i !== this.drawMarkers.indexOf(second)) : this.drawCoords
 
     if (coordinates.length < 3) {
       this.showToast('Need at least 3 points', true)
@@ -397,10 +444,13 @@ export default class extends Controller {
     ;(this.drawMarkers || []).forEach(m => m.remove())
     this.drawMarkers = []
 
+    this.drawHistory = []
+
     // Clear preview line
     this.map.getSource('draw-preview').setData({
       type: 'Feature', geometry: { type: 'LineString', coordinates: [] }
     })
+    this.showCrossings([])
 
     this.drawingActionsTarget.classList.add('hidden')
     this.drawBtnTarget.classList.remove('hidden')
@@ -436,6 +486,7 @@ export default class extends Controller {
       : ring
 
     this.placeVertexMarkers(coords)
+    this.showCrossings(coords) // an older outline may already cross itself: show where
     this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(boulderId))
   }
 
@@ -581,6 +632,7 @@ export default class extends Controller {
 
   showSelectedStatus() {
     if (this.selectedBoulderId == null) return
+    if (this.crossingCount) return this.setStatus('Edges cross (shown in red): move or remove a corner to untangle them')
     this.setStatus(this.dirty
       ? `${this.labelFor(this.selectedBoulderId)}: unsaved changes. Save changes to keep them`
       : `${this.labelFor(this.selectedBoulderId)} selected`)
@@ -600,6 +652,7 @@ export default class extends Controller {
     const closed = [...coords, coords[0]]
     feature.geometry.coordinates = [closed]
     this.map.getSource('boulders').setData(this.bouldersGeoJSON)
+    this.showCrossings(coords)
   }
 
   deselect() {
@@ -615,6 +668,7 @@ export default class extends Controller {
     }
     this.originalRing = null
     this.dirty = false
+    this.showCrossings([])
     this.crossingMarker?.remove()
     this.suggestionPopup?.remove()
     this.state = 'idle'
