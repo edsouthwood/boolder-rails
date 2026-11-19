@@ -79,6 +79,12 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
     assert_equal @outline.id.to_s, editor["data-admin-boulder-editor-focus-id-value"]
   end
 
+  test "the editor links out to the council aerials" do
+    get admin_area_boulder_editor_path(area_slug: "mine")
+
+    assert_select "button[data-action='click->admin-boulder-editor#openCouncilAerials']", text: /Open DCC aerial view here/
+  end
+
   test "the editor's map data carries boulder names" do
     @outline.update!(name: "Named")
     get admin_map_path(area_id: @mine.id, format: :geojson)

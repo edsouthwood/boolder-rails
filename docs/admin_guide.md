@@ -926,6 +926,12 @@ An edited outline whose edges cross each other (a "bow-tie") isn't saved: a red 
 2. Click **Delete boulder** — confirm the prompt
 3. The polygon is removed from the map and the database
 
+### Council aerials
+
+Click **Open DCC aerial view here ↗** to open Devon County Council's Environment Viewer in a new tab, centred on the selected boulder (marked with a pin) or the middle of the map, at about the same scale. Choose the aerial photo from its basemap gallery. The current aerials are sharp, early-spring photos taken before the bracken comes up, so they're good for checking where boulders are.
+
+The council's licence lets you **look only**: don't screenshot, download or copy the photos, or use them in guides or docs. That's why this is a link out rather than a basemap in the editor.
+
 ### LiDAR hillshade overlay
 
 Under **LiDAR hillshade** in the sidebar, click **LiDAR off** to switch it on. This lays Environment Agency 1 m LiDAR over the satellite image as shaded relief. Boulders show as crisp bumps with no shadows, lichen or grass to confuse things, so outlines are much easier to judge. Use the slider to blend it with the satellite image (around 50–70% works well). Your on/off choice and opacity are remembered in this browser.

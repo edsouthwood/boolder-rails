@@ -178,6 +178,16 @@
         </div>
       </div>
 
+      <%# Devon County Council aerials: a link out only. Their terms allow viewing on their site, not copying or screenshots %>
+      <div class="px-3 py-2 border-b flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1.5">Council aerials</p>
+        <button data-action="click->admin-boulder-editor#openCouncilAerials"
+                class="w-full px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors">
+          Open DCC aerial view here ↗
+        </button>
+        <p class="mt-1 text-xs text-gray-400">Opens Devon County Council's viewer in a new tab at this spot (or the selected boulder). Pick the aerial basemap in its gallery. Look only: no screenshots or copies.</p>
+      </div>
+
       <%# LiDAR overlay %>
       <div class="px-3 py-2 border-b flex-shrink-0">
         <p class="text-xs font-medium text-gray-600 mb-1.5">LiDAR</p>
