@@ -136,6 +136,7 @@
           <li>Click <strong>Draw boulder</strong> to trace a new outline</li>
           <li>Click an existing boulder to select and edit its corners</li>
           <li>Drag corners to reshape; drag or click a faint mid-edge dot to add one</li>
+          <li>Drag the <strong>✥</strong> in the middle to move a whole outline</li>
           <li>Click a corner, then <strong>Remove point</strong> (or Delete) to remove it</li>
           <li>While drawing, Delete/Backspace takes back the last point</li>
         </ul>
@@ -245,6 +246,34 @@
               Remove
             </button>
           </div>
+          <%# Outlines drawn on the image, found in this browser (outline_tracing.js) %>
+          <button data-action="click->admin-boulder-editor#findImageOutlines"
+                  data-admin-boulder-editor-target="imageFindBtn"
+                  class="w-full px-2 py-1 text-xs rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors">
+            Find outlines in image
+          </button>
+          <label class="flex items-center gap-2 text-xs text-gray-500">
+            <span class="w-16 flex-shrink-0">Close gaps</span>
+            <input type="range" min="0" max="8" value="2"
+                   data-action="input->admin-boulder-editor#refindImageOutlines"
+                   data-admin-boulder-editor-target="imageGap"
+                   class="flex-1 min-w-0 accent-gray-800">
+          </label>
+          <label class="flex items-center gap-2 text-xs text-gray-500">
+            <span class="w-16 flex-shrink-0">Ink</span>
+            <input type="range" min="0" max="250" step="10" value="0"
+                   aria-label="Ink: how dark a line must be (left end: worked out from the image)"
+                   data-action="input->admin-boulder-editor#refindImageOutlines"
+                   data-admin-boulder-editor-target="imageInk"
+                   class="flex-1 min-w-0 accent-gray-800">
+          </label>
+          <p data-admin-boulder-editor-target="imageFindStatus" class="text-xs text-gray-500" aria-live="polite"></p>
+          <button data-action="click->admin-boulder-editor#addAllUnmapped"
+                  data-admin-boulder-editor-source-param="image"
+                  data-admin-boulder-editor-target="imageAddAllBtn"
+                  class="hidden w-full px-2 py-1 text-xs rounded bg-granite text-white hover:bg-granite-dark disabled:opacity-50 transition-colors">
+            Add all new as boulders
+          </button>
         </div>
         <p class="mt-1 text-xs text-gray-400">A JPEG or PNG laid over the map to trace from. Only on this computer: never uploaded, gone when you reload. Use images you have the rights to (your own drone or phone photos, open-licence maps).</p>
       </div>

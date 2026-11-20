@@ -12,6 +12,7 @@ export default class extends Controller {
     'nameInput', 'nameOptions', 'nameOptionsBox', 'unplacedSection', 'unplacedList',
     'hideBtn', 'hiddenNote', 'removePointBtn',
     'imageInput', 'imageChooseBtn', 'imageControls', 'imageOpacity', 'imageAdjustBtn',
+    'imageFindBtn', 'imageFindStatus', 'imageAddAllBtn', 'imageGap', 'imageInk',
   ]
   static values = {
     geojsonUrl: String,
@@ -111,12 +112,14 @@ export default class extends Controller {
   // ─── Data loading ───────────────────────────────────────────────────────────
 
   loadData() {
-    // LiDAR suggestions (filled by suggestBoulders), drawn beneath the boulders
+    // Suggested outlines, from LiDAR (suggestBoulders) or the tracing image (findImageOutlines),
+    // drawn beneath the boulders
     this.map.addSource('suggestions', {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
     })
-    const suggestionColor = ['case', ['get', 'overlaps'], '#16a34a', '#f59e0b'] // green overlaps, amber new
+    // green overlaps a boulder; new ones amber (LiDAR) or fuchsia (image)
+    const suggestionColor = ['case', ['get', 'overlaps'], '#16a34a', ['==', ['get', 'source'], 'image'], '#c026d3', '#f59e0b']
     this.map.addLayer({
       id: 'suggestions-fill',
       type: 'fill',
@@ -507,7 +510,7 @@ export default class extends Controller {
 
       // Live-update polygon outline while dragging
       marker.on('dragstart', () => { this.unpickVertex() })
-      marker.on('drag', () => { this.refreshSelectedPolygon(); this.positionMidpoints() })
+      marker.on('drag', () => { this.refreshSelectedPolygon(); this.positionMidpoints(); this.positionMoveHandle() })
       marker.on('dragend', () => { this.justDragged = true; setTimeout(() => { this.justDragged = false }, 0); this.markUnsaved() })
       // Stop the click reaching the map, which would deselect the boulder
       el.addEventListener('click', (e) => {
@@ -522,6 +525,51 @@ export default class extends Controller {
       this.vertexMarkers.push(marker)
     })
     this.placeMidpoints()
+    this.placeMoveHandle()
+  }
+
+  // A handle in the middle of the selected outline that moves the whole thing, for shapes
+  // from a sketch that came out the right shape in slightly the wrong place
+  placeMoveHandle() {
+    this.moveHandle?.remove()
+    const el = document.createElement('div')
+    el.className = 'w-6 h-6 rounded-full bg-blue-600/70 border-2 border-white shadow text-white text-xs leading-5 text-center cursor-move select-none'
+    el.textContent = '✥'
+    el.title = 'Drag to move the whole outline'
+    el.addEventListener('click', (e) => e.stopPropagation()) // not a click on the map (deselect)
+    const handle = new maplibregl.Marker({ element: el, draggable: true })
+      .setLngLat(this.outlineCentre())
+      .addTo(this.map)
+    // Moves in screen pixels, like the tracing image's handle
+    handle.on('dragstart', () => {
+      this.unpickVertex()
+      this.outlineMoveStart = {
+        at: this.map.project(handle.getLngLat()),
+        corners: this.vertexMarkers.map(m => this.map.project(m.getLngLat())),
+      }
+    })
+    handle.on('drag', () => {
+      const at = this.map.project(handle.getLngLat())
+      const dx = at.x - this.outlineMoveStart.at.x, dy = at.y - this.outlineMoveStart.at.y
+      this.vertexMarkers.forEach((m, i) => {
+        const p = this.outlineMoveStart.corners[i]
+        m.setLngLat(this.map.unproject([p.x + dx, p.y + dy]))
+      })
+      this.refreshSelectedPolygon()
+      this.positionMidpoints()
+    })
+    handle.on('dragend', () => this.markUnsaved())
+    this.moveHandle = handle
+  }
+
+  // Average of the corners: inside any outline that isn't too hollow
+  outlineCentre() {
+    const coords = this.vertexCoords()
+    return [coords.reduce((s, c) => s + c[0], 0) / coords.length, coords.reduce((s, c) => s + c[1], 0) / coords.length]
+  }
+
+  positionMoveHandle() {
+    if (this.moveHandle && this.vertexMarkers.length) this.moveHandle.setLngLat(this.outlineCentre())
   }
 
   vertexCoords() {
@@ -1060,6 +1108,8 @@ export default class extends Controller {
     this.vertexMarkers = []
     this.midpointMarkers.forEach(m => m.remove())
     this.midpointMarkers = []
+    this.moveHandle?.remove()
+    this.moveHandle = null
   }
 
   updateCount(n) {
@@ -1168,18 +1218,17 @@ export default class extends Controller {
       const boulders = this.bouldersGeoJSON.features.map(f => ({
         id: f.properties.boulderId, ring: f.geometry.coordinates[0],
       }))
-      this.suggestions = await suggestBoulders(
+      const found = await suggestBoulders(
         { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() }, boulders
       )
-      this.renderSuggestions()
-      const overlapping = this.suggestions.filter(s => s.overlaps.length).length
-      this.suggestStatusTarget.textContent = this.suggestions.length
-        ? `${this.suggestions.length - overlapping} new, ${overlapping} overlapping. Click one to use it.`
+      this.replaceSuggestions('lidar', found)
+      const overlapping = found.filter(s => s.overlaps.length).length
+      this.suggestStatusTarget.textContent = found.length
+        ? `${found.length - overlapping} new, ${overlapping} overlapping. Click one to use it.`
         : 'No likely boulders found in this view.'
       if (this.selectedBoulderId != null) {
         this.useLidarBtnTarget.classList.toggle('hidden', !this.suggestionFor(this.selectedBoulderId))
       }
-      this.updateAddAllButton()
     } catch (error) {
       this.suggestStatusTarget.textContent = ''
       this.showToast(error.message || 'Could not fetch LiDAR', true)
@@ -1189,21 +1238,37 @@ export default class extends Controller {
     }
   }
 
+  // Swaps in a new set of suggestions from one source ('lidar' or 'image'), keeping the other's
+  replaceSuggestions(source, found) {
+    this.suggestions = [
+      ...this.suggestions.filter(s => s && this.sourceOf(s) !== source),
+      ...found.map(s => ({ ...s, source })),
+    ]
+    this.suggestionPopup?.remove()
+    this.renderSuggestions()
+    this.updateAddAllButton()
+  }
+
+  sourceOf(suggestion) {
+    return suggestion.source || 'lidar'
+  }
+
   renderSuggestions() {
-    this.map.getSource('suggestions').setData({
+    this.map.getSource('suggestions')?.setData({
       type: 'FeatureCollection',
       features: this.suggestions.map((s, index) => s && ({
         type: 'Feature',
-        properties: { index, overlaps: s.overlaps.length > 0 },
+        properties: { index, overlaps: s.overlaps.length > 0, source: this.sourceOf(s) },
         geometry: { type: 'Polygon', coordinates: [[...s.coordinates, s.coordinates[0]]] },
       })).filter(Boolean),
     })
   }
 
-  // The suggestion that overlaps this boulder most (suggestions list overlaps biggest first)
+  // The LiDAR suggestion that overlaps this boulder most (suggestions list overlaps biggest first)
   suggestionFor(boulderId) {
-    return this.suggestions.find(s => s && s.overlaps[0] == boulderId) ||
-      this.suggestions.find(s => s && s.overlaps.includes(Number(boulderId)))
+    const lidar = this.suggestions.filter(s => s && this.sourceOf(s) === 'lidar')
+    return lidar.find(s => s.overlaps[0] == boulderId) ||
+      lidar.find(s => s.overlaps.includes(Number(boulderId)))
   }
 
   showSuggestionPopup(index, lngLat) {
@@ -1213,7 +1278,9 @@ export default class extends Controller {
     el.className = 'text-xs flex flex-col gap-1.5'
     const info = document.createElement('p')
     info.className = 'text-gray-600'
-    info.textContent = `LiDAR suggestion · ${s.area} m² · up to ${s.height} m high`
+    info.textContent = this.sourceOf(s) === 'image'
+      ? `From tracing image · about ${s.area} m²`
+      : `LiDAR suggestion · ${s.area} m² · up to ${s.height} m high`
     el.appendChild(info)
     if (s.overlaps.length > 1) {
       const warning = document.createElement('p')
@@ -1259,39 +1326,54 @@ export default class extends Controller {
     const s = this.suggestions[index]
     const id = await this.createBoulder(s.coordinates, placing)
     if (id == null) return
+    const from = this.sourceOf(s) === 'image' ? 'the image' : 'LiDAR'
     this.suggestions[index] = null
     this.renderSuggestions()
     this.updateAddAllButton()
     this.selectBoulder(id)
-    this.setStatus(`${this.labelFor(id)} added from LiDAR. Tidy the corners, then Save changes.`)
+    this.setStatus(`${this.labelFor(id)} added from ${from}. Drag ✥ or the corners into place, then Save changes.`)
   }
 
-  // Indexes of the amber suggestions (nothing mapped there yet)
-  unmappedSuggestions() {
-    return (this.suggestions || []).flatMap((s, index) => (s && s.overlaps.length === 0) ? [index] : [])
+  // Indexes of one source's new suggestions (nothing mapped there yet)
+  unmappedSuggestions(source = 'lidar') {
+    return (this.suggestions || []).flatMap((s, index) =>
+      (s && s.overlaps.length === 0 && this.sourceOf(s) === source) ? [index] : [])
   }
 
   updateAddAllButton() {
-    const count = this.unmappedSuggestions().length
+    const count = this.unmappedSuggestions('lidar').length
     this.addAllBtnTarget.classList.toggle('hidden', count === 0)
     this.addAllBtnTarget.textContent = `Add all ${count} unmapped as boulders`
+    if (this.hasImageAddAllBtnTarget) {
+      const fromImage = this.unmappedSuggestions('image').length
+      this.imageAddAllBtnTarget.classList.toggle('hidden', fromImage === 0)
+      this.imageAddAllBtnTarget.textContent = `Add all ${fromImage} new as boulders`
+    }
   }
 
-  // Saves every amber suggestion as a new boulder, one at a time, stopping at the first failure
-  async addAllUnmapped() {
-    const indexes = this.unmappedSuggestions()
+  // Saves every new suggestion from one source (the button's source param) as a new boulder,
+  // one at a time, stopping at the first failure
+  async addAllUnmapped(event) {
+    const source = event?.params?.source || 'lidar'
+    const image = source === 'image'
+    const indexes = this.unmappedSuggestions(source)
     if (!indexes.length) return
     const pinned = new Set(indexes.map(index => this.pinnedNameFor(this.suggestions[index])?.id).filter(Boolean)).size
-    if (!confirm(`Add ${indexes.length} new boulder${indexes.length === 1 ? '' : 's'} from LiDAR?` +
+    if (!confirm(`Add ${indexes.length} new boulder${indexes.length === 1 ? '' : 's'} from ${image ? 'the tracing image' : 'LiDAR'}?` +
       (pinned ? ` About ${pinned} will take the name of the pin on them.` : '') +
-      ' Check the amber shapes first: walls and parked cars can show up as rock.')) return
+      (image
+        ? ' Check the pink shapes first: a label or a path drawn as a loop shows up too.'
+        : ' Check the amber shapes first: walls and parked cars can show up as rock.'))) return
 
-    this.addAllBtnTarget.disabled = true
+    const button = image ? this.imageAddAllBtnTarget : this.addAllBtnTarget
+    const status = image ? this.imageFindStatusTarget : this.suggestStatusTarget
+    button.disabled = true
     this.suggestBtnTarget.disabled = true
+    if (this.hasImageFindBtnTarget) this.imageFindBtnTarget.disabled = true
     let added = 0
     try {
       for (const index of indexes) {
-        this.suggestStatusTarget.textContent = `Adding ${added + 1}/${indexes.length}…`
+        status.textContent = `Adding ${added + 1}/${indexes.length}…`
         // A pin on the shape names it (each listed name is used once: it leaves the list when placed)
         const id = await this.createBoulder(this.suggestions[index].coordinates, this.pinnedNameFor(this.suggestions[index]))
         if (id == null) break
@@ -1300,11 +1382,12 @@ export default class extends Controller {
       }
     } finally {
       this.renderSuggestions()
-      this.addAllBtnTarget.disabled = false
+      button.disabled = false
       this.suggestBtnTarget.disabled = false
+      if (this.hasImageFindBtnTarget) this.imageFindBtnTarget.disabled = false
       this.updateAddAllButton()
-      this.suggestStatusTarget.textContent = added === indexes.length
-        ? `Added ${added} boulder${added === 1 ? '' : 's'}. Tidy any corners, then Save changes.`
+      status.textContent = added === indexes.length
+        ? `Added ${added} boulder${added === 1 ? '' : 's'}. ${image ? 'Drag ✥ or the corners of any that are out' : 'Tidy any corners'}, then Save changes.`
         : `Added ${added} of ${indexes.length}; stopped after an error.`
     }
   }
@@ -1318,7 +1401,8 @@ export default class extends Controller {
     const merged = others.length
       ? ` It also covers ${others.map(id => `#${id}`).join(', ')}, so it may be several rocks: trim it before saving.`
       : ''
-    this.setStatus(`LiDAR outline for #${boulderId}.${merged} Save changes to keep it, or click the boulder again to undo.`)
+    const from = this.sourceOf(suggestion) === 'image' ? 'Image' : 'LiDAR'
+    this.setStatus(`${from} outline for #${boulderId}.${merged} Save changes to keep it, or click the boulder again to undo.`)
   }
 
   useLidarOutline() {
@@ -1472,6 +1556,7 @@ export default class extends Controller {
   // Handles only while adjusting: left on the map they'd sit over boulder corners and
   // swallow the clicks meant for tracing
   setOverlayAdjusting(on) {
+    const wasAdjusting = !!this.overlayHandles
     this.overlayHandles?.forEach(m => m.remove())
     this.overlayHandles = null
     if (on && this.overlayCorners) {
@@ -1515,6 +1600,8 @@ export default class extends Controller {
       btn.classList.toggle('text-gray-700', !active)
       btn.classList.toggle('border-gray-300', !active)
     }
+    // Outlines found before the image moved are where it used to be
+    if (wasAdjusting && !on && this.imageOutlinesFound) this.findImageOutlines()
   }
 
   overlayCentre() {
@@ -1530,7 +1617,55 @@ export default class extends Controller {
     })
   }
 
+  // Closed loops drawn on the image (see outline_tracing.js), shown as pink suggestions to add
+  // like the LiDAR ones. They're worked out from where the image is pinned now, so they're
+  // found again when you finish moving it, or change a slider.
+  async findImageOutlines() {
+    if (!this.overlayCanvas) return
+    this.imageFindBtnTarget.disabled = true
+    this.imageFindStatusTarget.textContent = 'Looking for outlines…'
+    try {
+      const { findOutlines } = await import('outline_tracing')
+      const boulders = this.bouldersGeoJSON.features.map(f => ({
+        id: f.properties.boulderId, ring: f.geometry.coordinates[0],
+      }))
+      const ink = Number(this.imageInkTarget.value)
+      const { shapes, threshold } = findOutlines(this.overlayCanvas, this.overlayCorners, boulders, {
+        gap: Number(this.imageGapTarget.value),
+        threshold: ink > 0 ? ink : undefined, // 0: work it out from the image
+      })
+      this.imageInkTarget.title = `Ink is anything darker than ${threshold} of 255`
+      this.imageOutlinesFound = true
+      this.replaceSuggestions('image', shapes)
+      const overlapping = shapes.filter(s => s.overlaps.length).length
+      this.imageFindStatusTarget.textContent = shapes.length
+        ? `${shapes.length - overlapping} new, ${overlapping} over a boulder already mapped. Click one to use it.`
+        : 'No closed outlines found. Try more Close gaps, or a darker Ink setting.'
+      this.imageFindBtnTarget.textContent = 'Find outlines again'
+    } catch (error) {
+      this.imageFindStatusTarget.textContent = ''
+      this.showToast(error.message || 'Could not read outlines from the image', true)
+    } finally {
+      this.imageFindBtnTarget.disabled = false
+    }
+  }
+
+  // A slider moved: find them again, if they've been found already
+  refindImageOutlines() {
+    if (!this.imageOutlinesFound) return
+    clearTimeout(this.refindTimer)
+    this.refindTimer = setTimeout(() => this.findImageOutlines(), 250)
+  }
+
+  clearImageOutlines() {
+    this.imageOutlinesFound = false
+    if (this.suggestions.some(s => s && this.sourceOf(s) === 'image')) this.replaceSuggestions('image', [])
+    if (this.hasImageFindStatusTarget) this.imageFindStatusTarget.textContent = ''
+    if (this.hasImageFindBtnTarget) this.imageFindBtnTarget.textContent = 'Find outlines in image'
+  }
+
   removeOverlayImage() {
+    this.clearImageOutlines()
     this.overlayHandles?.forEach(m => m.remove())
     this.overlayHandles = null
     if (this.map.getLayer('overlay-image')) this.map.removeLayer('overlay-image')

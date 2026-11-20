@@ -94,6 +94,15 @@ class Admin::BoulderNamesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /never uploaded, gone when you reload/
   end
 
+  test "the editor can find outlines drawn on the tracing image" do
+    get admin_area_boulder_editor_path(area_slug: "mine")
+
+    assert_select "button[data-action='click->admin-boulder-editor#findImageOutlines']", text: /Find outlines in image/
+    assert_select "input[type=range][data-admin-boulder-editor-target=imageGap]"
+    assert_select "input[type=range][data-admin-boulder-editor-target=imageInk]"
+    assert_select "button[data-admin-boulder-editor-source-param=image][data-action='click->admin-boulder-editor#addAllUnmapped']"
+  end
+
   test "the editor's map data carries boulder names" do
     @outline.update!(name: "Named")
     get admin_map_path(area_id: @mine.id, format: :geojson)
