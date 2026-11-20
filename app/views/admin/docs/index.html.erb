@@ -517,6 +517,7 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li>Drag the blue corner dots to reshape the outline</li>
           <li><strong>Add a corner:</strong> a fainter dot sits halfway along each edge. Drag it to where the new corner should go, or click it to add a corner right there. (On very short edges the dot is hidden until you zoom in.)</li>
           <li><strong>Remove a corner:</strong> click it (it turns red), then click <strong>Remove point</strong> or press Delete. On a computer, Alt-click removes it in one go. An outline keeps at least 3 corners; Esc un-picks.</li>
+          <li><strong>Move the whole outline:</strong> drag the round blue <strong>✥</strong> handle in the middle of the selected boulder. The shape stays the same</li>
           <li>The status line says <strong>unsaved changes</strong> until you save. Click <strong>Save changes</strong> to save, or click away to discard</li>
           <li>An outline whose edges cross (a bow-tie) won't save: a red ring shows where, so move or remove a corner there and save again. Some older outlines and LiDAR shapes have small crossings like this; they show up the first time you edit them</li>
         </ol>
@@ -549,6 +550,13 @@ rails import:problems FOLDER=/path/to/haytor</pre>
           <li><strong>Replace image…</strong> loads another, <strong>Remove</strong> takes it away</li>
         </ul>
         <p>The image stays on your computer: it's never uploaded or saved, and it's gone when you reload the page. Only use images you have the rights to, such as your own photos or open-licence maps. That rules out screenshots of the council aerials (see above).</p>
+        <p><strong>Outlines from a drawing:</strong> with a sketch or map that has the boulders outlined on it, line it up, click <strong>Done moving</strong>, then <strong>Find outlines in image</strong>. Every closed loop shows as a <strong>pink</strong> dashed shape (<strong>green</strong> over a boulder already mapped). Click one to add it or replace an outline, just like a LiDAR suggestion, or use <strong>Add all N new as boulders</strong>. Then drag each boulder's <strong>✥</strong> handle or its corners into place, since sketches aren't to scale.</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Loops must be closed. <strong>Close gaps</strong> thickens lines so small breaks close; turn it down if two boulders drawn close together merge</li>
+          <li><strong>Ink</strong>: how dark a line must be. Left end = worked out from the image; slide right for faint pencil</li>
+          <li>Letters, numbers and a frame round the drawing are ignored. Solid or hatched boulders are missed; a path or label drawn as a loop comes out too, so delete it before Add all</li>
+          <li>A slider change, or moving the image and clicking Done moving, finds them again. It all runs in your browser</li>
+        </ul>
 
         <p class="font-medium text-gray-800">LiDAR boulder suggestions</p>
         <p>Click <strong>Suggest boulders in this view</strong>. The editor analyses the Environment Agency's LiDAR heights for the current view and outlines anything that looks like rock: <strong>amber</strong> where nothing is mapped, <strong>green</strong> where it overlaps a mapped boulder (the LiDAR is often the more accurate outline).</p>

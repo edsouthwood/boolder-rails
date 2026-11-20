@@ -915,8 +915,9 @@ Edges that cross are drawn **thick red** while you draw or edit, and the status 
 3. Drag any vertex to reshape the outline
 4. **Add a corner:** a fainter dot sits halfway along each edge. Drag it to where the new corner should go, or click it to add a corner right there. On edges too short to grab, the dot is hidden until you zoom in.
 5. **Remove a corner:** click it (it turns red), then click **Remove point** or press Delete/Backspace. Alt-click removes a corner in one go. An outline keeps at least 3 corners; Esc un-picks the corner.
-6. The status line says **unsaved changes** until you click **Save changes** to save
-7. Click the selected boulder again (or another boulder) to deselect without saving — any unsaved changes are undone
+6. **Move the whole outline:** drag the round blue **✥** handle in the middle of the selected boulder. Every corner moves together and the shape stays the same, which is handy for outlines from a sketch that are the right shape in slightly the wrong place.
+7. The status line says **unsaved changes** until you click **Save changes** to save
+8. Click the selected boulder again (or another boulder) to deselect without saving — any unsaved changes are undone
 
 An edited outline whose edges cross each other (a "bow-tie") isn't saved: a red ring marks the crossing, so move or remove a corner there and save again. A few older outlines and some LiDAR shapes have small crossings like this; you'll only meet them when you next edit one. New outlines (drawn or from LiDAR) aren't checked, so **Add all** never stops on one.
 
@@ -954,6 +955,25 @@ Under **Tracing image** in the sidebar, click **Import image…** and choose a J
 The image never leaves your computer: it isn't uploaded or saved anywhere, and it's gone when you reload the page. Large photos are scaled down to 4096 px on the long side so they display on iPads too. Phone HEIC photos won't load, so export them as JPEG first.
 
 Only use images you have the rights to, such as your own photos or open-licence maps. That rules out screenshots of the council aerials (see **Council aerials** above).
+
+#### Outlines from a drawing
+
+If the image is a drawing with the boulders outlined on it (a hand-drawn crag sketch, a scanned map), the editor can turn the outlines into boulders for you:
+
+1. Import the drawing and line it up as above. Get the whole drawing roughly in place first. Every boulder lands where its outline sits on the image.
+2. Click **Done moving**, then **Find outlines in image**. Every closed loop on the drawing shows as a **pink dashed** shape (**green** where it overlaps a boulder that's already mapped), and the status line says how many it found.
+3. Click a shape for **Add as new boulder**, **Add as** a name from the problem list, or **Replace outline of #N**, exactly like a LiDAR suggestion. **Add all N new as boulders** saves every pink shape at once, after a confirmation. A pin on a shape names it, as with LiDAR.
+4. Sketches aren't drawn to scale, so some boulders will be a little out. Select one and drag its **✥** handle to move the whole outline, or drag its corners, then **Save changes**.
+
+How it finds them: anything darker than the paper counts as ink, and any patch of paper fully closed in by ink is a boulder. So:
+
+- Loops must be closed. **Close gaps** (0–8) thickens the lines so small breaks still close. Turn it up if a boulder is missed, down if two boulders drawn close together come out as one.
+- **Ink** sets how dark a line has to be. At the left end it's worked out from the image. Slide it right for faint pencil, left if shading or a grey background gets in the way.
+- The outline follows the middle of the pen line and is simplified to a few corners.
+- Holes in letters and numbers are too small to count. A frame round the whole drawing is ignored. A boulder drawn solid black, or shaded with hatching, has no paper inside it, so it's missed: draw that one by hand. A path or label drawn as a closed loop comes out as a shape too, so delete those before **Add all**.
+- Changing a slider, or moving the image and clicking **Done moving**, finds the outlines again. **Remove** clears them.
+
+It all happens in your browser, so the drawing still never leaves your computer.
 
 ### LiDAR boulder suggestions
 
